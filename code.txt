@@ -1,0 +1,12 @@
+XSSFCellStyle style = new XSSFCellStyle(new StylesTable());
+searcher = new IndexSearcher(dir, true); //B
+Directory dir = TestUtil.getBookIndexDirectory(); //A
+IndexSearcher searcher;
+Term t = new Term("subject", "ant");
+Query query = new TermQuery(t);
+TopDocs docs = searcher.search(query, 10);
+assertEquals("JDwA", 1, docs.totalHits); //C
+t = new Term("subject", "junit");
+docs = searcher.search(new TermQuery(t), 10);
+assertEquals(2, docs.totalHits); //D
+searcher.close();

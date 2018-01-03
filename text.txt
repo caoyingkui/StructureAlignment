@@ -1,0 +1,5 @@
+I have created the cellStyle myself and used setCellStyle on it
+Create IndexSearcher
+TestUtil provides directory
+One hit expected for search for "ant"
+Two hits expected for "junit"
