@@ -693,6 +693,49 @@ public class CodeVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(ConditionalExpression node) {
+        // region <grammar>
+        /**
+         * Expression ? Expression : Expression
+         */
+        // endregion <grammar>
+
+        //region <construct the tree of the root>
+        Node root = new Node(NodeType.CODE_ConditionalExpression , "" , id ++);
+        tree = new CodeStructureTree(root , node.toString() , parent);
+        //endregion <construct the tree of the root>
+
+        //region <construct the tree of conditionExpression>
+        Expression condition = node.getExpression();
+        CodeVisitor conditionVisitor = new CodeVisitor(tree);
+        condition.accept(conditionVisitor);
+        children.add(conditionVisitor.getTree());
+        //endregion <construct the tree of conditionExpression>
+
+        //region <construct the tree of ?>
+        CodeStructureTree questionTree = buildPunctuationTree("?" , NodeType.ADDED_CHAR_QUESTION, tree);
+        children.add(questionTree);
+        //endregion <construct the tree of ?>
+
+        //region <construct the tree of thenExpression>
+        Expression thenExpression = node.getThenExpression();
+        CodeVisitor thenVisitor = new CodeVisitor(tree);
+        thenExpression.accept(thenVisitor);
+        children.add(thenVisitor.getTree());
+        //endregion <construct the tree of thenExpression>
+
+        //region <construct the tree of >
+        CodeStructureTree commaTree = buildPunctuationTree(":" , NodeType.ADDED_CHAR_COLON , tree );
+        children.add(commaTree);
+        //endregion <construct the tree of>
+
+        //region <construct the tree of elseExpression>
+        Expression elseExpression = node.getThenExpression();
+        CodeVisitor elseVisitor = new CodeVisitor(tree);
+        elseExpression.accept(elseVisitor);
+        children.add(elseVisitor.getTree());
+        //endregion <construct the tree of elseExpression>
+
+        tree.setChildren(children);
         return false;
     }
 
@@ -703,6 +746,37 @@ public class CodeVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(ContinueStatement node) {
+        // region <grammar>
+        /**
+         * continue [ Identifier ] ;
+         */
+        // endregion <grammar>
+
+        //region <construct the tree of the root>
+        Node root = new Node(NodeType.CODE_ContinueStatement , "" , id++);
+        tree = new CodeStructureTree(root , node.toString() , parent);
+        //endregion <construct the tree of the root>
+
+        //region <construct the tree of continue>
+        CodeStructureTree continueTree = buildKeyWordTree( "continue" , tree);
+        children.add(continueTree);
+        //endregion <construct the tree of continue>
+
+        //region <construct the tree of identifier>
+        SimpleName identifier = node.getLabel();
+        if(identifier != null){
+            CodeVisitor identifierVisitor = new CodeVisitor(tree);
+            identifier.accept(identifierVisitor);;
+            children.add(identifierVisitor.getTree());
+        }
+        //endregion <construct the tree of identifier>
+
+        //region <construct the tree of ;>
+        CodeStructureTree semicolonTree = buildPunctuationTree(";" , NodeType.ADDED_CHAR_SEMICOLON , tree);
+        children.add(semicolonTree);
+        //endregion <construct the tree of ;>
+
+        tree.setChildren(children);
         return false;
     }
 
@@ -746,16 +820,122 @@ public class CodeVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(DoStatement node) {
+        // region <grammar>
+        /**
+         * do Statement while ( Expression ) ;
+         * */
+        // endregion <grammar>
+
+        //region <construct the tree of the root>
+        Node root = new Node(NodeType.CODE_DoStatement ,"" , id++);
+        tree = new CodeStructureTree(root , node.toString() , parent);
+        //endregion <construct the tree of the root>
+
+        //region <construct the tree of do>
+        CodeStructureTree doTree = buildKeyWordTree("do" , tree);
+        children.add(doTree);
+        //endregion <construct the tree of do>
+
+        //region <construct the tree of statement>
+        Statement statement = node.getBody();
+        CodeVisitor statementVisitor = new CodeVisitor(tree);
+        statement.accept(statementVisitor);
+        children.add(statementVisitor.getTree());
+        //endregion <construct the tree of statement>
+
+
+        //region <construct the tree of while>
+        CodeStructureTree whileTree = buildKeyWordTree("while" , tree);
+        children.add(whileTree);
+        //endregion <construct the tree of while>
+
+        //region <construct the tree of >
+        CodeStructureTree lpTree = buildPunctuationTree("(" , NodeType.ADDED_CHAR_LEFT_PARENTHESIS , tree);
+        children.add(lpTree);
+        //endregion <construct the tree of>
+
+        //region <construct the tree of >
+        Expression condition = node.getExpression();
+        CodeVisitor conditionVisitor = new CodeVisitor(tree);
+        condition.accept(conditionVisitor);
+        children.add(conditionVisitor.getTree());
+        //endregion <construct the tree of>
+
+        //region <construct the tree of )>
+        CodeStructureTree rpTree = buildPunctuationTree(")" , NodeType.ADDED_CHAR_RIGHT_PARENTHESIS , tree);
+        children.add(rpTree);
+        //endregion <construct the tree of )>
+
+        tree.setChildren(children);
         return false;
     }
 
     @Override
     public boolean visit(EmptyStatement node) {
+        // region <grammar>
+        /**
+         * ;
+         */
+        // endregion <grammar>
+
+        //region <construct the tree of the root>
+        Node root = new Node(NodeType.CODE_EmptyStatement , ";" , id ++);
+        tree = new CodeStructureTree(root , node.toString() , parent);
+        //endregion <construct the tree of the root>
         return false;
     }
 
     @Override
     public boolean visit(EnhancedForStatement node) {
+        // region <grammar>
+        /**
+         * for ( FormalParameter : Expression ) Statement
+         */
+        // endregion <grammar>
+
+        //region <construct the tree of the root>
+        Node root = new Node(NodeType.CODE_EnhancedForStatement , "" , id++);
+        tree = new CodeStructureTree(root , node.toString() , parent);
+        //endregion <construct the tree of the root>
+
+        //region <construct the tree of (>
+        CodeStructureTree lpTree = buildPunctuationTree("(" , NodeType.ADDED_CHAR_LEFT_PARENTHESIS , tree);
+        children.add(lpTree);
+        //endregion <construct the tree of (>
+
+        //region <construct the tree of formalParameter>
+        SingleVariableDeclaration parameter = node.getParameter();
+        CodeVisitor parameterVisitor = new CodeVisitor(tree);
+        parameter.accept(parameterVisitor);
+        children.add(parameterVisitor.getTree());
+        //endregion <construct the tree of formalParameter>
+
+        //region <construct the tree of :>
+        CodeStructureTree colonTree = buildPunctuationTree(":" , NodeType.ADDED_CHAR_COLON , tree);
+        children.add(colonTree);
+        //endregion <construct the tree of :>
+
+
+        //region <construct the tree of Expression>
+        Expression expression = node.getExpression();
+        CodeVisitor expressionVisitor = new CodeVisitor(tree);
+        expression.accept(expressionVisitor);
+        children.add(expressionVisitor.getTree());
+        //endregion <construct the tree of Expression>
+
+        //region <construct the tree of )>
+        CodeStructureTree rpTree = buildPunctuationTree(")" , NodeType.ADDED_CHAR_RIGHT_PARENTHESIS , tree);
+        children.add(rpTree);
+        //endregion <construct the tree of )>
+
+        //region <construct the tree of statement>
+        Statement body = node.getBody();
+        CodeVisitor bodyVisitor = new CodeVisitor(tree);
+        body.accept(bodyVisitor);
+        children.add(bodyVisitor.getTree());
+        //endregion <construct the tree of statement>
+
+        tree.setChildren(children);
         return false;
     }
 
@@ -795,6 +975,37 @@ public class CodeVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(FieldAccess node) {
+        // region <grammar>
+        /**
+         * Expression . Identifier
+         */
+        // endregion <grammar>
+
+        //region <construct the tree of the root>
+        Node root = new Node(NodeType.CODE_FieldAccess , "" , id ++);
+        tree = new CodeStructureTree(root , node.toString() , parent);
+        //endregion <construct the tree of the root>
+
+        //region <construct the tree of Expression>
+        Expression expression = node.getExpression();
+        CodeVisitor expressionVisitor = new CodeVisitor(tree);
+        expression.accept(expressionVisitor);
+        children.add(expressionVisitor.getTree());
+        //endregion <construct the tree of Expression>
+
+        //region <construct the tree of .>
+        CodeStructureTree dotTree = buildPunctuationTree("." , NodeType.ADDED_CHAR_DOT , tree);
+        children.add(dotTree);
+        //endregion <construct the tree of .>
+
+        //region <construct the tree of identifier>
+        SimpleName identifier = node.getName();
+        CodeVisitor identifierVisitor = new CodeVisitor(tree);
+        identifier.accept(identifierVisitor);
+        children.add(identifierVisitor.getTree());
+        //endregion <construct the tree of identifier>
+
+        tree.setChildren(children);
         return false;
     }
 
@@ -805,11 +1016,128 @@ public class CodeVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(ForStatement node) {
+        // region <grammar>
+        /**
+         * for ( [ ForInit ] ; [ Expression ] ; [ ForUpdate ] )
+         *     Statement
+         *
+         * ForInit:
+         *      Expression { , Expression}
+         *
+         * ForUpdate:
+         *      Expression { , Expression}
+         */
+        // endregion <grammar>
+
+        //region <construct the tree of the root>
+        Node root = new Node(NodeType.CODE_ForStatement , "" , id ++);
+        tree = new CodeStructureTree(root , node.toString() , parent);
+        //endregion <construct the tree of the root>
+
+        //region <construct the tree of (>
+        CodeStructureTree lpTree = buildPunctuationTree("(" , NodeType.ADDED_CHAR_LEFT_PARENTHESIS , tree);
+        children.add(lpTree);
+        //endregion <construct the tree of (>
+
+        //region <construct the tree of ForInit>
+        List<ASTNode> initializers = node.initializers();
+        if(initializers != null && initializers.size() > 0) {
+            List<CodeStructureTree> initializerTrees = batchProcess(initializers, ",", NodeType.ADDED_CHAR_COMMA, tree);
+            children.addAll(initializerTrees);
+        }
+        //endregion <construct the tree of ForInit>
+
+        //region <construct the tree of ;>
+        CodeStructureTree semiColonTree = buildPunctuationTree(";" , NodeType.ADDED_CHAR_SEMICOLON , tree);
+        children.add(semiColonTree);
+        //endregion <construct the tree of ;>
+
+        //region <construct the tree of Expression>
+        Expression expression = node.getExpression();
+        CodeVisitor expressionVisitor = new CodeVisitor(tree);
+        expression.accept(expressionVisitor);
+        children.add(expressionVisitor.getTree());
+        //endregion <construct the tree of Expression>
+
+        //region <construct the tree of ;>
+        semiColonTree = buildPunctuationTree(";" , NodeType.ADDED_CHAR_SEMICOLON , tree);
+        children.add(semiColonTree);
+        //endregion <construct the tree of ;>
+
+        //region <construct the tree of ForUpdate>
+        List<ASTNode> updaters = node.updaters();
+        if(updaters != null && updaters.size() > 0) {
+            List<CodeStructureTree> updaterTrees = batchProcess(updaters, ",", NodeType.ADDED_CHAR_COMMA, tree);
+            children.addAll(updaterTrees);
+        }
+        //endregion <construct the tree of ForUpdate>
+
+        //region <construct the tree of )>
+        CodeStructureTree rpTree = buildPunctuationTree(")" , NodeType.ADDED_CHAR_RIGHT_PARENTHESIS, tree);
+        children.add(rpTree);
+        //endregion <construct the tree of )>
+
+        tree.setChildren(children);
         return false;
     }
 
     @Override
     public boolean visit(IfStatement node) {
+        // region <grammar>
+        /**
+         * if ( Expression ) Statement [ else Statement]
+         */
+        // endregion <grammar>
+
+        //region <construct the tree of the root>
+        Node root = new Node(NodeType.CODE_IfStatement , "" , id ++);
+        tree = new CodeStructureTree(root , node.toString() , parent);
+        //endregion <construct the tree of the root>
+
+        //region <construct the tree of if>
+        CodeStructureTree ifTree = buildKeyWordTree("if" , tree);
+        children.add(ifTree);
+        //endregion <construct the tree of if>
+
+        //region <construct the tree of (>
+        CodeStructureTree lpTree = buildPunctuationTree("(" , NodeType.ADDED_CHAR_LEFT_PARENTHESIS , tree);
+        children.add(lpTree);
+        //endregion <construct the tree of (>
+
+        //region <construct the tree of Expression>
+        Expression expression = node.getExpression();
+        CodeVisitor expressionVisitor = new CodeVisitor(tree);
+        expression.accept(expressionVisitor);
+        children.add(expressionVisitor.getTree());
+        //endregion <construct the tree of Expression>
+
+        //region <construct the tree of )>
+        CodeStructureTree rpTree = buildPunctuationTree(")" , NodeType.ADDED_CHAR_RIGHT_PARENTHESIS , tree);
+        children.add(rpTree);
+        //endregion <construct the tree of )>
+
+        //region <construct the tree of Statement>
+        Statement thenStatement = node.getThenStatement();
+        CodeVisitor thenStatementVisitor = new CodeVisitor(tree);
+        thenStatement.accept(thenStatementVisitor);
+        children.add(thenStatementVisitor.getTree());
+        //endregion <construct the tree of Statement>
+
+        //region <construct the tree of elseStatement>
+        Statement elseStatement = node.getElseStatement();
+        if(elseStatement!= null){
+            //region <construct the tree of else>
+            CodeStructureTree elseTree = buildKeyWordTree("else" , tree);
+            children.add(elseTree);
+            //endregion <construct the tree of else>
+
+            CodeVisitor elseStatementVisitor = new CodeVisitor(tree);
+            elseStatement.accept(elseStatementVisitor);
+            children.add(elseStatementVisitor.getTree());
+        }
+        //endregion <construct the tree of elseStatement>
+
+        tree.setChildren(children);
         return false;
     }
 

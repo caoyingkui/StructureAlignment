@@ -154,5 +154,6 @@ public enum NodeType {
     ADDED_CHAR_COMMA,                // ,
     ADDED_CHAR_SEMICOLON,             // ;
     ADDED_CHAR_DOT,                 // .
+    ADDED_CHAR_QUESTION,            //?
     NULL
 }
