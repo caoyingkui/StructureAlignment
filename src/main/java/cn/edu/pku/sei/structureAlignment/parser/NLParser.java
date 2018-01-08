@@ -12,8 +12,7 @@ public class NLParser {
     String nlText;
     TextStructureTree tree;
 
-    public NLParser(String text){
-        this.nlText = text ;
+    public NLParser(){
         String[] options = {};
         parser = LexicalizedParser.loadModel("nl parser models\\wsjFactored.ser.gz" , options);
         tree = null;
@@ -31,6 +30,7 @@ public class NLParser {
 
     public edu.stanford.nlp.trees.Tree parse(){
         try{
+            if(nlText.compareTo("") == 0) return null;
             edu.stanford.nlp.trees.Tree result = parser.parse(nlText);
             return result;
         }catch(Exception e){

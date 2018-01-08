@@ -23,8 +23,8 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
     public static void main(String[] args ){
         ASTParser parser = ASTParser.newParser(AST.JLS8);
         ///parser.setSource("XSSFCellStyle style = new XSSFCellStyle(new StylesTable());".toCharArray());
-        parser.setSource("XSSFCellStyle style = new XSSFCellStyle(new StylesTable());".toCharArray());
-
+        ///parser.setSource("XSSFCellStyle style = new XSSFCellStyle(new StylesTable());".toCharArray());
+        parser.setSource("d = null;".toCharArray());
 
         //parser.setSource("public class test{}".toCharArray());
         parser.setKind(ASTParser.K_STATEMENTS);
@@ -45,13 +45,15 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
         nodes.add(8);
         tree.findCommonParents(nodes , 4);
 
-        JFrame frame = new JFrame();
+        /*JFrame frame = new JFrame();
         Printer printer = new Printer(tree.getTree(2));
         printer.setBackground(Color.white);
         frame.add(printer);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1200, 1200);
-        frame.setVisible(true);
+        frame.setVisible(true);*/
+
+        tree.print();
     }
 
     public String getCode() {
@@ -63,15 +65,19 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
         this.code = code;
         this.children = new ArrayList<Tree>();
         this.parent = parent;
+        startIndex = endIndex = root.getId();
     }
 
     public void setChildren(List<Tree> children){
+        int e_id = 0; // endIndex
         for(Tree child : children){
             this.children.add(child);
+            e_id = child.getEndIndex();
         }
 
         String content = combineContentOfChildNode();
         this.root.setContent(content);
+        endIndex = e_id;
     }
 
     public String combineContentOfChildNode(){

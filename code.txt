@@ -1,12 +1,17 @@
-XSSFCellStyle style = new XSSFCellStyle(new StylesTable());
-searcher = new IndexSearcher(dir, true); //B
-Directory dir = TestUtil.getBookIndexDirectory(); //A
-IndexSearcher searcher;
-Term t = new Term("subject", "ant");
-Query query = new TermQuery(t);
-TopDocs docs = searcher.search(query, 10);
-assertEquals("JDwA", 1, docs.totalHits); //C
-t = new Term("subject", "junit");
-docs = searcher.search(new TermQuery(t), 10);
-assertEquals(2, docs.totalHits); //D
-searcher.close();
+File topicsFile = new File("src/lia/benchmark/topics.txt");   // 0
+File qrelsFile = new File("src/lia/benchmark/qrels.txt");     // 1
+Directory dir = FSDirectory.open(new File("indexes/MeetLucene"));  //2
+Searcher searcher = new IndexSearcher(dir, true);                  //3
+String docNameField = "filename";  //4
+PrintWriter logger = new PrintWriter(System.out, true);   //5
+TrecTopicsReader qReader = new TrecTopicsReader();   //#1   //6
+QualityQuery qqs[] = qReader.readQueries( new BufferedReader(new FileReader(topicsFile))); //#1 // 6
+Judge judge = new TrecJudge(new BufferedReader( new FileReader(qrelsFile)));                     //#2 // 7
+judge.validateData(qqs, logger);                     //#3   //8
+QualityQueryParser qqParser = new SimpleQQParser("title", "contents");  //#4   //9
+QualityBenchmark qrun = new QualityBenchmark(qqs, qqParser, searcher, docNameField);  // 10
+SubmissionReport submitLog = null;  // 11
+QualityStats stats[] = qrun.execute(judge,  submitLog, logger); //#5   //12
+QualityStats avg = QualityStats.average(stats);      //#6  //13
+avg.log("SUMMARY",2,logger, "  ");   //14
+dir.close();   //156

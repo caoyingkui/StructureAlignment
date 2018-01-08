@@ -1,5 +1,6 @@
 package cn.edu.pku.sei.structureAlignment.tree;
 
+import cn.edu.pku.sei.structureAlignment.Printer;
 import javafx.util.Pair;
 
 import javax.swing.*;
@@ -16,7 +17,10 @@ public abstract class Tree<T extends Tree<T>>{
     protected Tree parent;
 
     protected int width;
-    protected int rootWidth;
+    protected int rootWidth;// when display the tree , the width of the the root
+
+    protected int startIndex;   // record the starting coded number of a tree
+    protected int endIndex;     // record the ending coded number of a tree
 
     //region <setter>
 
@@ -73,9 +77,15 @@ public abstract class Tree<T extends Tree<T>>{
     public String getContent(){
         return root.getContent();
     }
+
+    public int getStartIndex(){
+        return startIndex;
+    }
+
+    public int getEndIndex(){
+        return endIndex;
+    }
     //endregion <getter>
-
-
 
     public abstract String getDisplayContent();
 
@@ -189,6 +199,16 @@ public abstract class Tree<T extends Tree<T>>{
             child.print(child_x , child_y , textHeight , lineHeight , margin , g);
 
         }
+    }
+
+    public void print(){
+        JFrame frame = new JFrame();
+        Printer printer = new Printer(this);
+        printer.setBackground(Color.white);
+        frame.add(printer);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(1200, 1200);
+        frame.setVisible(true);
     }
 
 

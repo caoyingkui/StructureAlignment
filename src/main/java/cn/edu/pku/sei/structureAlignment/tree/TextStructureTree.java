@@ -18,19 +18,21 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
     public static void main(String[] args){
         //NLParser parser = new NLParser("I have set rowCacheSize to 1000 (with your higher value, it took way too long)");
         //NLParser parser = new NLParser("I have set rowCacheSize to 1000");
-        NLParser parser = new NLParser("I have created the cellStyle myself and used setCellStyle on it");
+        NLParser parser = new NLParser();
+        parser.setNlText("I have created the cellStyle myself and used setCellStyle on it");
         edu.stanford.nlp.trees.Tree tree = parser.parse();
         tree.pennPrint();
         TextStructureTree structTree = new TextStructureTree(0);
         structTree.construct(tree , null);
 
-        JFrame frame = new JFrame();
+        structTree.print();
+        /*JFrame frame = new JFrame();
         Printer printer = new Printer(structTree.getTree(8));
         printer.setBackground(Color.white);
         frame.add(printer);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1200, 1200);
-        frame.setVisible(true);
+        frame.setVisible(true);*/
 
 
     }
@@ -54,16 +56,21 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
             String content = tree.nodeString().trim();
             root = new Node(type , content , id ++);
             root.setDisplayContent(rootLabel);
+            startIndex = endIndex = root.getId();
         }else{
             int r_id = id ++;
+            int e_id = 0; // endIndex
             for(edu.stanford.nlp.trees.Tree child : tree.children()){
                 TextStructureTree temp = new TextStructureTree();
                 temp.construct(child , this);
                 children.add(temp);
+                e_id = temp.getEndIndex();
             }
             String content = combineContentOfChildNode();
             root = new Node(type , content , r_id);
             root.setDisplayContent(rootLabel);
+            startIndex = r_id;
+            endIndex = e_id;
         }
 
 

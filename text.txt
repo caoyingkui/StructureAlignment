@@ -1,5 +1,6 @@
-I have created the cellStyle myself and used setCellStyle on it
-Create IndexSearcher
-TestUtil provides directory
-One hit expected for search for "ant"
-Two hits expected for "junit"
+Read TREC topics as QualityQuery[]
+Create Judge from TREC Qrel file
+Verify query and Judge match
+Create parser to translate queries into Lucene queries
+Run benchmark
+Print precision and recall measures

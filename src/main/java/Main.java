@@ -60,67 +60,6 @@ public class Main extends JPanel{
 
     public static void main(String[] args) throws IOException {
         compare("code.txt" , "text.txt");
-       /* ASTParser parser = ASTParser.newParser(AST.JLS8);
-        //parser.setSource("StreamingReader reader = StreamingReader.builder().rowCacheSize(1000).bufferSize(4096).sheetIndex(0).read(is);".toCharArray());
-        parser.setSource("row.getCell(3).setCellStyle(style);".toCharArray());
-        parser.setKind(ASTParser.K_STATEMENTS);
-
-        Block block = (Block)parser.createAST(null);
-
-        CodeVisitor visitor = new CodeVisitor(0);
-        block.accept(visitor);
-
-        CodeStructureTree tree = visitor.getTree();
-
-
-        //NLParser textParser = new NLParser("I have set rowCacheSize to 1000 (with your higher value, it took way too long)");
-        NLParser textParser = new NLParser("I have created the cellStyle myself and used setCellStyle on it");
-        edu.stanford.nlp.trees.Tree textTree = textParser.parse();
-        TextStructureTree structTree = new TextStructureTree(0);
-        structTree.construct(textTree , null);
-
-
-
-
-        Map<Integer , Node> textLeafNodes = structTree.getAllLeafNodes();
-        Map<Integer , Node> codeLeafNodes = tree.getAllLeafNodes();
-        ArrayList<Pair<Integer , Integer>>similar = new ArrayList<Pair<Integer , Integer>>();
-
-
-        for(int codeKey : codeLeafNodes.keySet()){
-            Node codeNode = codeLeafNodes.get(codeKey);
-            for(int textKey : textLeafNodes.keySet()){
-                Node textNode = textLeafNodes.get(textKey);
-                if(codeNode.compare(textNode) > 0.01){
-                    System.out.println(  ((CodeStructureTree)tree.getTree(codeKey)).getCode() );
-                    System.out.println(textNode.getContent());
-                    similar.add(new Pair<Integer , Integer>(codeKey , textKey));
-                }
-            }
-        }
-
-        for(int i = 0 ; i < similar.size(); i++){
-            for(int j = i + 1 ; j < similar.size() ; j++){
-                Pair<Integer , Integer> pair1 = similar.get(i);
-                Pair<Integer , Integer> pair2 = similar.get(j);
-
-                int id1 = pair1.getKey();
-                int id2 = pair2.getKey();
-                if(id1 != id2){
-                    int parent1 = tree.findCommonParents(id1 , id2 , 1) ;
-                    int parent2 = structTree.findCommonParents(pair1.getValue() , pair2.getValue() , 0);
-                    if(parent1 != -1 && parent2 != -1){
-                        System.out.println(((CodeStructureTree)tree.getTree(parent1)).getCode());
-                        System.out.println(structTree.getTree(parent2).getContent());
-                        System.out.println();
-                    }
-                }
-            }
-        }
-
-*/
-
-
     }
 
     public static void compare(String codePath , String textPath){
@@ -147,11 +86,27 @@ public class Main extends JPanel{
 
 
             line = "";
+            NLParser textParser = new NLParser();
             reader = new BufferedReader(new FileReader(new File(textPath)));
             while((line = reader.readLine()) != null ) {
-                NLParser textParser = new NLParser(line);
+                textParser.setNlText(line);
                 TextStructureTree tree = textParser.getTree();
                 textTrees.add(tree);
+            }
+
+            Scanner sc = new Scanner(System.in);
+            int a = 1, b;
+            while(a != -1){
+                a = sc.nextInt();
+                b = sc.nextInt();
+
+                CodeStructureTree ct = codeTrees.get(a);
+                TextStructureTree tt = textTrees.get(b);
+
+                ct.print();
+                tt.print();
+
+                compare(ct, tt);
             }
 
 
@@ -173,85 +128,108 @@ public class Main extends JPanel{
     }
 
     public static void compare(CodeStructureTree codeTree , TextStructureTree textTree){
-        Map<Integer , Node> codeLeafNodes = codeTree.getAllLeafNodes();
-        Map<Integer , Node> textLeafNodes = textTree.getAllLeafNodes();
 
-        //找到完全相同的点
-        Map<Integer , ArrayList<Integer>> nodes = new HashMap<Integer, ArrayList<Integer>>();
-        for(int codeId : codeLeafNodes.keySet()){
-            Node codeNode = codeLeafNodes.get(codeId);
-            ArrayList<Integer> similar = new ArrayList<Integer>();
-            for(int textId : textLeafNodes.keySet()){
-                Node textNode = textLeafNodes.get(textId);
-                if(codeNode.compare(textNode) == 1){
-                    similar.add(textId);
-                }
-            }
-            if(similar.size() >0){
-                nodes.put(codeId , similar);
-            }
-        }
+        int codeEndIndex = codeTree.getEndIndex();
+        int textEndIndex = textTree.getEndIndex();
+        double[][] similarMatrix = new double[codeEndIndex][textEndIndex];
+        for(int i = 0 ; i < codeEndIndex ; i ++)
+            for(int j = 0 ; j < textEndIndex ; j ++)
+                similarMatrix[i][j] = -1;
 
-        ArrayList<Integer> group = new ArrayList<Integer>();
-        for(int key : nodes.keySet()){
-            group.add(key);
-        }
-
-        Map<Integer , List<Integer>> parent_children = codeTree.findCommonParents( group , 20);
-
-        for(int parent : parent_children.keySet()){
-            List<Integer> children = parent_children.get(parent);
-            List<Integer> textChildren = new ArrayList<Integer>();
-
-            for(int child : children){
-                textChildren.add(nodes.get(child).get(0));
-            }
-
-            int textParent = textTree.findCommonParents(textChildren);
-
-            System.out.println(((CodeStructureTree)codeTree.getTree(parent)).getCode());
-            System.out.println(textTree.getTree(textParent).getContent());
-            System.out.println("   ");
-        }
-
+        findIdenticalPair(codeTree , textTree , similarMatrix);
 
         ArrayList<TextStructureTree> VPs = textTree.findAllVP();
 
         List<CodeStructureTree> nonleafNodes = codeTree.getAllNonleafNodes();
 
         for(TextStructureTree vpTree : VPs){
-            double max = -1;
-            CodeStructureTree candidate = null;
 
             for(CodeStructureTree nonleafNode : nonleafNodes){
-                double sim = Stemmer.compare(vpTree.getContent() , nonleafNode.getContent());
+                int textId = vpTree.getId();
+                int codeId = nonleafNode.getId();
+                similarMatrix[codeId][textId] = Stemmer.compare(vpTree.getContent() , nonleafNode.getContent());
 
-                if(vpTree.getId() == 2 && nonleafNode.getId() == 9){
-                    System.out.println("similarity:" + sim);
-                }
-
-                /*System.out.println("similarity:" + sim);
-                System.out.println(nonleafNode.getCode());
-                System.out.println(vpTree.getContent());
-                System.out.println();*/
-
-
-                if(sim > max){
-                    max = sim;
-                    candidate = nonleafNode;
-                }else if(sim == max){
-                    if(candidate.getTree(nonleafNode.getId()) != null){
-                        candidate = nonleafNode;
-                    }
-                }
-            }
-            if(max > 0.2) {
-                System.out.println(candidate.getCode());
-                System.out.println(vpTree.getContent());
-                System.out.println("   ");
             }
         }
 
+        boolean signal = true;
+        while(signal){
+            signal = false;
+            double max = 0.5;
+            int max_codeId = -1;
+            int max_textId = -1;
+            for(int codeId = 0 ; codeId < codeEndIndex ; codeId ++){
+                for(int textId = 0 ; textId < textEndIndex ; textId ++){
+                    if(similarMatrix[codeId][textId] > max){
+                        signal = true;
+                        max_codeId = codeId;
+                        max_textId = textId;
+                    }
+                }
+            }
+
+            if(signal){
+                System.out.println(((CodeStructureTree)codeTree.getTree(max_codeId)).getCode().trim());
+                System.out.println(textTree.getTree(max_textId).getContent().trim());
+                System.out.println(" ");
+
+                for(int codeId = 0 ; codeId < codeEndIndex ; codeId ++)
+                    similarMatrix[codeId][max_textId] = -1;
+                for(int textId = 0 ; textId < textEndIndex ; textId ++)
+                    similarMatrix[max_codeId][textId] = -1;
+            }
+        }
+
+    }
+
+    public static void findIdenticalPair(CodeStructureTree codeTree , TextStructureTree textTree , double[][] matrix){
+        Map<Integer , Node> codeLeafNodes = codeTree.getAllLeafNodes();
+        Map<Integer , Node> textLeafNodes = textTree.getAllLeafNodes();
+
+        Map<Integer , Integer> similarPairs = new HashMap<Integer, Integer>();
+
+        // this array is used to store the text node which have been recognized as identical with some code node
+        ArrayList<Integer> textNodes = new ArrayList<>();
+        for(int codeId : codeLeafNodes.keySet()){
+            Node codeNode = codeLeafNodes.get(codeId);
+            for(int textId : textLeafNodes.keySet()){
+                Node textNode = textLeafNodes.get(textId);
+                if(codeNode.compare(textNode) == 1 && !textNodes.contains(textId)){
+                    textNodes.add(textId);
+                    similarPairs.put(codeId , textId);
+                    break;
+                }
+            }
+        }
+
+
+        // group stores the code nodes which have been found some identical text node in the text tree.
+        ArrayList<Integer> group = new ArrayList<Integer>();
+        for(int key : similarPairs.keySet()){
+            group.add(key);
+        }
+
+        // find the nodes' common parent node
+        Map<Integer , List<Integer>> parent_children = codeTree.findCommonParents( group , 20);
+
+        for(int parent : parent_children.keySet()){
+            List<Integer> children = parent_children.get(parent);
+            List<Integer> textChildren = new ArrayList<Integer>();
+
+            for(int codeId : children){
+                int textId = similarPairs.get(codeId);
+                textChildren.add(textId);
+                matrix[codeId][textId] = 1;
+
+            }
+
+            int textParent = textTree.findCommonParents(textChildren);
+            matrix[parent][textParent] = 1;
+
+            System.out.println(((CodeStructureTree)codeTree.getTree(parent)).getCode().trim());
+            System.out.println(textTree.getTree(textParent).getContent().trim());
+            System.out.println("   ");
+        }
 
     }
 }

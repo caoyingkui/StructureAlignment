@@ -1,5 +1,6 @@
 package cn.edu.pku.sei.structureAlignment.util;
 
+import org.apache.commons.text.similarity.CosineSimilarity;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -10,7 +11,10 @@ import org.tartarus.snowball.ext.EnglishStemmer;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import edu.stanford.nlp.process.*;
 
@@ -103,8 +107,19 @@ public class Stemmer {
     }
 
     public static double compare(String str1 , String str2){
-        List<String> tokens1 = stem(tokenize(str1));
-        List<String> tokens2 = stem(tokenize(str2));
+        String[] tokens1 = stem(tokenize(str1)).toArray(new String[0]);
+        String[] tokens2 = stem(tokenize(str2)).toArray(new String[0]);
+
+        CosineSimilarity similarity = new CosineSimilarity();
+
+        Map<CharSequence , Integer> left = Arrays.stream(tokens1).collect(Collectors.toMap(c -> c , c -> 1 , Integer::sum));
+
+        Map<CharSequence , Integer> right = Arrays.stream(tokens2).collect(Collectors.toMap(c -> c , c -> 1 , Integer::sum));
+
+        return similarity.cosineSimilarity(left , right);
+
+
+        /*
         int count= 0;
         double result = 0;
         if(tokens1.size() > tokens2.size()) {
@@ -131,6 +146,6 @@ public class Stemmer {
             result = ((double) count) / tokens2.size();
         }
 
-        return result;
+        return result;*/
     }
 }
