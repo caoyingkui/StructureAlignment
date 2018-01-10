@@ -35,11 +35,11 @@ public class Stemmer {
         System.out.println(String.join(" " , words.split(pattern)));
 
 
-        for(String token : tokenize("putting the SpaNQuery as a should clause like this")){
+        for(String token : tokenize("reading the SpaNQuery as a should clause like this")){
             System.out.println(token);
         }
-        System.out.println("");
-        for(String token : stem(tokenize("putting the SpaNQuery SpaNQuery as a should clause like this"))){
+        System.out.println(">>>>>>>>>>>>>>>>>");
+        for(String token : stem(tokenize("reader the SpaNQuery SpaNQuery as a should clause like this"))){
             System.out.println(token);
         }
     }
@@ -69,7 +69,7 @@ public class Stemmer {
             List<String> result = new ArrayList<String>();
             EnglishStemmer stemmer = new EnglishStemmer();
             for(String word : words){
-                stemmer.setCurrent(word);
+                stemmer.setCurrent(word.toLowerCase());
                 stemmer.stem();
                 result.add(stemmer.getCurrent());
             }

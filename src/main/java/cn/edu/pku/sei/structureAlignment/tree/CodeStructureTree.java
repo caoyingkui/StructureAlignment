@@ -3,10 +3,7 @@ package cn.edu.pku.sei.structureAlignment.tree;
 
 import cn.edu.pku.sei.structureAlignment.Printer;
 import cn.edu.pku.sei.structureAlignment.parser.CodeVisitor;
-import org.eclipse.jdt.core.dom.AST;
-import org.eclipse.jdt.core.dom.ASTParser;
-import org.eclipse.jdt.core.dom.Block;
-import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -88,7 +85,33 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
         return result.trim();
     }
 
+    public List<CodeStructureTree> getSpecificTypeNode(NodeType type){
+        List<CodeStructureTree> result = new ArrayList<>();
 
+        if(root.type == type){
+            result.add(this);
+        }
+
+        if(children.size() > 0){
+            for(Tree child : children){
+                result.addAll(((CodeStructureTree)child).getSpecificTypeNode(type));
+            }
+        }
+        return result;
+    }
+
+    //this function only can be used when tree type is MethodInvocation
+    public String getMethodInvocationName(){
+        if(root.type != NodeType.CODE_MethodInvocation)
+            return null;
+        else{
+            ASTParser parser = ASTParser.newParser(AST.JLS8);
+            parser.setSource(code.toCharArray());
+            parser.setKind(ASTParser.K_STATEMENTS);
+            MethodInvocation methodInvocation = (MethodInvocation)parser.createAST(null);
+            return methodInvocation.getName().toString();
+        }
+    }
 
     @Override
     public String getContent() {
@@ -105,4 +128,15 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
         return result;
     }
 
+
+    public List<CodeStructureTree> getAllNonleafTree(){
+        List<CodeStructureTree> result = new ArrayList<>();
+        if(children.size() != 0) {
+            result.add(this);
+            for(Tree child : children){
+                result.addAll(((CodeStructureTree)child).getAllNonleafTree());
+            }return result;
+        }
+        return result;
+    }
 }

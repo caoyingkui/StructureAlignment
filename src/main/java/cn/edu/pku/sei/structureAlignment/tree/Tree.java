@@ -85,6 +85,10 @@ public abstract class Tree<T extends Tree<T>>{
     public int getEndIndex(){
         return endIndex;
     }
+
+    public int getChildrenSize(){
+        return children.size();
+    }
     //endregion <getter>
 
     public abstract String getDisplayContent();

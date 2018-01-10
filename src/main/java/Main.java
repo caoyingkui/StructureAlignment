@@ -2,6 +2,9 @@ import cn.edu.pku.sei.structureAlignment.Printer;
 import cn.edu.pku.sei.structureAlignment.parser.CodeVisitor;
 import cn.edu.pku.sei.structureAlignment.parser.NLParser;
 import cn.edu.pku.sei.structureAlignment.tree.*;
+import cn.edu.pku.sei.structureAlignment.util.DoubleValue;
+import cn.edu.pku.sei.structureAlignment.util.Matrix;
+import cn.edu.pku.sei.structureAlignment.util.SimilarPair;
 import cn.edu.pku.sei.structureAlignment.util.Stemmer;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
@@ -70,7 +73,6 @@ public class Main extends JPanel{
         try{
             String line = "";
 
-
             BufferedReader reader = new BufferedReader(new FileReader(new File(codePath)));
             while((line = reader.readLine()) != null){
                 ASTParser codeParser = ASTParser.newParser(AST.JLS8);
@@ -94,32 +96,38 @@ public class Main extends JPanel{
                 textTrees.add(tree);
             }
 
-            Scanner sc = new Scanner(System.in);
-            int a = 1, b;
-            while(a != -1){
-                a = sc.nextInt();
-                b = sc.nextInt();
+            Matrix<SimilarPair> matrix = new Matrix<>(codeTrees.size() , textTrees.size() , new SimilarPair(0 , 0));
 
-                CodeStructureTree ct = codeTrees.get(a);
-                TextStructureTree tt = textTrees.get(b);
+            for(int i = 0 ; i < codeTrees.size() ; i ++){
+                for(int j = 0 ; j < textTrees.size() ; j ++){
+                    CodeStructureTree codeTree = codeTrees.get(i);
+                    TextStructureTree textTree = textTrees.get(j);
+                    SimilarPair pair = compare(codeTree , textTree);
 
-                ct.print();
-                tt.print();
-
-                compare(ct, tt);
-            }
-
-
-            for(CodeStructureTree codeTree : codeTrees){
-                for(TextStructureTree textTree : textTrees){
-                    compare(codeTree , textTree);
+                    matrix.setCell(i , j , pair);
                 }
             }
 
+            Pair<Integer , Integer> pair = null;
+            do{
+                matrix.print(0);
+                pair = matrix.getMax(0.5);
+                if(pair != null){
+                    int codeId = pair.getKey();
+                    int textId = pair.getValue();
+                    SimilarPair simiPair = matrix.getCell(codeId , textId);
 
+                    matrix.cleanRow(codeId);
+                    matrix.cleanColumn(textId);
 
+                    CodeStructureTree scTree = (CodeStructureTree)codeTrees.get(codeId).getTree(simiPair.left);
+                    TextStructureTree ssTree = (TextStructureTree)textTrees.get(textId).getTree(simiPair.right);
 
+                    System.out.println(scTree.getCode());
+                    System.out.println(ssTree.getContent());
 
+                }
+            }while(pair != null);
 
         }catch (Exception e){
             e.printStackTrace();
@@ -127,62 +135,140 @@ public class Main extends JPanel{
 
     }
 
-    public static void compare(CodeStructureTree codeTree , TextStructureTree textTree){
+    public static SimilarPair compare(CodeStructureTree codeTree , TextStructureTree textTree){
+
+        double threshold = 0.5;
 
         int codeEndIndex = codeTree.getEndIndex();
         int textEndIndex = textTree.getEndIndex();
-        double[][] similarMatrix = new double[codeEndIndex][textEndIndex];
-        for(int i = 0 ; i < codeEndIndex ; i ++)
-            for(int j = 0 ; j < textEndIndex ; j ++)
-                similarMatrix[i][j] = -1;
+        Matrix<DoubleValue> similarMatrix = new Matrix(codeEndIndex + 1 , textEndIndex + 1 , new DoubleValue(-1));
+        for(int i = 0 ; i <= codeEndIndex ; i ++)
+            for(int j = 0 ; j <= textEndIndex ; j ++) {
+                DoubleValue doubleValue = new DoubleValue(-1.0);
+                similarMatrix.setCell(i, j, doubleValue);
+            }
 
         findIdenticalPair(codeTree , textTree , similarMatrix);
 
-        ArrayList<TextStructureTree> VPs = textTree.findAllVP();
+        //similarMatrix.print(0);
 
-        List<CodeStructureTree> nonleafNodes = codeTree.getAllNonleafNodes();
+        ArrayList<TextStructureTree> VPs = textTree.findAllVP();
+        List<CodeStructureTree> codeNodes = null;
 
         for(TextStructureTree vpTree : VPs){
+            Set<String> verbs = new HashSet<>();
+            Set<String> directNouns = new HashSet<>();// 这部分名词，是在句法树中，明显能够分析得到的dobj关系的名词
+            Set<String> normalNouns = new HashSet<>();// 这部分名词，就是出现在动词周围的名词，但是没有找到dobj关系
 
-            for(CodeStructureTree nonleafNode : nonleafNodes){
-                int textId = vpTree.getId();
-                int codeId = nonleafNode.getId();
-                similarMatrix[codeId][textId] = Stemmer.compare(vpTree.getContent() , nonleafNode.getContent());
-
+            //获取所有的动词，个人感觉一个VP中只会出现一个动词吧！？？
+            List<TextStructureTree> verbNodes = vpTree.findAllVerb();
+            for(TextStructureTree verbNode : verbNodes){
+                verbs.addAll(Stemmer.stem(verbNode.getContent()));
+                directNouns.addAll(Stemmer.stem(verbNode.getDependency("direct object")));
             }
-        }
 
-        boolean signal = true;
-        while(signal){
-            signal = false;
-            double max = 0.5;
-            int max_codeId = -1;
-            int max_textId = -1;
-            for(int codeId = 0 ; codeId < codeEndIndex ; codeId ++){
-                for(int textId = 0 ; textId < textEndIndex ; textId ++){
-                    if(similarMatrix[codeId][textId] > max){
-                        signal = true;
-                        max_codeId = codeId;
-                        max_textId = textId;
+            normalNouns.addAll(Stemmer.stem(vpTree.findAllNoun()));
+
+            for(String verb : directNouns){
+                if(normalNouns.contains(verb))
+                    normalNouns.remove(verb);
+            }
+
+            codeNodes = codeTree.getAllNonleafTree();
+            //codeNodes = codeTree.getSpecificTypeNode(NodeType.CODE_MethodInvocation);
+            if(verbs.contains("creat")) {
+                codeNodes.addAll( codeTree.getSpecificTypeNode(NodeType.CODE_ClassInstanceCreation) );
+                verbs.add("new");
+            }
+
+            double base = 1;
+
+            for(CodeStructureTree codeNode : codeNodes){
+                if(codeNode.getChildrenSize() < 2)//和一个动宾短语进行匹配，至少需要两个子节点嘛
+                    continue;
+                List<String> tokens = Stemmer.stem(codeNode.getContent());
+
+                int signal = 0;
+                for(String verb : verbs){
+                    for(String token : tokens){
+                        if( twoWordsAreSame(verb , token) ){
+                            base = 0.5;
+                            signal ++;
+                            break;
+                        }
+                    }
+                    if(signal == 1){
+                        break;
                     }
                 }
-            }
 
-            if(signal){
-                System.out.println(((CodeStructureTree)codeTree.getTree(max_codeId)).getCode().trim());
-                System.out.println(textTree.getTree(max_textId).getContent().trim());
-                System.out.println(" ");
+                if(directNouns.size() != 0){
+                    for(String noun : directNouns){
+                        if(tokens.contains(noun)){
+                            base += 0.3;
+                            break;
+                        }
+                    }
+                }
 
-                for(int codeId = 0 ; codeId < codeEndIndex ; codeId ++)
-                    similarMatrix[codeId][max_textId] = -1;
-                for(int textId = 0 ; textId < textEndIndex ; textId ++)
-                    similarMatrix[max_codeId][textId] = -1;
+                if(normalNouns.size() != 0){
+                    for(String noun : normalNouns){
+                        if(tokens.contains(noun)){
+                            base += 0.1;
+                            break;
+                        }
+                    }
+                }
+
+                if(base >= 0.5) {
+                    int textId = vpTree.getId();
+                    int codeId = codeNode.getId();
+                    double sim = Stemmer.compare(vpTree.getContent() , codeNode.getContent());
+
+                    if(base == 0.5) // 只出现了一个动词
+                        sim = base + 0.1 * sim;
+                    else if(base == 0.6) // 出现了普通名词
+                        sim = base + 0.2 * sim;
+                    else if(base == 0.8) // 出现了关键名词
+                        sim = base + 0.1 * sim;
+                    else if(base == 0.9) // 出现了普通名词和关键名词
+                        sim = base + 0.1 * sim;
+
+                    similarMatrix.setValue(codeId , textId , sim);
+                }
+
             }
         }
+
+        //similarMatrix.print(0);
+
+        boolean signal = false;
+
+        double max = 0.5;
+        int max_codeId = -1;
+        int max_textId = -1;
+        for(int codeId = codeEndIndex  ; codeId > -1 ; codeId --){
+            for(int textId = textEndIndex ; textId > -1  ; textId --){
+                double simTemp = similarMatrix.getValue(codeId , textId);
+                if( simTemp > max){
+                    signal = true;
+                    max_codeId = codeId;
+                    max_textId = textId;
+                    max = simTemp;
+                }
+            }
+        }
+
+        if(signal) {
+            SimilarPair similarPair = new SimilarPair(max_codeId , max_textId );
+            similarPair.setValue(max);
+            return similarPair;
+        }else
+            return null;
 
     }
 
-    public static void findIdenticalPair(CodeStructureTree codeTree , TextStructureTree textTree , double[][] matrix){
+    public static void findIdenticalPair(CodeStructureTree codeTree , TextStructureTree textTree , Matrix matrix){
         Map<Integer , Node> codeLeafNodes = codeTree.getAllLeafNodes();
         Map<Integer , Node> textLeafNodes = textTree.getAllLeafNodes();
 
@@ -219,17 +305,21 @@ public class Main extends JPanel{
             for(int codeId : children){
                 int textId = similarPairs.get(codeId);
                 textChildren.add(textId);
-                matrix[codeId][textId] = 1;
+                matrix.setValue(codeId , textId ,1);
 
             }
 
             int textParent = textTree.findCommonParents(textChildren);
-            matrix[parent][textParent] = 1;
+            matrix.setValue(parent , textParent , 1);
 
             System.out.println(((CodeStructureTree)codeTree.getTree(parent)).getCode().trim());
             System.out.println(textTree.getTree(textParent).getContent().trim());
             System.out.println("   ");
         }
 
+    }
+
+    static boolean twoWordsAreSame(String word1 , String word2){
+        return word1.contains(word2)||word2.contains(word1);
     }
 }

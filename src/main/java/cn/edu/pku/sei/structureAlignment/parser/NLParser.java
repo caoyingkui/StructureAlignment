@@ -2,6 +2,7 @@ package cn.edu.pku.sei.structureAlignment.parser;
 
 import cn.edu.pku.sei.structureAlignment.tree.TextStructureTree;
 import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
+import edu.stanford.nlp.simple.Sentence;
 import edu.stanford.nlp.trees.Tree;
 
 /**
@@ -44,7 +45,7 @@ public class NLParser {
             try{
                 edu.stanford.nlp.trees.Tree textTree = parse();
                 tree = new TextStructureTree(0);
-                tree.construct(textTree , null);
+                tree.construct(new Sentence(nlText));
                 return tree;
             }catch(Exception e){
                 e.printStackTrace();

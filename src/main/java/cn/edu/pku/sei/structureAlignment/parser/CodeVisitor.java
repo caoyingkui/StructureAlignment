@@ -115,9 +115,9 @@ public class CodeVisitor extends ASTVisitor {
 
         //region <construct the tree of ] >
         Node rbRoot = new Node(NodeType.ADDED_CHAR_LEFT_BRACKET , "]" , id ++);
-        CodeStructureTree rbTree = new CodeStructureTree(lbRoot , "]" , tree);
+        CodeStructureTree rbTree = new CodeStructureTree(rbRoot , "]" , tree);
         children.add(rbTree);
-        //endregion <construct the tree of [>
+        //endregion <construct the tree of ]>
 
         tree.setChildren(children);
         return false;
@@ -645,10 +645,6 @@ public class CodeVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(CompilationUnit node) {
-
-
-
-
         // region <grammar>
         /**
          * [ PackageDeclaration ]
