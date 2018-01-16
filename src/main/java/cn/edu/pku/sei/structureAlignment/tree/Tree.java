@@ -117,6 +117,16 @@ public abstract class Tree<T extends Tree<T>>{
         return result;
     }
 
+
+    /**
+     *
+     * @param x tree显示区域上边框的中间位置x坐标
+     * @param y tree显示区域上边框的中间位置y坐标
+     * @param textHeight 显示的文字的高度
+     * @param lineHeight 每行显示的文字，中间相间的间隔
+     * @param margin  每个子部分中间的间隔
+     * @param g
+     */
     public void print(int x , int y , int textHeight , int lineHeight , int margin , Graphics g){
         int text_x = x - rootWidth / 2;
         int text_y = y + textHeight ;
@@ -127,7 +137,6 @@ public abstract class Tree<T extends Tree<T>>{
             children.get(0).print(x , y + textHeight + lineHeight , textHeight , lineHeight , margin , g);
             g.drawLine(x, y + textHeight +  3, x, y + textHeight + lineHeight - 3);
         }
-
         else if(children.size() > 1){
 
             List<Tree> remainTrees = new ArrayList<Tree>();
@@ -137,6 +146,51 @@ public abstract class Tree<T extends Tree<T>>{
             int start = 0 , end = 0 , i;
 
             Tree child ;
+
+            int childrenTotalLength = 0;
+
+            for(i = 0 ; i < children.size() ; i ++ ){
+                child = children.get(i);
+
+                if(child.children.size() == 0 && i != 0 && i != children.size() - 1){ //第一棵树和最后一棵不算
+                    child_x += child.getWidth() / 2;
+                    remainTrees.add(child);
+
+                    child_x += ( margin +  child.getWidth() / 2 ) ;
+
+                    childrenTotalLength += child.getWidth();
+                }else{
+                    if(remainTrees.size() != 0 ){
+                        end = child_x + margin + child.width / 2 - child.rootWidth / 2;
+                        int remainSize = remainTrees.size();
+
+                        int step = (end - start - childrenTotalLength )/ (remainSize + 1);
+                        start += step;
+                        for(int j = 0 ; j < remainSize ; j++){
+                            Tree remainTree = remainTrees.get(j);
+
+                            //画出连接线
+                            g.drawLine(x , y + textHeight + 3 , start + remainTree.getWidth() / 2  , child_y - 3);
+
+                            remainTree.print(start + remainTree.getWidth() / 2 , child_y , textHeight , lineHeight , margin , g);
+                            start += (remainTree.getWidth() + step) ;
+                        }
+
+                        childrenTotalLength = 0;
+                        remainTrees = new ArrayList<Tree>();
+                    }
+                    child_x += child.getWidth() / 2;
+
+                    g.drawLine(x , y + textHeight + 3 , child_x , child_y - 3);
+                    child.print(child_x , child_y , textHeight , lineHeight , margin , g);
+
+                    start = child_x  + child.rootWidth / 2;
+                    child_x += ( margin +  child.getWidth() / 2 ) ;
+                }
+
+            }
+            /*
+            Tree child ;
             // print the first child
             child =  children.get(0);
             child_x += child.getWidth() / 2;
@@ -144,6 +198,8 @@ public abstract class Tree<T extends Tree<T>>{
             child.print(child_x, child_y, textHeight, lineHeight, margin, g);
             start = child_x  + child.rootWidth / 2;
             child_x += (margin + (child.getWidth() / 2) );
+
+            int childrenTotalLength = 0;
 
             for(i = 1 ; i < children.size() - 1 ; i ++ ){
                 child = children.get(i);
@@ -154,13 +210,15 @@ public abstract class Tree<T extends Tree<T>>{
                     remainTrees.add(child);
 
                     child_x += ( margin +  child.getWidth() / 2 ) ;
+
+                    childrenTotalLength += child.getWidth();
                 }else{
 
                     if(remainTrees.size() != 0){
                         end = child_x + margin + child.width / 2 - child.rootWidth / 2;
                         int remainSize = remainTrees.size();
 
-                        int step = ( end - start ) / (remainSize + 1);
+                        int step = childrenTotalLength / (remainSize + 1);
 
                         for(int j = 0 ; j < remainSize ; j++){
                             Tree remainTree = remainTrees.get(j);
@@ -185,6 +243,7 @@ public abstract class Tree<T extends Tree<T>>{
             child = children.get(i);
 
 
+            // print the last tree
             if(remainTrees.size() != 0){
                 end = child_x + margin + child.width / 2 - child.rootWidth / 2;
                 int remainSize = remainTrees.size();
@@ -201,7 +260,7 @@ public abstract class Tree<T extends Tree<T>>{
             child_x += child.getWidth() / 2;
             g.drawLine(x , y + textHeight + 3 , child_x , child_y - 3);
             child.print(child_x , child_y , textHeight , lineHeight , margin , g);
-
+            */
         }
     }
 

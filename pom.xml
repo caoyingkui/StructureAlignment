@@ -32,8 +32,28 @@
             <version>3.8.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>cn.edu.pku.sei.tsr</groupId>
+            <artifactId>sql-connector</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
+    <repositories>
+        <!--软工内部maven仓库，主要用于存放本地的构建内容，以及缓存加速一些线上maven库的下载-->
+        <repository>
+            <id>sei-sc-public</id>
+            <name>SEI Sapiential City Public</name>
+            <url>http://192.168.4.248:8081/repository/maven-public/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+    </repositories>
 
 
 </project>

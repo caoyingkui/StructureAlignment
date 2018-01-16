@@ -20,8 +20,8 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
     public static void main(String[] args ){
         ASTParser parser = ASTParser.newParser(AST.JLS8);
         ///parser.setSource("XSSFCellStyle style = new XSSFCellStyle(new StylesTable());".toCharArray());
-        ///parser.setSource("XSSFCellStyle style = new XSSFCellStyle(new StylesTable());".toCharArray());
-        parser.setSource("d = null;".toCharArray());
+        parser.setSource("XSSFCellStyle style = new XSSFCellStyle(new StylesTable());".toCharArray());
+        //parser.setSource("d = null;".toCharArray());
 
         //parser.setSource("public class test{}".toCharArray());
         parser.setKind(ASTParser.K_STATEMENTS);
@@ -115,14 +115,17 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
 
     @Override
     public String getContent() {
-        return root.getContent();
+        String result = "";
+        result = root.getContent();
+        result += " " + root.getAdditionalInfo();
+        return result;
     }
 
 
     public String getDisplayContent(){
         String result = "";
         result += root.getId() + ": ";
-        if(children.size() == 0) result += root.getContent();
+        if(children.size() == 0) result += root.getAdditionalInfo() + " " +root.getContent( ) ;
         else result += root.getType().toString().substring(5);
 
         return result;

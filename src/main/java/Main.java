@@ -6,9 +6,7 @@ import cn.edu.pku.sei.structureAlignment.util.DoubleValue;
 import cn.edu.pku.sei.structureAlignment.util.Matrix;
 import cn.edu.pku.sei.structureAlignment.util.SimilarPair;
 import cn.edu.pku.sei.structureAlignment.util.Stemmer;
-import org.eclipse.jdt.core.dom.AST;
-import org.eclipse.jdt.core.dom.ASTParser;
-import org.eclipse.jdt.core.dom.Block;
+import org.eclipse.jdt.core.dom.*;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
@@ -22,7 +20,6 @@ import java.util.Map.Entry;
 
 import javax.swing.*;
 import javafx.util.Pair;
-import org.eclipse.jdt.core.dom.PrimitiveType;
 
 /**
  * Created by oliver on 2017/12/25.
@@ -73,26 +70,31 @@ public class Main extends JPanel{
         try{
             String line = "";
 
+            CodeVisitor.initialize();
             BufferedReader reader = new BufferedReader(new FileReader(new File(codePath)));
             while((line = reader.readLine()) != null){
                 ASTParser codeParser = ASTParser.newParser(AST.JLS8);
                 codeParser.setKind(ASTParser.K_STATEMENTS);
                 codeParser.setSource(line.toCharArray());
                 Block block = (Block) codeParser.createAST(null);
+
+                if(! (block instanceof Block) || block.statements().size() == 0)
+                    continue;
                 CodeVisitor visitor = new CodeVisitor(0);
-                block.accept(visitor);
+                ((ASTNode)(block.statements().get(0)) ).accept(visitor);
                 CodeStructureTree tree = visitor.getTree();
                 codeTrees.add(tree);
+                //tree.print();
             }
             reader.close();
 
 
             line = "";
-            NLParser textParser = new NLParser();
+            NLParser textParser = null;
             reader = new BufferedReader(new FileReader(new File(textPath)));
             while((line = reader.readLine()) != null ) {
-                textParser.setNlText(line);
-                TextStructureTree tree = textParser.getTree();
+                textParser = new NLParser(line);
+                TextStructureTree tree = textParser.getTextStructureTree();
                 textTrees.add(tree);
             }
 
@@ -110,7 +112,7 @@ public class Main extends JPanel{
 
             Pair<Integer , Integer> pair = null;
             do{
-                matrix.print(0);
+                //matrix.print(0);
                 pair = matrix.getMax(0.5);
                 if(pair != null){
                     int codeId = pair.getKey();
@@ -123,8 +125,9 @@ public class Main extends JPanel{
                     CodeStructureTree scTree = (CodeStructureTree)codeTrees.get(codeId).getTree(simiPair.left);
                     TextStructureTree ssTree = (TextStructureTree)textTrees.get(textId).getTree(simiPair.right);
 
-                    System.out.println(scTree.getCode());
-                    System.out.println(ssTree.getContent());
+                    System.out.println(scTree.getCode().trim());
+                    System.out.println(ssTree.getContent().trim() + "\n");
+
 
                 }
             }while(pair != null);

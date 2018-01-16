@@ -1,6 +1,7 @@
-Read TREC topics as QualityQuery[]
-Create Judge from TREC Qrel file
-Verify query and Judge match
-Create parser to translate queries into Lucene queries
-Run benchmark
-Print precision and recall measures
+Updating indexed Documents
+
+
+Create new document with "Haag" in city field
+Replace original document with new version
+Verify old document is gone
+Verify new document is indexed

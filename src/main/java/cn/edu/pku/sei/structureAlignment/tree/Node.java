@@ -1,5 +1,6 @@
 package cn.edu.pku.sei.structureAlignment.tree;
 
+import cn.edu.pku.sei.structureAlignment.parser.CodeVisitor;
 import cn.edu.pku.sei.structureAlignment.util.Stemmer;
 
 import java.util.List;
@@ -9,41 +10,49 @@ import java.util.List;
  */
 public class Node {
     protected int id;
-    protected String content;
     protected NodeType type;
-    protected String displayContent;
+    protected String content;  // the original text of a node
+    protected String displayContent; //
+    protected String additionalInfo; // the information we can be extracted by other ways.
 
     //region <setter>
+    public void setType(NodeType type) {
+        this.type = type;
+    }
 
     public void setContent(String content) {
         this.content = content;
     }
 
-    public void setType(NodeType type) {
-        this.type = type;
-    }
-
     public void setDisplayContent(String displayContent){
         this.displayContent = displayContent;
+    }
+
+    public void setAdditionalInfo(String additionalInfo){
+        this.additionalInfo = additionalInfo;
     }
     //endregion <setter>
 
 
     //region <getter>
-    public String getContent() {
-        return content;
+    public int getId(){
+        return id;
     }
 
     public NodeType getType() {
         return type;
     }
 
-    public int getId(){
-        return id;
+    public String getContent() {
+        return content;
     }
 
     public String getDisplayContent(){
-        return this.displayContent;
+        return displayContent;
+    }
+
+    public String getAdditionalInfo(){
+        return additionalInfo;
     }
     //endregion <getter>
 
@@ -51,6 +60,7 @@ public class Node {
         this.type = type;
         this.content = content;
         this.id = id;
+        additionalInfo = CodeVisitor.getVariableType(content);
     }
 
     public double compare(Node node){

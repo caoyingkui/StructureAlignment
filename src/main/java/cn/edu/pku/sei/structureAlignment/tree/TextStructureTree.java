@@ -26,9 +26,8 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
         //NLParser parser = new NLParser("I have set rowCacheSize to 1000 (with your higher value, it took way too long)");
         //NLParser parser = new NLParser("I have set rowCacheSize to 1000");
 
-        NLParser parser = new NLParser();
-        parser.setNlText("I have created the cellStyle myself and used setCellStyle on it");
-        edu.stanford.nlp.trees.Tree tree = parser.parse();
+        NLParser parser = new NLParser("I have created the cellStyle myself and used setCellStyle on it");
+        edu.stanford.nlp.trees.Tree tree = parser.getNLTree();
         tree.pennPrint();
         TextStructureTree structTree = new TextStructureTree(0);
         structTree.construct(new Sentence("I have created the cellStyle myself and used setCellStyle on it"));
@@ -124,7 +123,6 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
     }
 
     public String getDisplayContent(){
-        //return getContent();
         return root.getId() + ": " + root.getDisplayContent();
     }
 

@@ -1,17 +1,9 @@
-File topicsFile = new File("src/lia/benchmark/topics.txt");   // 0
-File qrelsFile = new File("src/lia/benchmark/qrels.txt");     // 1
-Directory dir = FSDirectory.open(new File("indexes/MeetLucene"));  //2
-Searcher searcher = new IndexSearcher(dir, true);                  //3
-String docNameField = "filename";  //4
-PrintWriter logger = new PrintWriter(System.out, true);   //5
-TrecTopicsReader qReader = new TrecTopicsReader();   //#1   //6
-QualityQuery qqs[] = qReader.readQueries( new BufferedReader(new FileReader(topicsFile))); //#1 // 7
-Judge judge = new TrecJudge(new BufferedReader( new FileReader(qrelsFile)));                     //#2 // 8
-judge.validateData(qqs, logger);                     //#3   //9
-QualityQueryParser qqParser = new SimpleQQParser("title", "contents");  //#4   //10
-QualityBenchmark qrun = new QualityBenchmark(qqs, qqParser, searcher, docNameField);  // 11
-SubmissionReport submitLog = null;  // 12
-QualityStats stats[] = qrun.execute(judge,  submitLog, logger); //#5   //13
-QualityStats avg = QualityStats.average(stats);      //#6  //14
-avg.log("SUMMARY",2,logger, "  ");   //15
-dir.close();   //16
+IndexSearcher searcher = new IndexSearcher(TestUtil.getBookIndexDirectory());
+Term term = new Term("category", "/technology/computers/programming"); //A
+PrefixQuery query = new PrefixQuery(term); //#A
+TopDocs matches = searcher.search(query, 10); //#A
+int programmingAndBelow = matches.totalHits;
+matches = searcher.search(new TermQuery(term), 10); //#B
+int justProgramming = matches.totalHits;
+assertTrue(programmingAndBelow > justProgramming);
+searcher.close();

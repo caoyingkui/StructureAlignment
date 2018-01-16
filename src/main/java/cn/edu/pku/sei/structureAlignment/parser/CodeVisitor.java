@@ -8,7 +8,9 @@ import org.eclipse.jdt.core.dom.*;
 
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.eclipse.jdt.core.dom.InfixExpression.Operator.TIMES;
 
@@ -20,20 +22,22 @@ public class CodeVisitor extends ASTVisitor {
     protected CodeStructureTree tree;
     protected List<Tree> children;
     private static int id ;
+    public static Map<String , String> variableDictionary ;
     private Tree parent ; // this is used to set the parent of the tree
 
+    static{
+        initialize();
+    }
 
     //this constructor only be used when we need to construct a new codeStructTree
     public CodeVisitor(int id){
         this.id = id;
         children = new ArrayList<Tree>();
         this.parent = null;
-
     }
 
     //this constructor only be used inside codeVisitor ,
     //it means when we try to construct the sub-part of a tree, we use this constructor to build the sub-tree
-
     // usually , the top node a tree will be encoded with 0 ,
     // and there is a static id, which is used to store the number which will be used for next node.
     private CodeVisitor(Tree parent){
@@ -65,6 +69,17 @@ public class CodeVisitor extends ASTVisitor {
         }
 
         return result;
+    }
+
+    public static void initialize(){
+        variableDictionary = new HashMap<>();
+        id = 0;
+    }
+
+    public static String getVariableType (String variable){
+        if(variableDictionary.containsKey(variable))
+            return variableDictionary.get(variable);
+        else return "";
     }
 
     @Override
@@ -627,7 +642,7 @@ public class CodeVisitor extends ASTVisitor {
             argument.accept(argumentVisitor);
             children.add(argumentVisitor.getTree());
 
-            Node commaRoot = new Node(NodeType.ADDED_CHAR_COMMA , "," , id ++);
+            Node commaRoot = new Node(NodeType.ADDED_CHAR_COMMA , "," , id ); // id 不用自增1
             commaTree = new CodeStructureTree(commaRoot , "," , tree);
         }
         //endregion <construct the tree of arguments>
@@ -2225,6 +2240,9 @@ public class CodeVisitor extends ASTVisitor {
          */
         //endregion <grammar>
 
+        String typeName ;
+
+
         //region <construct the tree of root>
         Node root = new Node(NodeType.CODE_VariableDeclarationStatement , "" , id ++);
         tree = new CodeStructureTree(root , node.toString() , parent);
@@ -2246,12 +2264,21 @@ public class CodeVisitor extends ASTVisitor {
         CodeVisitor typeVisitor = new CodeVisitor(tree);
         type.accept(typeVisitor);
         children.add(typeVisitor.getTree());
+
+        typeName = type.toString();
         //endregion <construct the tree of Type>
 
         //region <construct the tree of VariableDeclarationFragments>
         List<ASTNode> fragments = node.fragments();
+        for(ASTNode fragment : fragments){
+        String variableName = ((VariableDeclarationFragment)fragment).getName().toString();
+        variableDictionary.put(variableName , typeName);
+        }
+
         List<CodeStructureTree> fragmentTrees = batchProcess(fragments , "," , NodeType.ADDED_CHAR_COMMA , tree);
         children.addAll(fragmentTrees);
+
+
         //endregion <construct the tree of VariableDeclarationFragments>
 
         //region <construct the tree of ; >
