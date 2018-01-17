@@ -1,6 +1,4 @@
 Updating indexed Documents
-
-
 Create new document with "Haag" in city field
 Replace original document with new version
 Verify old document is gone

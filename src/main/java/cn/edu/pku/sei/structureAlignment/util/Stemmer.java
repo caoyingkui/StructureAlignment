@@ -44,9 +44,25 @@ public class Stemmer {
         }
     }
 
+    public static String stemSingleWord(String word){
+        String result = "";
+        try{
+            EnglishStemmer stemmer = new EnglishStemmer();
+            stemmer.setCurrent(word);
+            stemmer.stem();
+            result = stemmer.getCurrent();
+        }catch (Exception e){
+            result = "";
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
     public static List<String> stem(String sentence){
+        List<String> result = new ArrayList<String>();
         try {
-            List<String> result = new ArrayList<String>();
+            result = new ArrayList<String>();
             List<String> tokens = tokenize(sentence);
 
             EnglishStemmer stemmer = new EnglishStemmer();
@@ -57,11 +73,12 @@ public class Stemmer {
                 result.add(stemmer.getCurrent());
             }
 
-            return result;
+
         }catch(Exception e){
+            result.clear();
             e.printStackTrace();
-            return null;
         }
+        return result;
     }
 
     public static List<String> stem(List<String> words){

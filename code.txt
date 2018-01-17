@@ -1,9 +1,7 @@
-IndexSearcher searcher = new IndexSearcher(TestUtil.getBookIndexDirectory());
-Term term = new Term("category", "/technology/computers/programming"); //A
-PrefixQuery query = new PrefixQuery(term); //#A
-TopDocs matches = searcher.search(query, 10); //#A
-int programmingAndBelow = matches.totalHits;
-matches = searcher.search(new TermQuery(term), 10); //#B
-int justProgramming = matches.totalHits;
-assertTrue(programmingAndBelow > justProgramming);
-searcher.close();
+Query query = new QueryParser(Version.LUCENE_CURRENT, "subject", analyzer).parse("title2:[K TO N]"); //A
+//assertTrue(query instanceof TermRangeQuery);
+TopDocs matches = searcher.search(query, 10);
+//assertTrue(TestUtil.hitsIncludeTitle(searcher, matches,"Mindstorms"));
+query = new QueryParser(Version.LUCENE_CURRENT, "subject", analyzer).parse("title2:{K TO Mindstorms}"); //B
+matches = searcher.search(query, 10);
+//assertFalse(TestUtil.hitsIncludeTitle(searcher, matches, "Mindstorms"));

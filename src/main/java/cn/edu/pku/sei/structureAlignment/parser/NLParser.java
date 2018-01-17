@@ -12,13 +12,17 @@ import java.util.List;
  * Created by oliver on 2017/12/23.
  */
 public class NLParser {
-    LexicalizedParser parser = null;
+    static LexicalizedParser parser = null;
     String nlText;
     TextStructureTree textStructureTree;
     edu.stanford.nlp.trees.Tree nlTree;
+    static{
+        String[] options = {};
+        parser = LexicalizedParser.loadModel("nl parser models\\englishPCFG.ser.gz" , options);
+    }
 
     public static void main(String[] args){
-        NLParser p = new NLParser("searches a Lucene index");
+        NLParser p = new NLParser("Searching for words that sound like one another");
         p.getTextStructureTree().print();
         String subject = p.getSubjectiveNoun();
         String verb = p.getVerb();
@@ -35,8 +39,7 @@ public class NLParser {
 
     public NLParser(String text){
         this.nlText = text;
-        String[] options = {};
-        parser = LexicalizedParser.loadModel("nl parser models\\englishPCFG.ser.gz" , options);
+
         parseForNLTree();
         textStructureTree = null;
     }

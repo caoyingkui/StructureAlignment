@@ -1,3 +1,4 @@
+import cn.edu.pku.sei.structureAlignment.CodeLineRelation.CodeLineRelationGraph;
 import cn.edu.pku.sei.structureAlignment.Printer;
 import cn.edu.pku.sei.structureAlignment.parser.CodeVisitor;
 import cn.edu.pku.sei.structureAlignment.parser.NLParser;
@@ -24,42 +25,35 @@ import javafx.util.Pair;
 /**
  * Created by oliver on 2017/12/25.
  */
-public class Main extends JPanel{
-    @Override
-    protected void printComponent(Graphics g) {
-        g.drawOval(5, 5, 25, 25);
-    }
-
-    @Override
-    public void paint(Graphics g) {
-
-        super.paint(g);
-        g.setColor(Color.orange);
-        //g.fillRect(10, 10, 10, 10 );
-
-        //Font font = Font.decode("Times New Roman");
-
-        Font font = new Font("Verdana", Font.BOLD, 24);
-        g.setFont(font);
-        String text = "Foo123456789abcdefg";
-
-        //Rectangle2D r2d = g.getFontMetrics(font).getStringBounds(text, g);
-        g.drawString(text , 0 , 30);
-        g.fillRect(0 , 30 , 308 , 30);
-
-
-        int width = this.getWidth();
-        int height = this.getHeight();
-
-        g.fillRect(width / 2 - 10 , 0 , 20 , 10);
-
-        //g.fillRect(123, 0 , (int)r2d.getWidth() + 1 , 11);
-        //g.fillRect(0 , 11, (int)r2d.getWidth() , (int)r2d.getHeight());
-
-    }
+public class Main {
 
     public static void main(String[] args) throws IOException {
-        compare("code.txt" , "text.txt");
+        //compare("code.txt" , "text.txt");
+        List<CodeLineRelationGraph> graphs = new ArrayList<>();
+        List<String> description = new ArrayList<>();
+        File[] files = new File("codeSnippets").listFiles();
+        for(File file : files){
+            String path = file.getAbsolutePath();
+            CodeLineRelationGraph graph = new CodeLineRelationGraph();
+            graph.build(path);
+            graphs.add(graph);
+
+            String fileName = file.getName();
+            fileName = fileName.substring(0 , fileName.length() - 4);
+            description.add(fileName);
+        }
+
+        for(int i = 0 ; i < graphs.size() ; i ++){
+            System.out.println(i + " :" + description.get(i));
+            CodeLineRelationGraph graph = graphs.get(i);
+            for(int j = 0 ; j < description.size() ; j ++){
+                if(graph.compare(description.get(j)) == 1){
+                    System.out.print(j + " ");
+                }
+            }
+            System.out.println();
+        }
+
     }
 
     public static void compare(String codePath , String textPath){
