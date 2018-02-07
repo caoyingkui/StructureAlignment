@@ -1,12 +1,9 @@
 package cn.edu.pku.sei.structureAlignment.tree;
 
 
-import cn.edu.pku.sei.structureAlignment.Printer;
-import cn.edu.pku.sei.structureAlignment.parser.CodeVisitor;
+import cn.edu.pku.sei.structureAlignment.parser.code.CodeVisitor;
 import org.eclipse.jdt.core.dom.*;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,7 +17,9 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
     public static void main(String[] args ){
         ASTParser parser = ASTParser.newParser(AST.JLS8);
         ///parser.setSource("XSSFCellStyle style = new XSSFCellStyle(new StylesTable());".toCharArray());
-        parser.setSource("XSSFCellStyle style = new XSSFCellStyle(new StylesTable());".toCharArray());
+        parser.setSource((
+                "searcher.setDefaultFieldSortScoring(true, false); "
+                ).toCharArray());
         //parser.setSource("d = null;".toCharArray());
 
         //parser.setSource("public class test{}".toCharArray());
@@ -34,13 +33,6 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
 
         CodeStructureTree tree = visitor.getTree();
         //tree.findCommonParents(16 , 19 , 4);
-        List<Integer> nodes = new ArrayList<Integer>();
-        nodes.add(16 );
-        nodes.add(20);
-        nodes.add(19);
-        nodes.add(5);
-        nodes.add(8);
-        tree.findCommonParents(nodes , 4);
 
         /*JFrame frame = new JFrame();
         Printer printer = new Printer(tree.getTree(2));
@@ -50,7 +42,7 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
         frame.setSize(1200, 1200);
         frame.setVisible(true);*/
 
-        tree.print();
+        tree.getTree(2).print();
     }
 
     public String getCode() {
@@ -124,8 +116,8 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
 
     public String getDisplayContent(){
         String result = "";
-        result += root.getId() + ": ";
-        if(children.size() == 0) result += root.getAdditionalInfo() + " " +root.getContent( ) ;
+        //result += root.getId() + ": ";
+        if(children.size() == 0) result += root.getAdditionalInfo() + " " + root.getDisplayContent( ) ;
         else result += root.getType().toString().substring(5);
 
         return result;
@@ -142,4 +134,5 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
         }
         return result;
     }
+
 }

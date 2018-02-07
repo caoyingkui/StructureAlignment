@@ -1,9 +1,13 @@
 package cn.edu.pku.sei.structureAlignment.tree;
 
-import cn.edu.pku.sei.structureAlignment.parser.CodeVisitor;
+import cn.edu.pku.sei.structureAlignment.parser.code.CodeVisitor;
+import cn.edu.pku.sei.structureAlignment.util.ClassNameList;
 import cn.edu.pku.sei.structureAlignment.util.Stemmer;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by oliver on 2017/12/23.
@@ -59,26 +63,44 @@ public class Node {
     public Node(NodeType type , String content , int id){
         this.type = type;
         this.content = content;
+        this.displayContent = content;
         this.id = id;
         additionalInfo = CodeVisitor.getVariableType(content);
     }
 
+    /**
+     * @param node
+     * @return 2:  if two nodes' are completely identical and the content are not a class name.
+     *              I think this condition will be more reliable to predict two nodes are identical
+     *          1: if two nodes' are completely identical and the content are a class name
+     *          0.5: if two nodes' are partially identical
+     *          0: if two nodes' are completely different
+     */
     public double compare(Node node){
+        String content = this.getContent();
         String anotherContent = node.getContent();
 
-        List<String> words1 = Stemmer.stem(content);
-        List<String> words2 = Stemmer.stem(anotherContent);
-
-        int max = words1.size() > words2.size() ? words1.size() : words2.size();
-
-        double count = 0.0;
-
-        for(String word1 : words1){
-            if(words2.contains(word1)) count ++;
+        if(content.compareTo(anotherContent) == 0) {
+            if(ClassNameList.classList.contains(content))
+                return 1;
+            else
+                return 1;
         }
 
-        return max != 0 ? count/max : 0;
+        Set<String> words1 = new HashSet<String>();
+        words1.addAll(Stemmer.stem(content + " " + this.getAdditionalInfo()));
 
+        Set<String> words2 = new HashSet<String>();
+        words2.addAll(Stemmer.stem(anotherContent + " " + node.getAdditionalInfo()));
+
+        for(String word1 : words1){
+            for(String word2 : words2 ){
+                if(word1.compareTo(word2) == 0){
+                    return 0.5;
+                }
+            }
+        }
+        return 0;
     }
 }
 

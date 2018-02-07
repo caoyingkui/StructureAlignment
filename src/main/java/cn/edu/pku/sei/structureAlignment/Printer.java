@@ -32,6 +32,6 @@ public class Printer extends JPanel {
         int width = this.getWidth();
         int height = this.getHeight();
         tree.calculateWidth(6 , g);
-        tree.print(width / 2 , 0 , 13 , 50 , 6 , g);
+        tree.print(width / 2 , 0 , 13 , 50   , 6 , g);
     }
 }

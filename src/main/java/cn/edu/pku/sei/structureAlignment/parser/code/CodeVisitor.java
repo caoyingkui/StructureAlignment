@@ -1,18 +1,15 @@
-package cn.edu.pku.sei.structureAlignment.parser;
+package cn.edu.pku.sei.structureAlignment.parser.code;
 
 import cn.edu.pku.sei.structureAlignment.tree.CodeStructureTree;
 import cn.edu.pku.sei.structureAlignment.tree.Node;
 import cn.edu.pku.sei.structureAlignment.tree.NodeType;
 import cn.edu.pku.sei.structureAlignment.tree.Tree;
+import mySql.SqlConnector;
 import org.eclipse.jdt.core.dom.*;
 
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.eclipse.jdt.core.dom.InfixExpression.Operator.TIMES;
+import java.sql.ResultSet;
+import java.util.*;
 
 
 /**
@@ -25,7 +22,20 @@ public class CodeVisitor extends ASTVisitor {
     public static Map<String , String> variableDictionary ;
     private Tree parent ; // this is used to set the parent of the tree
 
+    private static SqlConnector conn; // this is for connecting the javadoc database
+    private static String tableName;
+
     static{
+        ResourceBundle bundle = ResourceBundle.getBundle("database");
+        String url = bundle.getString("luceneAPI_url");
+        String user = bundle.getString("luceneAPI_user");
+        String pwd = bundle.getString("luceneAPI_pwd");
+        String driver = bundle.getString("luceneAPI_driver");
+        tableName = bundle.getString("luceneAPI_table");
+
+        conn = new SqlConnector(url , user , pwd , driver);
+        conn.start();
+
         initialize();
     }
 
@@ -1613,7 +1623,37 @@ public class CodeVisitor extends ASTVisitor {
         List<ASTNode> arguments = node.arguments();
         List<CodeStructureTree> argumentTrees = new ArrayList<CodeStructureTree>();
         if (arguments != null) {
+            int argumentCount = arguments.size();
+            String functionName = node.getName().toString();
+            conn.setPreparedStatement("select argumentTypes , argumentNames from " + tableName + " where name = ? and type = 'METHOD'");
+            conn.setString(1 , functionName);
+            ResultSet rs = conn.executeQuery();
+            String[] argumentTypes = null;
+            String[] argumentNames = null;
+            if(rs != null){
+                try {
+                    while (rs.next()) {
+                        argumentTypes = rs.getString(1).split("\\|");
+                        argumentNames = rs.getString(2).split("\\|");
+
+                        //这里有问题，那第一个匹配到参数个数相同的作为结果，当有相同参数个数的同名函数时，就会出现问题。
+                        if(argumentNames.length == argumentCount){
+                            break;
+                        }
+                    }
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+            }
+
             argumentTrees= batchProcess(arguments, ",", NodeType.ADDED_CHAR_COMMA , null);
+
+            if(argumentNames != null){
+                for(int i = 0 ; i < argumentCount ; i ++ ){
+                    String additionInfo = argumentTypes[i] + " " + argumentNames[i];
+                    argumentTrees.get(i * 2).getRoot().setAdditionalInfo(additionInfo);
+                }
+            }
         }
         //endregion <construct the tree of the Arguments>
 
@@ -2096,8 +2136,10 @@ public class CodeVisitor extends ASTVisitor {
     @Override
     public boolean visit(StringLiteral node) {
 
-        Node root = new Node(NodeType.CODE_StringLiteral , node.toString() , id ++);
+        Node root = new Node(NodeType.CODE_StringLiteral , node.getLiteralValue(), id ++);
+        root.setDisplayContent(node.toString()); // 显示的是带引号的，如"test" , 实际匹配的时候用的是不带引号的， 如test.
         tree = new CodeStructureTree(root ,  node.toString() , parent);
+
         return false;
     }
 

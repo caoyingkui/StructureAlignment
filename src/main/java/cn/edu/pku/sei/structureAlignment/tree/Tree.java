@@ -447,6 +447,12 @@ public abstract class Tree<T extends Tree<T>>{
     }
 
 
+    /**
+     * findCommonParents are used to find the common parent of a group of nodes, maxDepth is the max depth from the parent to the lowest child.
+     * @param nodes
+     * @param maxDepth
+     * @return
+     */
     public Map<Integer , List<Integer>> findCommonParents(List<Integer> nodes , int maxDepth){
         Map<Integer , List<Integer> >result = new HashMap<Integer, List<Integer>>();
         Map<Integer , List<Integer>> paths = new HashMap<Integer, List<Integer>>();
@@ -482,7 +488,6 @@ public abstract class Tree<T extends Tree<T>>{
     //paths中记录的一定数量的从某个相同的顶点到不同节点的路径， 并且这些路径的最后一个节点就是要到达的顶点。
     //所以可以认为，每一条路径至少要有两个元素:第一个共同的顶点 + 其他路径结点 + 最后到达的节点。
     //在第一次调用该函数时，可以认为从root节点到不同节点的路径，因此paths中的所有元素的第一个元素都为0（root节点）
-
     //在接下来递归调用该函数时，需要找到有相同的父亲节点的路径。
     private Map<Integer , List<Integer>> findCommonParents(int maxDepth , List<List<Integer>> paths ){
         Map<Integer , List<Integer>> result = new HashMap<Integer, List<Integer>>();
@@ -571,6 +576,11 @@ public abstract class Tree<T extends Tree<T>>{
         return result;
     }
 
+    /**
+     * @param id
+     * @return the path from the root to the node, if the path exist,
+     *          null, if no.
+     */
     private List<Integer> findPathToNode(int id){
         List<Integer> result = new ArrayList<Integer>();
 
@@ -584,6 +594,7 @@ public abstract class Tree<T extends Tree<T>>{
 
             childLength = temp.children.size();
             end = id + 1;
+            //在建立树的时候，严格按照深度优先的编号，因此，一个树的所有子节点最小结点就是root的编号，而最大的结点就是他的sibling的root编号减1
             for(i = childLength - 1 ; i > -1 ; i -- ){
                 start = temp.children.get(i).getId();
                 if(id >= start && id < end){

@@ -1,13 +1,9 @@
 package cn.edu.pku.sei.structureAlignment.tree;
 
-import cn.edu.pku.sei.structureAlignment.Printer;
-import cn.edu.pku.sei.structureAlignment.parser.NLParser;
+import cn.edu.pku.sei.structureAlignment.parser.nlp.NLParser;
 import edu.stanford.nlp.semgraph.SemanticGraphEdge;
 import edu.stanford.nlp.simple.*;
-import edu.stanford.nlp.trees.GrammaticalRelation;
-import edu.stanford.nlp.util.Triple;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,11 +22,11 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
         //NLParser parser = new NLParser("I have set rowCacheSize to 1000 (with your higher value, it took way too long)");
         //NLParser parser = new NLParser("I have set rowCacheSize to 1000");
 
-        NLParser parser = new NLParser("I have created the cellStyle myself and used setCellStyle on it");
+        NLParser parser = new NLParser("Finally assign the font instance to CellStyle instance");
         edu.stanford.nlp.trees.Tree tree = parser.getNLTree();
         tree.pennPrint();
         TextStructureTree structTree = new TextStructureTree(0);
-        structTree.construct(new Sentence("I have created the cellStyle myself and used setCellStyle on it"));
+        structTree.construct(new Sentence("Here, the filter constrains document searches to only documents owned by “jake”."));
 
         structTree.print();
         /*JFrame frame = new JFrame();

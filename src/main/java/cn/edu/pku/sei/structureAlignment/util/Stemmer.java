@@ -3,12 +3,9 @@ package cn.edu.pku.sei.structureAlignment.util;
 import org.apache.commons.text.similarity.CosineSimilarity;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
-import org.apache.lucene.analysis.tokenattributes.TermAttribute;
-import org.apache.lucene.util.Version;
+import org.apache.lucene.analysis.core.StopAnalyzer;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.tartarus.snowball.ext.EnglishStemmer;
-
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import edu.stanford.nlp.process.*;
 
 /**
  * Created by oliver on 2017/12/27.
@@ -24,22 +20,10 @@ import edu.stanford.nlp.process.*;
 public class Stemmer {
     public static void  main(String[] args){
 
-        String words = "putting the SpanQuery ? as a should clause like this";
-        String pattern ;
-        //pattern = "(\\W+)|(?x)(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z])";
-        pattern = "([^\\p{L}\\d]+)|(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)|(?<=[\\p{L}&&[^\\p{Lu}]])(?=\\p{Lu})|(?<=\\p{Lu})(?=\\p{Lu}[\\p{L}&&[^\\p{Lu}]])";
-        for(String word : words.split(pattern)){
-            System.out.println(word);
-        }
-
-        System.out.println(String.join(" " , words.split(pattern)));
+        String words = "owner owned";
 
 
-        for(String token : tokenize("reading the SpaNQuery as a should clause like this")){
-            System.out.println(token);
-        }
-        System.out.println(">>>>>>>>>>>>>>>>>");
-        for(String token : stem(tokenize("reader the SpaNQuery SpaNQuery as a should clause like this"))){
+        for(String token : stem(words)){
             System.out.println(token);
         }
     }
@@ -102,16 +86,15 @@ public class Stemmer {
         try{
             String camelCasePattern = "([^\\p{L}\\d]+)|(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)|(?<=[\\p{L}&&[^\\p{Lu}]])(?=\\p{Lu})|(?<=\\p{Lu})(?=\\p{Lu}[\\p{L}&&[^\\p{Lu}]])";
             sentence = String.join(" " , sentence.split(camelCasePattern));
-
-            Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_30);
             List<String> result = new ArrayList<String>();
 
-            TokenStream stream = analyzer.tokenStream("" , new StringReader(sentence));
-            OffsetAttribute offsetAttribute = stream.getAttribute(OffsetAttribute.class);
-            TermAttribute termAttribute = stream.getAttribute(TermAttribute.class);
+            Analyzer analyzer = new StopAnalyzer();
 
-            while(stream.incrementToken()){
-                String term = termAttribute.term();
+            TokenStream tokenStream = analyzer.tokenStream("" , new StringReader(sentence));
+            CharTermAttribute cta = tokenStream.addAttribute(CharTermAttribute.class);
+            tokenStream.reset();
+            while(tokenStream.incrementToken()){
+                String term = cta.toString();
                 result.add(term);
             }
 
