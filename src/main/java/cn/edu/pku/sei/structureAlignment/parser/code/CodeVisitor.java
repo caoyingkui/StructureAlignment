@@ -2313,8 +2313,8 @@ public class CodeVisitor extends ASTVisitor {
         //region <construct the tree of VariableDeclarationFragments>
         List<ASTNode> fragments = node.fragments();
         for(ASTNode fragment : fragments){
-        String variableName = ((VariableDeclarationFragment)fragment).getName().toString();
-        variableDictionary.put(variableName , typeName);
+            String variableName = ((VariableDeclarationFragment)fragment).getName().toString();
+            variableDictionary.put(variableName , typeName);
         }
 
         List<CodeStructureTree> fragmentTrees = batchProcess(fragments , "," , NodeType.ADDED_CHAR_COMMA , tree);

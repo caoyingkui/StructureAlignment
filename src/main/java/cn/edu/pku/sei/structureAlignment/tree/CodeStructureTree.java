@@ -1,11 +1,14 @@
 package cn.edu.pku.sei.structureAlignment.tree;
 
 
+import cn.edu.pku.sei.structureAlignment.database.ApiDB;
 import cn.edu.pku.sei.structureAlignment.parser.code.CodeVisitor;
 import org.eclipse.jdt.core.dom.*;
 
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by oliver on 2017/12/23.
@@ -133,6 +136,29 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
             }return result;
         }
         return result;
+    }
+
+    public void updateJavadocInfo(){
+        Map<Integer , Node> leafNodes = this.getAllLeafNodes();
+
+        String sql = "select name , javadoc from " + ApiDB.tableName + " where type = 'CLASS' and name = ?" ;
+        ApiDB.conn.setPreparedStatement(sql);
+        for(int nodeId : leafNodes.keySet()){
+            Node leafNode = leafNodes.get(nodeId);
+            ApiDB.conn.setString(1 , leafNode.getContent());
+            ResultSet rs = ApiDB.conn.executeQuery();
+            if(rs != null){
+                try {
+                    if (rs.next()) {
+                        String javadoc = rs.getString(2);
+                        leafNode.setAdditionalInfo(javadoc);
+                    }
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+            }
+
+        }
     }
 
 }

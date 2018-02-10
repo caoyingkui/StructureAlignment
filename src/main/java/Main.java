@@ -34,7 +34,7 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\12.txt"));
+        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\10.txt"));
 
         File d = new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence");
         File[] files = d.listFiles();
@@ -527,6 +527,25 @@ public class Main {
             }
             matrix.print();
 
+            int maxCode = 0;
+            for(commentNum = 0 ; commentNum < textTreeCount ; commentNum ++){
+                codeLineNum = matrix.getColumnMax(commentNum , maxCode , 2);
+
+                //数据中代码和注释的编号是从1开始的。
+                if(codeLineNum != -1){
+                    if(annotations.containsKey(codeLineNum + 1) && annotations.get(codeLineNum + 1) == commentNum + 1){
+                        right ++ ;
+                        System.out.print("  right:");
+                    }else{
+                        wrong ++ ;
+                        System.out.print("  wrong:");
+                    }
+                    System.out.println((codeLineNum + 1 )+ " " + ( commentNum + 1));
+                    maxCode = codeLineNum + 1;
+                }
+            }
+
+            //region <old>
             Pair<Integer , Integer> max;
             while((max = matrix.getMax(2)) != null){
                 codeLineNum = max.getKey();
@@ -546,8 +565,8 @@ public class Main {
                 }
                 System.out.println(codeLineNum + " " + commentNum);
 
-
             }
+            //endregion <old>
 
             int total = annotations.size();
             globalTotal += total;
