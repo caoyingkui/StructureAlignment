@@ -36,7 +36,9 @@ public class Main {
 
         //match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\10.txt"));
 
+        match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\7.txt"));
         File d = new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence");
+
         File[] files = d.listFiles();
         for(File file : files) {
             match(file);
@@ -529,7 +531,7 @@ public class Main {
 
             int maxCode = 0;
             for(commentNum = 0 ; commentNum < textTreeCount ; commentNum ++){
-                codeLineNum = matrix.getColumnMax(commentNum , maxCode , 2);
+                codeLineNum = matrix.getColumnMax(commentNum , maxCode  , 2);
 
                 //数据中代码和注释的编号是从1开始的。
                 if(codeLineNum != -1){
@@ -546,6 +548,7 @@ public class Main {
             }
 
             //region <old>
+            /*
             Pair<Integer , Integer> max;
             while((max = matrix.getMax(2)) != null){
                 codeLineNum = max.getKey();
@@ -565,7 +568,7 @@ public class Main {
                 }
                 System.out.println(codeLineNum + " " + commentNum);
 
-            }
+            }*/
             //endregion <old>
 
             int total = annotations.size();
