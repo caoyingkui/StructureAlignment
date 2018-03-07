@@ -4,10 +4,7 @@ import cn.edu.pku.sei.structureAlignment.parser.code.CodeVisitor;
 import cn.edu.pku.sei.structureAlignment.util.ClassNameList;
 import cn.edu.pku.sei.structureAlignment.util.Stemmer;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by oliver on 2017/12/23.
@@ -16,6 +13,7 @@ public class Node {
     protected int id;
     protected NodeType type;
     protected String content;  // the original text of a node
+    protected List<String> alternatives;
     protected String displayContent; //
     protected String additionalInfo; // the information we can be extracted by other ways.
 
@@ -26,6 +24,10 @@ public class Node {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public void addAlternatives(String content){
+        alternatives.add(content.trim().toLowerCase());
     }
 
     public void setDisplayContent(String displayContent){
@@ -65,7 +67,14 @@ public class Node {
         this.content = content;
         this.displayContent = content;
         this.id = id;
-        additionalInfo = CodeVisitor.getVariableType(content);
+
+        alternatives = new ArrayList<>();
+        String typeInfo = CodeVisitor.getVariableType(content);
+        if(typeInfo.compareTo("") != 0) {
+            alternatives.add(typeInfo.toLowerCase());
+        }
+
+        this.additionalInfo = "";
     }
 
     /**
@@ -80,11 +89,13 @@ public class Node {
         String content = this.getContent();
         String anotherContent = node.getContent();
 
-        if(content.compareTo(anotherContent) == 0) {
-            if(ClassNameList.classList.contains(content))
-                return 1;
-            else
-                return 1;
+        //remove the punctuation "
+        if(this.type == NodeType.CODE_StringLiteral) content = content.length() > 2 ? content.substring(1 , content.length() - 1) : "";
+
+        if(node.type == NodeType.CODE_StringLiteral) anotherContent = anotherContent.length() > 2 ? content.substring(1 , content.length() - 1) : "" ;
+
+        if(content.trim().toLowerCase().compareTo(anotherContent.trim().toLowerCase()) == 0 || this.alternativesContains(anotherContent)) {
+            return 2;
         }
 
         Set<String> words1 = new HashSet<String>();
@@ -101,6 +112,11 @@ public class Node {
             }
         }
         return 0;
+    }
+
+    public boolean alternativesContains(String content){
+        content = content.trim().toLowerCase();
+        return alternatives.contains(content);
     }
 }
 

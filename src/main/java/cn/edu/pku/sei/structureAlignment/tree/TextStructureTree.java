@@ -26,7 +26,7 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
         edu.stanford.nlp.trees.Tree tree = parser.getNLTree();
         tree.pennPrint();
         TextStructureTree structTree = new TextStructureTree(0);
-        structTree.construct(new Sentence("Here, the filter constrains document searches to only documents owned by “jake”."));
+        structTree.construct(new Sentence("Finally assign the font instance to CellStyle instance"));
 
         structTree.print();
         /*JFrame frame = new JFrame();
@@ -119,7 +119,8 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
     }
 
     public String getDisplayContent(){
-        return root.getId() + ": " + root.getDisplayContent();
+        return root.getDisplayContent();
+        //return root.getId() + ": " + root.getDisplayContent();
     }
 
     public ArrayList<TextStructureTree> findAllVP(){

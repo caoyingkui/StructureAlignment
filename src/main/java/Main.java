@@ -1,7 +1,5 @@
 import cn.edu.pku.sei.structureAlignment.CodeLineRelation.CodeLineRelationGraph;
-import cn.edu.pku.sei.structureAlignment.feature.Feature;
 import cn.edu.pku.sei.structureAlignment.parser.code.CodeVisitor;
-import cn.edu.pku.sei.structureAlignment.parser.nlp.Dependency;
 import cn.edu.pku.sei.structureAlignment.parser.nlp.NLParser;
 import cn.edu.pku.sei.structureAlignment.tree.*;
 import cn.edu.pku.sei.structureAlignment.util.DoubleValue;
@@ -9,35 +7,37 @@ import cn.edu.pku.sei.structureAlignment.util.Matrix;
 import cn.edu.pku.sei.structureAlignment.util.SimilarPair;
 import cn.edu.pku.sei.structureAlignment.util.Stemmer;
 import edu.stanford.nlp.simple.Sentence;
-import mySql.SqlConnector;
 import org.eclipse.jdt.core.dom.*;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.sql.ResultSet;
 import java.util.*;
 import java.util.List;
 
 import javafx.util.Pair;
 
-import javax.xml.soap.Text;
 
 /**
  * Created by oliver on 2017/12/25.
  */
 public class Main {
-    static int globalTotal = 0;
-    static int globalRight = 0;
-    static int globalWrong = 0;
+    private static int globalTotal = 0;
+    private static int globalRight = 0;
+    private static int globalWrong = 0;
+    private static int codeLineCount = 0;
+    private static int commentCount = 0;
 
     public static void main(String[] args) throws IOException {
 
-        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\10.txt"));
+        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\8.txt"));
 
-        match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\7.txt"));
-        File d = new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence");
+        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\9.txt"));
+
+        //File d = new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence");
+        File d = new File("C:\\Users\\oliver\\Desktop\\test code snippets");
+
 
         File[] files = d.listFiles();
         for(File file : files) {
@@ -45,6 +45,7 @@ public class Main {
         }
         double precision = (globalWrong + globalRight) == 0 ? 0 : (double) globalRight / (globalRight + globalWrong) ;
         double recall = globalTotal == 0 ? 1 : (double)globalRight / globalTotal;
+        System.out.printf("total code lines:%d total comments:%d\n" , codeLineCount , commentCount);
         System.out.printf("total:%d right:%d wrong:%d precision:%.2f recall:%.2f\n\n\n", globalTotal , globalRight , globalWrong , precision , recall);
         System.out.printf("");
 
@@ -399,6 +400,8 @@ public class Main {
     }
 
     static double howWellAreTwoTreesAreSimilar(CodeStructureTree codeTree , TextStructureTree textTree){
+        double result = 0;
+
         Map<Integer , Node> codeLeafNodes = codeTree.getAllLeafNodes();
         Map<Integer , Node> textLeafNodes = textTree.getAllLeafNodes();
 
@@ -413,18 +416,57 @@ public class Main {
         for(Integer textId : textLeafNodes.keySet()){
             textNodes.add(textLeafNodes.get(textId));
         }
+        Collections.sort(codeNodes, new Comparator<Node>() {
+            @Override
+            public int compare(Node o1, Node o2) {
+                return o1.getId() - o2.getId();
+            }
+        });
+
+        Collections.sort(textNodes, new Comparator<Node>() {
+            @Override
+            public int compare(Node o1, Node o2) {
+                return o1.getId() - o2.getId();
+            }
+        });
 
         int codeLeafCount = codeLeafNodes.size();
         int textLeafCount = textLeafNodes.size();
+        String text = String.join( " " , textTree.getContent().trim().split("[ ]+") );
         Matrix<DoubleValue> matrix = new Matrix<>(codeLeafCount , textLeafCount , new DoubleValue(0));
         for(int i = 0 ; i < codeLeafCount ; i ++){
             Node codeNode = codeNodes.get(i);
+            NodeType nodeType = codeNode.getType();
+            if(codeNode.getType() == NodeType.CODE_StringLiteral){
+                String codeText = codeNode.getContent();
+                codeText = codeText.length() > 2 ? codeText.substring(1 , codeText.length() - 1) : ""; // filter out the punctuation "
+                codeText = String.join(" " , codeText.trim().split("[ ]+"));
+                if(text.contains(codeText)){
+                    result += (4 * codeText.trim().split("[ ]{1}").length );
+                    matrix.cleanRow(i);
+                    continue;
+                }
+            }else if(nodeType == NodeType.ADDED_CHAR_LEFT_PARENTHESIS ||
+                    nodeType == NodeType.ADDED_CHAR_RIGHT_PARENTHESIS ||
+                    nodeType == NodeType.ADDED_CHAR_LEFT_BRACKET ||
+                    nodeType == NodeType.ADDED_CHAR_RIGHT_BRACKET ||
+                    nodeType == NodeType.ADDED_CHAR_LEFT_BRACE ||
+                    nodeType == NodeType.ADDED_CHAR_RIGHT_BRACE ||
+                    nodeType == NodeType.ADDED_CHAR_COLON ||
+                    nodeType == NodeType.ADDED_CHAR_COMMA ||
+                    nodeType == NodeType.ADDED_CHAR_SEMICOLON ||
+                    nodeType == NodeType.ADDED_CHAR_DOT ||
+                    nodeType == NodeType.ADDED_CHAR_QUESTION){
+                matrix.cleanRow(i);
+                continue;
+            }
+
             for(int j = 0 ; j < textLeafCount ; j ++){
                 Node textNode = textNodes.get(j);
                 matrix.setValue(i , j , codeNode.compare(textNode));
             }
         }
-        double result = 0;
+
         Pair<Integer , Integer> max;
         while((max = matrix.getMax(2)) != null){
             int codeId = max.getKey();
@@ -479,9 +521,11 @@ public class Main {
             String line;
             while((line = reader.readLine()).length() != 0){
                 codeLines.add(line);
+                codeLineCount ++;
             }
             CodeLineRelationGraph graph = new CodeLineRelationGraph();
             graph.build(codeLines);
+            Matrix<DoubleValue> sliceMatrix = graph.slicesMatrix;
             List<CodeStructureTree> codeTrees = graph.getCodeLineTrees();
 
 
@@ -489,6 +533,7 @@ public class Main {
             List<TextStructureTree> textTrees = new ArrayList<>();
             while((line = reader.readLine()).length() != 0){
                 comments.add(line);
+                commentCount ++;
             }
             for(String c : comments){
                 TextStructureTree textTree = new TextStructureTree(0);
@@ -518,8 +563,6 @@ public class Main {
 
             Matrix<DoubleValue> matrix = new Matrix<>(codeTreeCount , textTreeCount , new DoubleValue(0));
 
-            int right = 0;
-            int wrong = 0;
             for(int i = 0 ; i < codeTreeCount ; i ++){
                 CodeStructureTree codeTree = codeTrees.get(i);
                 for(int j = 0 ; j < textTreeCount ; j ++){
@@ -529,7 +572,59 @@ public class Main {
             }
             matrix.print();
 
-            int maxCode = 0;
+            List<Pair<Integer , Integer>> matchScheme = matrix.findBestMatchScheme();
+            List<Pair<Integer , Integer>> finalMatchScheme = new ArrayList<>();
+            List<Integer> codeHasMatchedToSomeText = new ArrayList<Integer>();
+            for(Pair<Integer , Integer> pair : matchScheme){
+                codeHasMatchedToSomeText.add(pair.getKey());
+            }
+
+            int codeCount = sliceMatrix.getM();
+            for(Pair<Integer ,Integer> pair : matchScheme){
+                int code = pair.getKey();
+                List<Integer> slice = new ArrayList<>();
+                Collections.sort(slice, new Comparator<Integer>() {
+                    @Override
+                    public int compare(Integer o1, Integer o2) {
+                        return o1 - o2;
+                    }
+                });
+
+                int temp = code - 1;
+                // temp + 1指向当前一行
+                while(temp > -1 && sliceMatrix.getCell(temp + 1 , temp ).getValue() == 1){
+                    slice.add(temp);
+                    temp --;
+                }
+
+                temp = code + 1;
+                // temp - 1 指向当前一行
+                while(temp < codeCount && sliceMatrix.getCell(temp - 1 , temp).getValue() == 1){
+                    slice.add(temp);
+                    temp ++;
+                }
+
+                boolean s = false;
+                for(Integer c : slice){
+                    if(codeHasMatchedToSomeText.contains( (Object)c)){
+                        s = true;
+                        break;
+                    }
+                }
+
+                finalMatchScheme.add(new Pair<Integer , Integer>(code , pair.getValue()));
+                if(!s){
+                    for(Integer c : slice){
+                        finalMatchScheme.add(new Pair<Integer ,Integer>(c , pair.getValue()));
+                    }
+                }
+
+            }
+
+
+            analysesResult(finalMatchScheme , annotations);
+
+            /*
             for(commentNum = 0 ; commentNum < textTreeCount ; commentNum ++){
                 codeLineNum = matrix.getColumnMax(commentNum , maxCode  , 2);
 
@@ -545,7 +640,7 @@ public class Main {
                     System.out.println((codeLineNum + 1 )+ " " + ( commentNum + 1));
                     maxCode = codeLineNum + 1;
                 }
-            }
+            }*/
 
             //region <old>
             /*
@@ -571,19 +666,40 @@ public class Main {
             }*/
             //endregion <old>
 
-            int total = annotations.size();
-            globalTotal += total;
-            globalRight += right;
-            globalWrong += wrong;
-            double precision = (wrong + right) == 0 ? 0 : (double) right / (right + wrong) ;
-            double recall = total == 0 ? 1 : (double)right / total;
-            System.out.printf("total:%d right:%d wrong:%d precision:%.2f recall:%.2f\n\n\n", total , right , wrong , precision , recall);
+
 
         }catch(Exception e){
             e.printStackTrace();
         }
 
         return 0;
+    }
+
+    private static void analysesResult(List<Pair<Integer , Integer>> matchScheme , Map<Integer, Integer> annotations ){
+        int codeLineNum = 0 , commentNum = 0 ;
+        int right = 0, wrong = 0;
+        if(matchScheme != null) {
+            for (Pair<Integer, Integer> pair : matchScheme) {
+                codeLineNum = pair.getKey() + 1;
+                commentNum = pair.getValue() + 1;
+                if (annotations.containsKey(codeLineNum) && annotations.get(codeLineNum) == commentNum) {
+                    right++;
+                    System.out.print("  right:");
+                } else {
+                    wrong++;
+                    System.out.print("  wrong:");
+                }
+                System.out.println((codeLineNum ) + " " + (commentNum ));
+            }
+        }
+
+        int total = annotations.size();
+        globalTotal += total;
+        globalRight += right;
+        globalWrong += wrong;
+        double precision = (wrong + right) == 0 ? 0 : (double) right / (right + wrong) ;
+        double recall = total == 0 ? 1 : (double)right / total;
+        System.out.printf("total:%d right:%d wrong:%d precision:%.2f recall:%.2f\n\n\n", total , right , wrong , precision , recall);
     }
 
 }

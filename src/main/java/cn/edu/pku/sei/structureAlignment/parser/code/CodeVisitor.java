@@ -4,6 +4,7 @@ import cn.edu.pku.sei.structureAlignment.tree.CodeStructureTree;
 import cn.edu.pku.sei.structureAlignment.tree.Node;
 import cn.edu.pku.sei.structureAlignment.tree.NodeType;
 import cn.edu.pku.sei.structureAlignment.tree.Tree;
+import javafx.util.Pair;
 import mySql.SqlConnector;
 import org.eclipse.jdt.core.dom.*;
 
@@ -16,8 +17,8 @@ import java.util.*;
  * Created by oliver on 2017/12/24.
  */
 public class CodeVisitor extends ASTVisitor {
-    protected CodeStructureTree tree;
-    protected List<Tree> children;
+    private CodeStructureTree tree;
+    private List<Tree> children;
     private static int id ;
     public static Map<String , String> variableDictionary ;
     private Tree parent ; // this is used to set the parent of the tree
@@ -1612,6 +1613,10 @@ public class CodeVisitor extends ASTVisitor {
         SimpleName name = node.getName();
         Node nameRoot = new Node(NodeType.CODE_SimpleName , name.toString() , id ++);
         CodeStructureTree nameTree = new CodeStructureTree(nameRoot , name.toString() , null);
+        Map<String , String> methodInfo = getMostPossibleMethodInfo(node);
+        if(methodInfo != null){
+            nameTree.getRoot().setAdditionalInfo(methodInfo.get("javadoc"));
+        }
         //endregion <construct the tree of the Identifier>
 
         //region <construct the tree of ( >
@@ -1624,26 +1629,11 @@ public class CodeVisitor extends ASTVisitor {
         List<CodeStructureTree> argumentTrees = new ArrayList<CodeStructureTree>();
         if (arguments != null) {
             int argumentCount = arguments.size();
-            String functionName = node.getName().toString();
-            conn.setPreparedStatement("select argumentTypes , argumentNames from " + tableName + " where name = ? and type = 'METHOD'");
-            conn.setString(1 , functionName);
-            ResultSet rs = conn.executeQuery();
             String[] argumentTypes = null;
             String[] argumentNames = null;
-            if(rs != null){
-                try {
-                    while (rs.next()) {
-                        argumentTypes = rs.getString(1).split("\\|");
-                        argumentNames = rs.getString(2).split("\\|");
-
-                        //这里有问题，那第一个匹配到参数个数相同的作为结果，当有相同参数个数的同名函数时，就会出现问题。
-                        if(argumentNames.length == argumentCount){
-                            break;
-                        }
-                    }
-                }catch(Exception e){
-                    e.printStackTrace();
-                }
+            if(methodInfo != null){
+                argumentTypes = methodInfo.get("argumentTypes").split(" \\| ");
+                argumentNames = methodInfo.get("argumentNames").split(" \\| ");
             }
 
             argumentTrees= batchProcess(arguments, ",", NodeType.ADDED_CHAR_COMMA , null);
@@ -2136,7 +2126,7 @@ public class CodeVisitor extends ASTVisitor {
     @Override
     public boolean visit(StringLiteral node) {
 
-        Node root = new Node(NodeType.CODE_StringLiteral , node.getLiteralValue(), id ++);
+        Node root = new Node(NodeType.CODE_StringLiteral , node.toString(), id ++);
         root.setDisplayContent(node.toString()); // 显示的是带引号的，如"test" , 实际匹配的时候用的是不带引号的， 如test.
         tree = new CodeStructureTree(root ,  node.toString() , parent);
 
@@ -2215,6 +2205,34 @@ public class CodeVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(TypeLiteral node) {
+        //region<grammar>
+        /**
+         * ( Type | void ) . class
+         */
+        //endregion<grammar>
+
+        //region<construct the tree of root>
+        Node root = new Node(NodeType.CODE_TypeLiteral , "" , id ++);
+        tree = new CodeStructureTree(root , node.toString() , parent);
+        //endregion<construct the tree of root>
+
+        //region<construct the tree of Type>
+        Node typeNode = new Node(NodeType.NULL , node.getType().toString() , id ++);
+        CodeStructureTree typeTree = new CodeStructureTree(typeNode , node.getType().toString() , tree);
+        children.add(typeTree);
+        //endregion<construct the tree of Type>
+
+        //region<construct the tree of .>
+        children.add(buildPunctuationTree("." , NodeType.ADDED_CHAR_DOT , tree));
+        //endregion <construct the tree of .>
+
+        //region<construct the tree of class>
+        Node classRoot = new Node(NodeType.NULL , "class" , id++);
+        CodeStructureTree classTree = new CodeStructureTree(classRoot , "class" , tree);
+        children.add(classTree);
+        //endregion<construct the tree of class>
+
+        tree.setChildren(children);
         return false;
     }
 
@@ -2395,13 +2413,175 @@ public class CodeVisitor extends ASTVisitor {
 
     private CodeStructureTree buildKeyWordTree(String keyWord , CodeStructureTree parentTree){
         Node root = new Node(NodeType.ADDED_KEYWORD , keyWord , id ++);
-        CodeStructureTree t = new CodeStructureTree(root , keyWord , parentTree);
-        return t;
+        return new CodeStructureTree(root , keyWord , parentTree);
     }
 
     private CodeStructureTree buildPunctuationTree(String c , NodeType type , CodeStructureTree parentTree){
         Node root = new Node(type , c , id ++);
-        CodeStructureTree t = new CodeStructureTree(root , c , parentTree);
-        return t;
+        return new CodeStructureTree(root , c , parentTree);
+    }
+
+    private Map<String , String> getMostPossibleMethodInfo(MethodInvocation node){
+        Map<String , String> result = null;
+        String qualifiedName = node.getExpression() == null ? "" : node.getExpression().toString();
+
+        int max = 0;
+
+        if(variableDictionary.containsKey(qualifiedName)) {
+            qualifiedName = variableDictionary.get(qualifiedName);
+            max ++;
+        }
+        String functionName = node.getName().toString();
+        List<ASTNode> arguments = node.arguments();
+        List<Pair<String , String>> argumentList = new ArrayList<>();
+        for(ASTNode argument : arguments){
+            // <name , type>
+            Pair<String , String> pair = new Pair<>(argument.toString() , getTypeName(argument));
+            argumentList.add(pair);
+        }
+
+
+        int argumentCount = arguments.size();
+        max += argumentCount;
+
+        String sql = "select name , qualifiedName , returnType , argumentTypes , argumentNames , javadoc from api where  name = ? and argumentCount = ?";
+
+        conn.setPreparedStatement(sql);
+        conn.setString(1 , functionName);
+        conn.setInt(2 , arguments.size());
+        ResultSet rs = conn.executeQuery();
+        try {
+
+            while (rs.next()) {
+                int temp = 0;
+
+                String[] argumentTypes = rs.getString(4).split(" \\| ");
+                String[] argumentNames = rs.getString(5).split(" \\| ");
+                for(int i = 0 ; i < argumentCount ; i ++){
+                    Pair pair = argumentList.get(i);
+                    String name = pair.getKey().toString();
+                    String type = pair.getValue().toString();
+                    if(name.compareTo(argumentNames[i]) == 0 || type.compareTo(argumentTypes[i]) == 0){
+                        temp ++;
+                    }
+                }
+
+                if(rs.getString(2).contains(qualifiedName)){
+                    temp ++;
+                }
+
+                if(temp == max){
+                    if(result == null)
+                        result = new HashMap<>();
+                    result.put("name" , rs.getString(1));
+                    result.put("qualifiedName" , rs.getString(2));
+                    result.put("returnType" , rs.getString(3));
+                    result.put("argumentTypes" , rs.getString(4));
+                    result.put("argumentNames" , rs.getString(5));
+                    result.put("javadoc" , rs.getString(6));
+                    break;
+                }
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        return result;
+
+    }
+
+    private String getTypeName(ASTNode node){
+        try {
+            if (node instanceof ArrayAccess){
+                // ArrayAccess: Expression [ Expression ]
+                return getTypeName(((ArrayAccess) node).getArray());
+            }else if(node instanceof ArrayCreation){
+                return getTypeName(((ArrayCreation) node).getType());
+            }else if(node instanceof Assignment){
+                return getTypeName(((Assignment) node).getLeftHandSide());
+            }else if(node instanceof BooleanLiteral){
+                return "boolean";
+            }else if(node instanceof CastExpression){
+                return getTypeName(((CastExpression) node).getType());
+            }else if(node instanceof CharacterLiteral){
+                return "char";
+            }else if(node instanceof ClassInstanceCreation){
+                return getTypeName(((ClassInstanceCreation) node).getType());
+            }else if(node instanceof ConditionalExpression){
+                // Expression ? Expression : Expression
+                String result = getTypeName(((ConditionalExpression) node).getThenExpression());
+                return result.compareTo("null") != 0 ? result : getTypeName(((ConditionalExpression) node).getElseExpression());
+            }else if(node instanceof InfixExpression){
+                InfixExpression.Operator op = ((InfixExpression) node).getOperator();
+                if(op == InfixExpression.Operator.TIMES ||
+                        op == InfixExpression.Operator.DIVIDE ||
+                        op == InfixExpression.Operator.PLUS ||
+                        op == InfixExpression.Operator.MINUS ||
+                        op == InfixExpression.Operator.REMAINDER){
+                    return getTypeName(((InfixExpression) node).getLeftOperand());
+                }else if(op == InfixExpression.Operator.LESS ||
+                        op == InfixExpression.Operator.GREATER ||
+                        op == InfixExpression.Operator.LESS_EQUALS ||
+                        op == InfixExpression.Operator.GREATER_EQUALS ||
+                        op == InfixExpression.Operator.EQUALS ||
+                        op == InfixExpression.Operator.NOT_EQUALS ||
+                        op == InfixExpression.Operator.CONDITIONAL_AND ||
+                        op == InfixExpression.Operator.CONDITIONAL_OR){
+                    return "boolean";
+                }else if(op == InfixExpression.Operator.LEFT_SHIFT ||
+                        op == InfixExpression.Operator.RIGHT_SHIFT_SIGNED ||
+                        op == InfixExpression.Operator.RIGHT_SHIFT_UNSIGNED){
+                    return getTypeName(((InfixExpression) node).getLeftOperand());
+                }else if(op == InfixExpression.Operator.XOR ||
+                        op == InfixExpression.Operator.AND ||
+                        op == InfixExpression.Operator.OR){
+                    return getTypeName(((InfixExpression) node).getLeftOperand());
+                }else{
+                    return "";
+                }
+            }else if(node instanceof InstanceofExpression){
+                return "boolean";
+            }else if(node instanceof Name){
+                String name = node.toString();
+                if(variableDictionary.containsKey(name)){
+                    return variableDictionary.get(name);
+                }else{
+                    return "";
+                }
+            }else if(node instanceof NullLiteral){
+                return "null";
+            }else if(node instanceof NumberLiteral){
+                return node.toString().contains(".") ? "double" : "int";
+            }else if(node instanceof ParenthesizedExpression){
+                return getTypeName(((ParenthesizedExpression) node).getExpression());
+            }else if(node instanceof PostfixExpression){
+                return getTypeName(((PostfixExpression) node).getOperand());
+            }else if(node instanceof PrefixExpression){
+                return getTypeName(((PrefixExpression) node).getOperand());
+            }else if(node instanceof StringLiteral){
+                return "String";
+            }else if(node instanceof VariableDeclarationExpression){
+                return getTypeName(((VariableDeclarationExpression) node).getType());
+            }else if(node instanceof PrimitiveType){
+                return node.toString();
+            }else if(node instanceof ArrayType){
+                return getTypeName(((ArrayType) node).getElementType()) + "[]";
+            }else if(node instanceof SimpleType){
+                return node.toString();
+            }else if(node instanceof QualifiedType){
+                return ((QualifiedType) node).getName().toString();
+            }else if(node instanceof NameQualifiedType){
+                return ((NameQualifiedType) node).getName().toString();
+            }else if(node instanceof ParameterizedType){
+                return getTypeName(((ParameterizedType) node).getType()) + " < >";
+            }else if(node instanceof UnionType || node instanceof IntersectionType){
+                return getTypeName((Type)((UnionType) node).types().get(0));
+            }else {
+                return "";
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            return "";
+        }
     }
 }
