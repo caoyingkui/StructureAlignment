@@ -1,12 +1,13 @@
-String[] isbns = new String[] {"0854402624"}; // Steiner // #1
-SpecialsAccessor accessor = new TestSpecialsAccessor(isbns);
-Filter filter = new SpecialsFilter(accessor);
-WildcardQuery educationBooks = new WildcardQuery(new Term("category", "*education*")); // #2
-FilteredQuery edBooksOnSpecial = new FilteredQuery(educationBooks, filter); // #2
-TermQuery logoBooks = new TermQuery(new Term("subject", "logo")); //3
-BooleanQuery logoOrEdBooks = new BooleanQuery(); // #4
-logoOrEdBooks.add(logoBooks, BooleanClause.Occur.SHOULD); // #4
-logoOrEdBooks.add(edBooksOnSpecial, BooleanClause.Occur.SHOULD); // #4
-TopDocs hits = searcher.search(logoOrEdBooks, 10);
-System.out.println(logoOrEdBooks.toString());
-assertEquals("Papert and Steiner", 2, hits.totalHits);
+switch(a){
+    case 1:{
+        a ++;
+        break;
+    }case 2:
+        a ++;
+        b ++;
+     case 3:{
+        a ++;
+     }
+     default:
+
+}

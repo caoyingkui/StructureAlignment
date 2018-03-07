@@ -846,13 +846,18 @@ public class CodeVisitor extends ASTVisitor {
     public boolean visit(DoStatement node) {
         // region <grammar>
         /**
-         * do Statement while ( Expression ) ;
+         *  DoStatement:
+         *      do Statement while ( Expression ) ;
          * */
         // endregion <grammar>
 
         //region <construct the tree of the root>
         Node root = new Node(NodeType.CODE_DoStatement ,"" , id++);
-        tree = new CodeStructureTree(root , node.toString() , parent);
+        String code = "do while (" + node.getExpression().toString() +")";
+        tree = new CodeStructureTree(root , code , parent);
+        tree.setProperty("size" , (int) node.getProperty("size"));
+        tree.setProperty("start" , (int) node.getProperty("start"));
+        tree.setProperty("end" , (int) node.getProperty("end"));
         //endregion <construct the tree of the root>
 
         //region <construct the tree of do>
@@ -861,29 +866,30 @@ public class CodeVisitor extends ASTVisitor {
         //endregion <construct the tree of do>
 
         //region <construct the tree of statement>
+        /*
         Statement statement = node.getBody();
         CodeVisitor statementVisitor = new CodeVisitor(tree);
         statement.accept(statementVisitor);
         children.add(statementVisitor.getTree());
+        */
         //endregion <construct the tree of statement>
-
 
         //region <construct the tree of while>
         CodeStructureTree whileTree = buildKeyWordTree("while" , tree);
         children.add(whileTree);
         //endregion <construct the tree of while>
 
-        //region <construct the tree of >
+        //region <construct the tree of  (>
         CodeStructureTree lpTree = buildPunctuationTree("(" , NodeType.ADDED_CHAR_LEFT_PARENTHESIS , tree);
         children.add(lpTree);
-        //endregion <construct the tree of>
+        //endregion <construct the tree of (>
 
-        //region <construct the tree of >
+        //region <construct the tree of Expression>
         Expression condition = node.getExpression();
         CodeVisitor conditionVisitor = new CodeVisitor(tree);
         condition.accept(conditionVisitor);
         children.add(conditionVisitor.getTree());
-        //endregion <construct the tree of>
+        //endregion <construct the tree of Expression>
 
         //region <construct the tree of )>
         CodeStructureTree rpTree = buildPunctuationTree(")" , NodeType.ADDED_CHAR_RIGHT_PARENTHESIS , tree);
@@ -919,7 +925,11 @@ public class CodeVisitor extends ASTVisitor {
 
         //region <construct the tree of the root>
         Node root = new Node(NodeType.CODE_EnhancedForStatement , "" , id++);
-        tree = new CodeStructureTree(root , node.toString() , parent);
+        String code = "for(" + node.getParameter().toString() + " : "+ node.getExpression().toString() + ")";
+        tree = new CodeStructureTree(root , code , parent);
+        tree.setProperty("size" , (int) node.getProperty("size"));
+        tree.setProperty("start" , (int) node.getProperty("start"));
+        tree.setProperty("end" , (int) node.getProperty("end"));
         //endregion <construct the tree of the root>
 
         //region <construct the tree of (>
@@ -953,10 +963,12 @@ public class CodeVisitor extends ASTVisitor {
         //endregion <construct the tree of )>
 
         //region <construct the tree of statement>
+        /*
         Statement body = node.getBody();
         CodeVisitor bodyVisitor = new CodeVisitor(tree);
         body.accept(bodyVisitor);
         children.add(bodyVisitor.getTree());
+        */
         //endregion <construct the tree of statement>
 
         tree.setChildren(children);
@@ -1055,7 +1067,22 @@ public class CodeVisitor extends ASTVisitor {
 
         //region <construct the tree of the root>
         Node root = new Node(NodeType.CODE_ForStatement , "" , id ++);
-        tree = new CodeStructureTree(root , node.toString() , parent);
+        String code = "for(" ;
+        for(Object n : node.initializers()){
+            code += (((ASTNode)n).toString() + " , " );
+        }
+        code = code.substring(0 , code.length() - 3);
+        code += " ; ";
+        code += node.getExpression().toString() + " ; ";
+        for(Object n : node.updaters()){
+            code += (((ASTNode)n).toString() + " , ");
+        }
+        code = code.substring(0 , code.length() - 3);
+        code += ")";
+        tree = new CodeStructureTree(root , code , parent);
+        tree.setProperty("size" , (int) node.getProperty("size"));
+        tree.setProperty("start" , (int) node.getProperty("start"));
+        tree.setProperty("end" , (int) node.getProperty("end"));
         //endregion <construct the tree of the root>
 
         //region <construct the tree of (>
@@ -1115,7 +1142,11 @@ public class CodeVisitor extends ASTVisitor {
 
         //region <construct the tree of the root>
         Node root = new Node(NodeType.CODE_IfStatement , "" , id ++);
-        tree = new CodeStructureTree(root , node.toString() , parent);
+        String code = "if(" + node.getExpression().toString() + ")";
+        tree = new CodeStructureTree(root , code , parent);
+        tree.setProperty("size" , (int) node.getProperty("size"));
+        tree.setProperty("start" , (int) node.getProperty("start"));
+        tree.setProperty("end" , (int) node.getProperty("end"));
         //endregion <construct the tree of the root>
 
         //region <construct the tree of if>
@@ -1140,14 +1171,18 @@ public class CodeVisitor extends ASTVisitor {
         children.add(rpTree);
         //endregion <construct the tree of )>
 
+
         //region <construct the tree of Statement>
+        /*
         Statement thenStatement = node.getThenStatement();
         CodeVisitor thenStatementVisitor = new CodeVisitor(tree);
         thenStatement.accept(thenStatementVisitor);
         children.add(thenStatementVisitor.getTree());
+        */
         //endregion <construct the tree of Statement>
 
         //region <construct the tree of elseStatement>
+        /*
         Statement elseStatement = node.getElseStatement();
         if(elseStatement!= null){
             //region <construct the tree of else>
@@ -1159,6 +1194,7 @@ public class CodeVisitor extends ASTVisitor {
             elseStatement.accept(elseStatementVisitor);
             children.add(elseStatementVisitor.getTree());
         }
+        */
         //endregion <construct the tree of elseStatement>
 
         tree.setChildren(children);
@@ -1621,7 +1657,7 @@ public class CodeVisitor extends ASTVisitor {
 
         //region <construct the tree of ( >
         Node lpRoot = new Node(NodeType.ADDED_CHAR_LEFT_PARENTHESIS, "(", id++);
-        CodeStructureTree lpTree = new CodeStructureTree(lpRoot, "(" , null);
+        CodeStructureTree lpTree = new CodeStructureTree(lpRoot, "(" , tree);
         //endregion <construct the tree of ( >
 
         //region <construct the tree of the Arguments>
@@ -1648,7 +1684,7 @@ public class CodeVisitor extends ASTVisitor {
         //endregion <construct the tree of the Arguments>
 
         //region <construct the tree of ) >
-        Node rpRoot = new Node(NodeType.ADDED_CHAR_LEFT_PARENTHESIS, ")", id++);
+        Node rpRoot = new Node(NodeType.ADDED_CHAR_RIGHT_PARENTHESIS, ")", id++);
         CodeStructureTree rpTree = new CodeStructureTree(rpRoot, ")" , tree);
         //endregion <construct the tree of ) >
 
@@ -2160,11 +2196,87 @@ public class CodeVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(SwitchStatement node) {
+        // region <grammar>
+        /**
+         *  SwitchStatement:
+         *      switch ( Expression )
+         *          { { SwitchCase | Statement } }
+         *  SwitchCase:
+         *      case Expression  :
+         *      default :
+         */
+        // endregion <grammar>
+
+        // region <construct the tree of the root>
+        Node root = new Node(NodeType.CODE_SwitchStatement , "" , id ++);
+        String code = "switch (" + node.getExpression().toString() + ")";
+        tree = new CodeStructureTree(root , code , parent);
+        tree.setProperty("size" , (int) node.getProperty("size"));
+        tree.setProperty("start" , (int) node.getProperty("start"));
+        tree.setProperty("end" , (int) node.getProperty("end"));
+        // endregion <construct the tree of the root>
+
+        // region <construct the tree of (>
+        CodeStructureTree lpTree = buildPunctuationTree("(" , NodeType.ADDED_CHAR_LEFT_PARENTHESIS , tree);
+        children.add(lpTree);
+        // endregion <construct the tree of (>
+
+        // region <construct the tree of Expression>
+        Expression expression = node.getExpression();
+        if(expression != null){
+            CodeVisitor expressionVisitor = new CodeVisitor(tree);
+            expression.accept(expressionVisitor);
+            Tree expressionTree = expressionVisitor.getTree();
+            children.add(expressionTree);
+        }
+        // endregion <construct the tree of Expression>
+
+        // region <construct the tree of )>
+        CodeStructureTree rpTree = buildPunctuationTree(")" , NodeType.ADDED_CHAR_RIGHT_PARENTHESIS, tree);
+        children.add(lpTree);
+        // endregion <construct the tree of )>
+
+        tree.setChildren(children);
         return false;
     }
 
     @Override
     public boolean visit(SynchronizedStatement node) {
+        // region <grammar>
+        /**
+         *  SynchronizedStatement:
+         *      synchronized ( Expression ) Block
+         */
+        // endregion <grammar>
+
+        // region <construct the tree of root>
+        Node root = new Node(NodeType.CODE_SynchronizedStatement , "" , id++);
+        String code = "synchronized (" + node.getExpression() +")" ;
+        this.tree = new CodeStructureTree(root ,code , parent);
+        tree.setProperty("size" , (int)node.getProperty("size"));
+        tree.setProperty("start" , (int)node.getProperty("start"));
+        tree.setProperty("end" , (int)node.getProperty("end"));
+        // endregion <construct the tree of root>
+
+        // region <construct the tree of (>
+        CodeStructureTree lpTree = buildPunctuationTree("(" , NodeType.ADDED_CHAR_LEFT_PARENTHESIS , tree);
+        children.add(lpTree);
+        // endregion <construct the tree of (>
+
+        // region <construct the tree of Expression>
+        Expression expression = node.getExpression();
+        CodeVisitor expressionVisitor = new CodeVisitor(tree);
+        expression.accept(expressionVisitor);
+        Tree expressionTree = expressionVisitor.getTree();
+        children.add(expressionTree);
+        // endregion <construct the tree of Expression>
+
+        // region <construct the tree of )>
+        CodeStructureTree rpTree = buildPunctuationTree(")" , NodeType.ADDED_CHAR_RIGHT_PARENTHESIS , tree);
+        children.add(lpTree);
+        // endregion <construct the tree of )>
+
+        tree.setChildren(children);
         return false;
     }
 
@@ -2190,6 +2302,33 @@ public class CodeVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(TryStatement node) {
+        // region <grammar>
+        /**
+         *  try [ ( Resources ) ]
+         *      Block
+         *      [ { CatchClause } ]
+         *      [ finally Block ]
+         */
+        // endregion <grammar>
+
+        // region <construct the tree of root>
+        Node root = new Node(NodeType.CODE_TryStatement , "" , id++);
+        this.tree = new CodeStructureTree(root , "try" , parent);
+        tree.setProperty("size" , (int)node.getProperty("size"));
+        tree.setProperty("start" , (int)node.getProperty("start"));
+        tree.setProperty("end" , (int)node.getProperty("end"));
+        // endregion <construct the tree of root>
+
+        // 结点为try 语句
+        if(node.getBody() != null){
+            CodeStructureTree tryTree = buildKeyWordTree("try" , tree);
+            children.add(tryTree);
+        }else{ // 结点为 finally 语句
+            CodeStructureTree finallyTree = buildKeyWordTree("finally" , tree);
+            children.add(finallyTree);
+        }
+
+        tree.setChildren(children);
         return false;
     }
 
@@ -2403,6 +2542,48 @@ public class CodeVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(WhileStatement node) {
+        // region <grammar>
+        /**
+         *  WhileStatement:
+         *      while ( Expression ) Statement
+         */
+        // endregion <grammar>
+
+        // region <construct the tree of root>
+        Node root = new Node(NodeType.CODE_WhileStatement , "" , id ++);
+        String code = "while (" + node.getExpression().toString() + ")" ;
+        this.tree = new CodeStructureTree(root , code , parent);
+        tree.setProperty("size" , node.getProperty("size"));
+        tree.setProperty("start" , node.getProperty("start"));
+        tree.setProperty("end" , node.getProperty("end"));
+        // endregion <construct the tree of root>
+
+        // region <construct the tree of while>
+        CodeStructureTree whileTree = buildKeyWordTree("while" , tree);
+        children.add(whileTree);
+        // endregion <construct the tree of while>
+
+        // region <construct the tree of (>
+        CodeStructureTree lpTree = buildPunctuationTree("(" , NodeType.ADDED_CHAR_LEFT_PARENTHESIS , tree);
+        children.add(lpTree);
+        // endregion <construct the tree of (>
+
+        // region <construct the tree of Expression>
+        Expression expression = node.getExpression();
+        if(expression != null){
+            CodeVisitor expressionVisitor = new CodeVisitor(tree);
+            expression.accept(expressionVisitor);
+            Tree expressionTree = expressionVisitor.getTree();
+            children.add(expressionTree);
+        }
+        // endregion <construct the tree of Expression>
+
+        // region <construct the tree of )>
+        CodeStructureTree rpTree = buildPunctuationTree(")" , NodeType.ADDED_CHAR_RIGHT_PARENTHESIS , tree);
+        children.add(lpTree);
+        // endregion <construct the tree of )>
+
+        tree.setChildren(children);
         return false;
     }
 

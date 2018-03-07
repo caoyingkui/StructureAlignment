@@ -3,10 +3,12 @@ package cn.edu.pku.sei.structureAlignment.tree;
 
 import cn.edu.pku.sei.structureAlignment.database.ApiDB;
 import cn.edu.pku.sei.structureAlignment.parser.code.CodeVisitor;
+import edu.stanford.nlp.util.ArrayMap;
 import org.eclipse.jdt.core.dom.*;
 
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +18,20 @@ import java.util.Map;
 public class CodeStructureTree extends Tree<CodeStructureTree>{
 
     protected String code;
+    private Map<String , Object> properties;
+
+    public void setProperty(String propertyName , Object data){
+        if(properties == null)
+            properties = new HashMap<>();
+        properties.put(propertyName , data);
+    }
+
+    public Object getProperty(String propertyName){
+        if(properties.containsKey(propertyName))
+            return properties.get(propertyName);
+        else
+            return null;
+    }
 
     public static void main(String[] args ){
         ASTParser parser = ASTParser.newParser(AST.JLS8);
@@ -58,6 +74,7 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
         this.children = new ArrayList<Tree>();
         this.parent = parent;
         startIndex = endIndex = root.getId();
+
     }
 
     public void setChildren(List<Tree> children){
