@@ -139,11 +139,7 @@ public enum NodeType {
     CODE_ASSIGNMENT_OPERATOR_RIGHT_SHIFT_UNSIGNED_ASSIGN,   // >>>=
 
 
-
-    ADDED_MethodInvocation_Types,
-    ADDED_MethodInvocation_Arguments,
     ADDED_KEYWORD,
-    ADDED_OPERATOR,
     ADDED_CHAR_LEFT_PARENTHESIS,    // (
     ADDED_CHAR_RIGHT_PARENTHESIS,   // )
     ADDED_CHAR_LEFT_BRACKET,        // [
@@ -153,9 +149,12 @@ public enum NodeType {
     ADDED_CHAR_LEFT_ANGLE_BRACKET,  // <
     ADDED_CHAR_RIGHT_ANGLE_BRACKET, // >
     ADDED_CHAR_COLON,               // :
+    ADDED_CHAR_DOUBLE_COLON,        // ::
     ADDED_CHAR_COMMA,                // ,
     ADDED_CHAR_SEMICOLON,             // ;
     ADDED_CHAR_DOT,                 // .
     ADDED_CHAR_QUESTION,            //?
+    ADDED_CHAR_AT,                   // @
+    ADDED_CHAR_ELLIPSIS,             // ...
     NULL
 }

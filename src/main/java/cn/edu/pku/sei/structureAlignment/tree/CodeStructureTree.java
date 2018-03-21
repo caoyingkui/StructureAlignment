@@ -37,7 +37,8 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
         ASTParser parser = ASTParser.newParser(AST.JLS8);
         ///parser.setSource("XSSFCellStyle style = new XSSFCellStyle(new StylesTable());".toCharArray());
         parser.setSource((
-                "query.add(new Map<Integer ,Integer>() , new Term[] { new Term(\"field\", \"quick\"), new Term(\"field\", \"fast\") });"
+                "A.var idField = new Field(\"id\", \"MyItemId\", Field.Store.YES, Field.Index.NOT_ANALYZED);"
+
                 ).toCharArray());
         //parser.setSource("d = null;".toCharArray());
 
@@ -48,9 +49,11 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
         Block block = (Block)parser.createAST(null);
 
         CodeVisitor visitor = new CodeVisitor(0);
-        block.accept(visitor);
+        ((ASTNode)block.statements().get(0)).accept(visitor);
+        //block.accept(visitor);
 
         CodeStructureTree tree = visitor.getTree();
+        tree.print();;
         //tree.findCommonParents(16 , 19 , 4);
 
         /*JFrame frame = new JFrame();
@@ -61,25 +64,25 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
         frame.setSize(1200, 1200);
         frame.setVisible(true);*/
 
-        tree.getTree(2).print();
+        tree.print();
     }
 
     public String getCode() {
         return this.code;
     }
 
-    public CodeStructureTree(Node root , String code , Tree parent){
+    public CodeStructureTree(Node root , String code , CodeStructureTree parent){
         this.root = root;
         this.code = code;
-        this.children = new ArrayList<Tree>();
+        this.children = new ArrayList<CodeStructureTree>();
         this.parent = parent;
         startIndex = endIndex = root.getId();
 
     }
 
-    public void setChildren(List<Tree> children){
+    public void setChildren(List<CodeStructureTree> children){
         int e_id = 0; // endIndex
-        for(Tree child : children){
+        for(CodeStructureTree child : children){
             this.children.add(child);
             e_id = child.getEndIndex();
         }
@@ -136,32 +139,19 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
 
     public String getDisplayContent(){
         String result = "";
-        //result += root.getId() + ": ";
-        if(children.size() == 0) result = root.getDisplayContent();//result += root.getAdditionalInfo() + " " + root.getDisplayContent( ) ;
+        result += root.getId() + ": ";
+        if(children.size() == 0) result += root.getDisplayContent();//result += root.getAdditionalInfo() + " " + root.getDisplayContent( ) ;
         else result += root.getType().toString().substring(5);
 
         return result;
     }
 
-
-    public List<CodeStructureTree> getAllNonleafTree(){
-        List<CodeStructureTree> result = new ArrayList<>();
-        if(children.size() != 0) {
-            result.add(this);
-            for(Tree child : children){
-                result.addAll(((CodeStructureTree)child).getAllNonleafTree());
-            }return result;
-        }
-        return result;
-    }
-
     public void updateJavadocInfo(){
-        Map<Integer , Node> leafNodes = this.getAllLeafNodes();
+        List<Node> leafNodes = this.getAllLeafNodes();
 
         String sql = "select name , javadoc from " + ApiDB.tableName + " where type = 'CLASS' and name = ?" ;
         ApiDB.conn.setPreparedStatement(sql);
-        for(int nodeId : leafNodes.keySet()){
-            Node leafNode = leafNodes.get(nodeId);
+        for(Node leafNode : leafNodes){
             ApiDB.conn.setString(1 , leafNode.getContent());
             ResultSet rs = ApiDB.conn.executeQuery();
             if(rs != null){

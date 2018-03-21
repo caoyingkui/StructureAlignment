@@ -1,5 +1,11 @@
+package cn.edu.pku.sei.structureAlignment;
+
 import cn.edu.pku.sei.structureAlignment.CodeLineRelation.CodeLineRelationGraph;
+import cn.edu.pku.sei.structureAlignment.feature.Feature;
+import cn.edu.pku.sei.structureAlignment.feature.FeatureFactory;
 import cn.edu.pku.sei.structureAlignment.parser.code.CodeVisitor;
+import cn.edu.pku.sei.structureAlignment.parser.code.StatementVisitor;
+import cn.edu.pku.sei.structureAlignment.parser.nlp.Dependency;
 import cn.edu.pku.sei.structureAlignment.parser.nlp.NLParser;
 import cn.edu.pku.sei.structureAlignment.tree.*;
 import cn.edu.pku.sei.structureAlignment.util.DoubleValue;
@@ -31,17 +37,26 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\8.txt"));
-
         //match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\9.txt"));
 
+        //match(new File("C:\\Users\\oliver\\Desktop\\test code snippets\\6.txt"));
+
+        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\contianning control sentence\\67.txt"));
+
+
+        File d = new File("C:\\Users\\oliver\\Desktop\\数据\\contianning control sentence");
         //File d = new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence");
-        File d = new File("C:\\Users\\oliver\\Desktop\\test code snippets");
+
+        //File d = new File("C:\\Users\\oliver\\Desktop\\数据\\stackoverflow");
+        //File d = new File("C:\\Users\\oliver\\Desktop\\test code snippets");
 
 
         File[] files = d.listFiles();
-        for(File file : files) {
-            match(file);
+        if(files != null) {
+            for (File file : files) {
+                match(file);
+                System.out.flush();
+            }
         }
         double precision = (globalWrong + globalRight) == 0 ? 0 : (double) globalRight / (globalRight + globalWrong) ;
         double recall = globalTotal == 0 ? 1 : (double)globalRight / globalTotal;
@@ -134,8 +149,8 @@ public class Main {
     }
 
     public static void compare(String codePath , String textPath){
-        ArrayList<CodeStructureTree> codeTrees = new ArrayList<CodeStructureTree>();
-        ArrayList<TextStructureTree> textTrees = new ArrayList<TextStructureTree>();
+        ArrayList<CodeStructureTree> codeTrees = new ArrayList<>();
+        ArrayList<TextStructureTree> textTrees = new ArrayList<>();
 
 
         try{
@@ -238,7 +253,9 @@ public class Main {
             List<TextStructureTree> verbNodes = vpTree.findAllVerb();
             for(TextStructureTree verbNode : verbNodes){
                 verbs.addAll(Stemmer.stem(verbNode.getContent()));
-                directNouns.addAll(Stemmer.stem(verbNode.getDependency("direct object")));
+                for(Dependency dependency : verbNode.getDependency("direct object")){
+                    directNouns.addAll(Stemmer.stem(dependency.getTarget()));
+                }
             }
 
             normalNouns.addAll(Stemmer.stem(vpTree.findAllNoun()));
@@ -248,7 +265,7 @@ public class Main {
                     normalNouns.remove(verb);
             }
 
-            codeNodes = codeTree.getAllNonleafTree();
+            codeNodes = codeTree.getAllNonleafTrees();
             //codeNodes = codeTree.getSpecificTypeNode(NodeType.CODE_MethodInvocation);
             if(verbs.contains("creat")) {
                 codeNodes.addAll( codeTree.getSpecificTypeNode(NodeType.CODE_ClassInstanceCreation) );
@@ -358,7 +375,7 @@ public class Main {
 
         for(int parent : parent_children.keySet()){
             List<Integer> children = parent_children.get(parent);
-            List<Integer> textChildren = new ArrayList<Integer>();
+            Set<Integer> textChildren = new HashSet<>();
 
             for(int codeId : children){
                 int textId = similarPairs.get(codeId);
@@ -378,18 +395,19 @@ public class Main {
     }
 
     static Map<Integer , Integer> findIdenticalNodes(CodeStructureTree codeTree , TextStructureTree textTree){
-        Map<Integer , Node> codeLeafNodes = codeTree.getAllLeafNodes();
-        Map<Integer , Node> textLeafNodes = textTree.getAllLeafNodes();
+        List<Node> codeLeafNodes = codeTree.getAllLeafNodes();
+        List<Node> textLeafNodes = textTree.getAllLeafNodes();
 
         Map<Integer , Integer> similarPairs = new HashMap<Integer, Integer>();
 
         // this array is used to store the text node which have been recognized as identical with some code node
         ArrayList<Integer> textNodes = new ArrayList<>();
-        for(int codeId : codeLeafNodes.keySet()){
-            Node codeNode = codeLeafNodes.get(codeId);
-            for(int textId : textLeafNodes.keySet()){
-                Node textNode = textLeafNodes.get(textId);
-                if(codeNode.compare(textNode) >= 0.5 && !textNodes.contains(textId)){
+        int codeId , textId;
+        for(Node codeNode : codeLeafNodes){
+            codeId = codeNode.getId();
+            for(Node textNode : textLeafNodes){
+                textId = textNode.getId();
+                if(codeNode.compare(textNode) >= 0.5 && !textNodes.contains(textNode.getId())){
                     textNodes.add(textId);
                     similarPairs.put(codeId , textId);
                     break;
@@ -399,39 +417,14 @@ public class Main {
         return similarPairs;
     }
 
-    static double howWellAreTwoTreesAreSimilar(CodeStructureTree codeTree , TextStructureTree textTree){
+    static double howWellAreTwoTreesAreSimilar(CodeStructureTree codeTree , TextStructureTree textTree , Map<String , Integer> tokenOccurFrequency){
         double result = 0;
 
-        Map<Integer , Node> codeLeafNodes = codeTree.getAllLeafNodes();
-        Map<Integer , Node> textLeafNodes = textTree.getAllLeafNodes();
+        List<Node> codeNodes = codeTree.getAllLeafNodes();
+        List<Node> textNodes = textTree.getAllLeafNodes();
 
-
-
-        List<Node> codeNodes = new ArrayList<>();
-        List<Node> textNodes = new ArrayList<>();
-
-        for(Integer codeId : codeLeafNodes.keySet()){
-            codeNodes.add(codeLeafNodes.get(codeId));
-        }
-        for(Integer textId : textLeafNodes.keySet()){
-            textNodes.add(textLeafNodes.get(textId));
-        }
-        Collections.sort(codeNodes, new Comparator<Node>() {
-            @Override
-            public int compare(Node o1, Node o2) {
-                return o1.getId() - o2.getId();
-            }
-        });
-
-        Collections.sort(textNodes, new Comparator<Node>() {
-            @Override
-            public int compare(Node o1, Node o2) {
-                return o1.getId() - o2.getId();
-            }
-        });
-
-        int codeLeafCount = codeLeafNodes.size();
-        int textLeafCount = textLeafNodes.size();
+        int codeLeafCount = codeNodes.size();
+        int textLeafCount = textNodes.size();
         String text = String.join( " " , textTree.getContent().trim().split("[ ]+") );
         Matrix<DoubleValue> matrix = new Matrix<>(codeLeafCount , textLeafCount , new DoubleValue(0));
         for(int i = 0 ; i < codeLeafCount ; i ++){
@@ -464,10 +457,19 @@ public class Main {
             for(int j = 0 ; j < textLeafCount ; j ++){
                 Node textNode = textNodes.get(j);
                 matrix.setValue(i , j , codeNode.compare(textNode));
+                //matrix.setValue(i , j , codeNode.compare(textNode , tokenOccurFrequency));
             }
         }
 
         Pair<Integer , Integer> max;
+        while((max = matrix.getMax(0.01)) != null){
+            int codeId = max.getKey();
+            int textId = max.getValue();
+            result += (4 * matrix.getCell(codeId , textId).getValue());
+            matrix.cleanRow(codeId);
+            matrix.cleanColumn( textId);
+        }
+        /*
         while((max = matrix.getMax(2)) != null){
             int codeId = max.getKey();
             int textId = max.getValue();
@@ -490,7 +492,7 @@ public class Main {
             result += 1;
             matrix.cleanRow(codeId);
             matrix.cleanColumn(textId);
-        }
+        }*/
 
         return result;
     }
@@ -499,8 +501,174 @@ public class Main {
         return word1.contains(word2)||word2.contains(word1);
     }
 
+    public static List<Pair<Integer , Integer>> match(CodeLineRelationGraph codeGraph , List<String> comments){
+        String codeString = codeGraph.getCode();
+        List<CodeStructureTree> codeTrees = codeGraph.getCodeLineTrees();
+        Matrix<DoubleValue> sliceMatrix = codeGraph.slicesMatrix;
+        List<TextStructureTree> textTrees = new ArrayList<>();
+        List<List<Feature>> featureList = new ArrayList<>();
 
 
+        for(String comment : comments){
+            TextStructureTree textTree = new TextStructureTree(0);
+            textTree.construct(new Sentence(comment));
+            textTrees.add(textTree);
+
+            //featureList.add(FeatureFactory.getFeatures(comment));
+        }
+
+        List<String> tokens = Stemmer.tokenize(codeString);
+        Map<String , Integer> tokenOccurFrequency = new HashMap<>();
+        for(String token : tokens){
+            token = token.toLowerCase();
+            if(tokenOccurFrequency.containsKey(token))
+                tokenOccurFrequency.put(token , tokenOccurFrequency.get(token));
+            else
+                tokenOccurFrequency.put(token , 1);
+        }
+
+
+        int codeTreeCount = codeTrees.size();
+        int textTreeCount = textTrees.size();
+        Matrix<DoubleValue> matrix = new Matrix<>(codeTreeCount , textTreeCount , new DoubleValue(0));
+
+        for(int i = 0 ; i < codeTreeCount ; i ++){
+            CodeStructureTree codeTree = codeTrees.get(i);
+            for(int j = 0 ; j < textTreeCount ; j ++){
+                TextStructureTree textTree = textTrees.get(j);
+                double sim = howWellAreTwoTreesAreSimilar(codeTree , textTree , tokenOccurFrequency);
+
+
+                /*List<Feature> features = featureList.get(j);
+                for(Feature feature : features){
+                    if(feature.match(codeTree)){
+                        sim += 4;
+                    }
+                }*/
+                matrix.setValue(i , j , sim);
+
+            }
+        }
+        matrix.print();
+
+        List<Pair<Integer , Integer>> matchScheme ;
+        if(textTreeCount > 8)
+            matchScheme = matrix.findBestMatchScheme(2);
+        else
+            matchScheme = matrix.findBestMatchScheme();
+        List<Pair<Integer , Integer>> finalMatchScheme = new ArrayList<>();
+
+        if(matchScheme != null) {
+            List<Integer> codeHasMatchedToSomeText = new ArrayList<Integer>();
+            for (Pair<Integer, Integer> pair : matchScheme) {
+                codeHasMatchedToSomeText.add(pair.getKey());
+            }
+
+            int codeCount = sliceMatrix.getM();
+            for (Pair<Integer, Integer> pair : matchScheme) {
+                int code = pair.getKey();
+                List<Integer> slice = new ArrayList<>();
+                Collections.sort(slice, new Comparator<Integer>() {
+                    @Override
+                    public int compare(Integer o1, Integer o2) {
+                        return o2 - o1;
+                    }
+                });
+
+                int temp = code - 1;
+                // temp + 1指向当前一行
+                while (temp > -1 && sliceMatrix.getCell(temp + 1, temp).getValue() == 1) {
+                    slice.add(temp);
+                    temp--;
+                }
+
+                temp = code + 1;
+                // temp - 1 指向当前一行
+                while (temp < codeCount && sliceMatrix.getCell(temp - 1, temp).getValue() == 1) {
+                    slice.add(temp);
+                    temp++;
+                }
+
+                boolean s = false;
+                for (Integer c : slice) {
+                    if (codeHasMatchedToSomeText.contains((Object) c)) {
+                        s = true;
+                        break;
+                    }
+                }
+
+                finalMatchScheme.add(new Pair<Integer, Integer>(code, pair.getValue()));
+                if (!s) {
+                    for (Integer c : slice) {
+                        finalMatchScheme.add(new Pair<Integer, Integer>(c, pair.getValue()));
+                    }
+                }
+
+            }
+        }
+
+
+        Collections.sort(finalMatchScheme, new Comparator<Pair<Integer, Integer>>() {
+            @Override
+            public int compare(Pair<Integer, Integer> o1, Pair<Integer, Integer> o2) {
+                return o1.getKey() - o2.getKey();
+            }
+        });
+
+        return finalMatchScheme;
+    }
+
+    static List<Object> parseTestFile(File file){
+        List<Object> result = new ArrayList<>();
+
+        try{
+            //region <read code>
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+            StringBuilder codeString = new StringBuilder("");
+            String line;
+            while((line = reader.readLine()).length() != 0){
+                codeString.append(line).append("\n");
+                codeLineCount ++;
+            }
+
+            result.add(codeString.toString());
+            //endregion <read code>
+
+
+            // region <read comments>
+            List<String> comments = new ArrayList<>();
+            List<TextStructureTree> textTrees = new ArrayList<>();
+            while((line = reader.readLine()).length() != 0){
+                comments.add(line);
+                codeString.append(line).append(" "); // for idf
+                commentCount ++;
+            }
+
+            result.add(comments);
+            // endregion <read comments>
+
+            //region <read annotations>
+            Map<Integer, Integer> annotations = new HashMap<>();
+            int codeLineNum;
+            int commentNum;
+            while((line = reader.readLine()).compareTo("END") != 0 ){
+                String[] nums = line.split(" ");
+                commentNum = Integer.parseInt(nums[1]);
+                for(String s : nums[0].split("\\|")){
+                    codeLineNum = Integer.parseInt(s);
+                    annotations.put(codeLineNum , commentNum);
+                }
+            }
+            result.add(annotations);
+            //endregion <read annotations>
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return result;
+
+    }
 
     /**
      * the file should be arranged as the following format:
@@ -516,157 +684,20 @@ public class Main {
 
         System.out.println(file.getAbsolutePath() + ":");
         try{
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            List<String> codeLines = new ArrayList<>();
-            String line;
-            while((line = reader.readLine()).length() != 0){
-                codeLines.add(line);
-                codeLineCount ++;
-            }
+
+            List<Object> metaInfo = parseTestFile(file);
+
+            String codeString = (String)metaInfo.get(0);
+            List<String> comments = (List<String>) metaInfo.get(1);
+            Map<Integer, Integer> annotations = (Map<Integer , Integer>) metaInfo.get(2);
+
             CodeLineRelationGraph graph = new CodeLineRelationGraph();
-            graph.build(codeLines);
-            Matrix<DoubleValue> sliceMatrix = graph.slicesMatrix;
-            List<CodeStructureTree> codeTrees = graph.getCodeLineTrees();
+            graph.build(codeString);
 
-
-            List<String> comments = new ArrayList<>();
-            List<TextStructureTree> textTrees = new ArrayList<>();
-            while((line = reader.readLine()).length() != 0){
-                comments.add(line);
-                commentCount ++;
-            }
-            for(String c : comments){
-                TextStructureTree textTree = new TextStructureTree(0);
-                textTree.construct( new Sentence( c));
-                textTrees.add(textTree);
-            }
-
-
-            Map<Integer, Integer> annotations = new HashMap<>();
-            int codeLineNum;
-            int commentNum;
-            while((line = reader.readLine()).compareTo("END") != 0 ){
-                String[] nums = line.split(" ");
-                commentNum = Integer.parseInt(nums[1]);
-                for(String s : nums[0].split("\\|")){
-                    codeLineNum = Integer.parseInt(s);
-                    annotations.put(codeLineNum , commentNum);
-                }
-
-
-            }
-
-            reader.close();
-
-            int codeTreeCount = codeTrees.size();
-            int textTreeCount = textTrees.size();
-
-            Matrix<DoubleValue> matrix = new Matrix<>(codeTreeCount , textTreeCount , new DoubleValue(0));
-
-            for(int i = 0 ; i < codeTreeCount ; i ++){
-                CodeStructureTree codeTree = codeTrees.get(i);
-                for(int j = 0 ; j < textTreeCount ; j ++){
-                    TextStructureTree textTree = textTrees.get(j);
-                    matrix.setValue(i , j , howWellAreTwoTreesAreSimilar(codeTree , textTree));
-                }
-            }
-            matrix.print();
-
-            List<Pair<Integer , Integer>> matchScheme = matrix.findBestMatchScheme();
-            List<Pair<Integer , Integer>> finalMatchScheme = new ArrayList<>();
-            List<Integer> codeHasMatchedToSomeText = new ArrayList<Integer>();
-            for(Pair<Integer , Integer> pair : matchScheme){
-                codeHasMatchedToSomeText.add(pair.getKey());
-            }
-
-            int codeCount = sliceMatrix.getM();
-            for(Pair<Integer ,Integer> pair : matchScheme){
-                int code = pair.getKey();
-                List<Integer> slice = new ArrayList<>();
-                Collections.sort(slice, new Comparator<Integer>() {
-                    @Override
-                    public int compare(Integer o1, Integer o2) {
-                        return o1 - o2;
-                    }
-                });
-
-                int temp = code - 1;
-                // temp + 1指向当前一行
-                while(temp > -1 && sliceMatrix.getCell(temp + 1 , temp ).getValue() == 1){
-                    slice.add(temp);
-                    temp --;
-                }
-
-                temp = code + 1;
-                // temp - 1 指向当前一行
-                while(temp < codeCount && sliceMatrix.getCell(temp - 1 , temp).getValue() == 1){
-                    slice.add(temp);
-                    temp ++;
-                }
-
-                boolean s = false;
-                for(Integer c : slice){
-                    if(codeHasMatchedToSomeText.contains( (Object)c)){
-                        s = true;
-                        break;
-                    }
-                }
-
-                finalMatchScheme.add(new Pair<Integer , Integer>(code , pair.getValue()));
-                if(!s){
-                    for(Integer c : slice){
-                        finalMatchScheme.add(new Pair<Integer ,Integer>(c , pair.getValue()));
-                    }
-                }
-
-            }
-
+            List<Pair<Integer , Integer>> finalMatchScheme = match(graph ,comments );
 
             analysesResult(finalMatchScheme , annotations);
-
-            /*
-            for(commentNum = 0 ; commentNum < textTreeCount ; commentNum ++){
-                codeLineNum = matrix.getColumnMax(commentNum , maxCode  , 2);
-
-                //数据中代码和注释的编号是从1开始的。
-                if(codeLineNum != -1){
-                    if(annotations.containsKey(codeLineNum + 1) && annotations.get(codeLineNum + 1) == commentNum + 1){
-                        right ++ ;
-                        System.out.print("  right:");
-                    }else{
-                        wrong ++ ;
-                        System.out.print("  wrong:");
-                    }
-                    System.out.println((codeLineNum + 1 )+ " " + ( commentNum + 1));
-                    maxCode = codeLineNum + 1;
-                }
-            }*/
-
-            //region <old>
-            /*
-            Pair<Integer , Integer> max;
-            while((max = matrix.getMax(2)) != null){
-                codeLineNum = max.getKey();
-                commentNum = max.getValue();
-                matrix.cleanRow(codeLineNum);
-                matrix.cleanColumn(commentNum);
-
-                //数据中代码和注释的编号是从1开始的。
-                codeLineNum ++;
-                commentNum ++ ;
-                if(annotations.containsKey(codeLineNum) && annotations.get(codeLineNum) == commentNum){
-                    right ++ ;
-                    System.out.print("  right:");
-                }else{
-                    wrong ++ ;
-                    System.out.print("  wrong:");
-                }
-                System.out.println(codeLineNum + " " + commentNum);
-
-            }*/
-            //endregion <old>
-
-
+            //analysesResult(matchScheme , annotations);
 
         }catch(Exception e){
             e.printStackTrace();

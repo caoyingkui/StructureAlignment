@@ -1,6 +1,7 @@
 package cn.edu.pku.sei.structureAlignment.tree;
 
 import cn.edu.pku.sei.structureAlignment.Printer;
+import com.google.protobuf.MapEntry;
 import javafx.util.Pair;
 
 import javax.swing.*;
@@ -12,8 +13,8 @@ import java.util.List;
  * Created by oliver on 2017/12/23.
  */
 public abstract class Tree<T extends Tree<T>>{
-    protected Node root;
-    protected List<Tree> children;
+    public Node root;
+    protected List<T> children;
     protected Tree parent;
 
     protected int width;
@@ -25,11 +26,7 @@ public abstract class Tree<T extends Tree<T>>{
     //region <setter>
 
 
-    public void setRoot(Node root) {
-        this.root = root;
-    }
-
-    public void setChildren(List<Tree> children) {
+    public void setChildren(List<T> children) {
         this.children = children;
     }
 
@@ -54,15 +51,11 @@ public abstract class Tree<T extends Tree<T>>{
         return root.getId();
     }
 
-    public Node getRoot() {
-        return root;
-    }
-
     public Tree getParent(){
         return this.parent;
     }
 
-    public List<Tree> getChildren() {
+    public List<T> getChildren() {
         return children;
     }
 
@@ -275,18 +268,18 @@ public abstract class Tree<T extends Tree<T>>{
     }
 
 
-    public Tree compress(){
-        if(children.size() == 0) return this;
+    public T compress(){
+        if(children.size() == 0) return (T)this;
         else if(children.size() == 1) return children.get(0).compress();
         else{
-            List<Tree> temp = new ArrayList<Tree>();
-            for(Tree child: children){
+            List<T> temp = new ArrayList<T>();
+            for(T child: children){
                 temp.add(child.compress());
             }
 
             children.clear();
             setChildren(temp);
-            return this;
+            return (T)this;
         }
 
     }
@@ -307,77 +300,109 @@ public abstract class Tree<T extends Tree<T>>{
     }
 
 
-    public Tree getTree(int id){
-        Tree result = null;
-        if(root.id == id) return this;
-        else{
-            int start , end = id + 1 , i;
-            Tree child;
-            for(i = children.size() - 1 ; i > -1 ; i--){
-                child = children.get(i);
-                start = child.getId();
-                if(id >= start && id < end){
+    public T getTree(int id){
+        if(root.id == id) return (T) this;
+        else {
+            for(T child : children){
+                if(child.startIndex <= id && child.endIndex >= id){
                     return child.getTree(id);
-                }else{
-                    end = start;
                 }
             }
         }
-        return result;
+        return null;
     }
 
     public Node getNode(int id){
-        Node result = null;
-        if(root.id == id) return root;
-        else{
-            for(Tree child : children){
-                result = getNode(id);
-                if(result != null)
-                    break;
-            }
-        }
-        return result;
+        T tree = getTree(id);
+        if(tree != null)
+            return tree.root;
+        else
+            return null;
     }
 
     public List<Node> getAllNodes(){
         List<Node> result = new ArrayList<Node>();
         result.add(root);
 
-        for(Tree child : children){
+        for(T child : children){
             result.addAll(child.getAllNodes());
         }
         return result;
     }
 
-    public Map<Integer , Node> getAllLeafNodes(){
-        Map<Integer , Node> result = new HashMap<Integer, Node>();
+    public List<T> getAllTrees(){
+        List<T> result = new ArrayList<>();
+        result.add((T)this);
+
+        for(T child : children){
+            result.addAll(child.getAllTrees());
+        }
+
+        return result;
+    }
+
+    public List< Node> getAllLeafNodes(){
+        List<Node> result = new ArrayList<>();
 
         if(children.size() == 0){
-            result.put(root.getId() , root);
+            result.add(root);
         } else{
-            for(Tree child : children){
-                result.putAll(child.getAllLeafNodes());
+            for(T child : children){
+                result.addAll(child.getAllLeafNodes());
             }
         }
 
+        Collections.sort(result , new Comparator<Node>(){
+            @Override
+            public int compare(Node o1, Node o2) {
+                return o1.id - o2.id;
+            }
+        });
         return result;
     }
 
-    public List<T> getAllNonleafNodes(){
-        List<T> result = null;
-        if(children.size() == 0) return null;
-        else{
-            result = new ArrayList<>();
+    public List<T> getAllLeafTrees(){
+        List<T> result = new ArrayList<>();
+
+        if(children.size() == 0){
             result.add((T)this);
-            for(Tree child : children){
-                List<T> r = child.getAllNonleafNodes();
-                if(r != null){
-                    result.addAll(r);
-                }
+        } else{
+            for(T child : children){
+                result.addAll(child.getAllLeafTrees());
+            }
+        }
+
+        Collections.sort(result, new Comparator<T>() {
+            @Override
+            public int compare(T o1, T o2) {
+                return o1.root.id - o2.root.id;
+            }
+        });
+        return result;
+    }
+
+    public List<Node> getAllNonleafNodes() {
+        List<Node> result =  new ArrayList<>();
+        if(children.size() > 0){
+            result.add(root);
+            for(T child : children){
+                result.addAll(child.getAllNonleafNodes());
             }
         }
         return result;
     }
+
+    public List<T> getAllNonleafTrees(){
+        List<T> result = new ArrayList<>();
+        if(children.size() > 0){
+            result.add((T)this);
+            for(T child : children){
+                result.addAll(child.getAllNonleafTrees());
+            }
+        }
+        return result;
+    }
+
 
     /**
      * get two leaf nodes' common parent
@@ -413,7 +438,7 @@ public abstract class Tree<T extends Tree<T>>{
         return -1;
     }
 
-    public int findCommonParents(List<Integer> nodes){
+    public int findCommonParents(Set<Integer> nodes){
         List< List<Integer>> paths = new ArrayList<List<Integer>>();
 
         for(int node : nodes){

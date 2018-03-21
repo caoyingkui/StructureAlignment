@@ -5,18 +5,15 @@ import cn.edu.pku.sei.structureAlignment.feature.Feature;
 import cn.edu.pku.sei.structureAlignment.feature.MethodInvocationFeature;
 import cn.edu.pku.sei.structureAlignment.tree.TextStructureTree;
 import cn.edu.pku.sei.structureAlignment.util.Stemmer;
-import javafx.util.Pair;
 import mySql.SqlConnector;
 import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
 import edu.stanford.nlp.semgraph.SemanticGraphEdge;
 import edu.stanford.nlp.simple.Sentence;
 import edu.stanford.nlp.trees.Tree;
-import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
-import org.osgi.framework.Bundle;
 
 import java.io.File;
 import java.sql.ResultSet;
@@ -78,8 +75,12 @@ public class NLParser  {
 
     }
 
+    public Map<String , String> getWord2class(){
+        return word2class;
+    }
+
     public static void main(String[] args){
-        NLParser p = new NLParser("Searching for words that sound like one another");
+        NLParser p = new NLParser("Delete 1 document");
         p.getUniversalDependency();
         p.getTextStructureTree().print();
         String subject = p.getSubjectiveNoun();
@@ -91,6 +92,10 @@ public class NLParser  {
         for(String noun : nouns){
             System.out.print(noun + " ");
         }
+
+        List<MethodInvocationFeature> featur = p.getFeature_verbsToFeature();
+        List<Feature> features = p.getFeatures();
+        List<Dependency> de = p.getUniversalDependency();
 
     }
 
@@ -293,7 +298,7 @@ public class NLParser  {
         List<String> result = new ArrayList<>();
         String label = tree.label().toString();
         if(contains(verbWordLevels , label)){
-            result.add(tree.getLeaves().get(0).toString());
+            result.add(tree.getLeaves().get(0).toString().toLowerCase());
         }else{
             if(tree.children().length > 0){
                 Tree[] children = tree.children();
@@ -305,15 +310,8 @@ public class NLParser  {
         return result;
     }
 
-    List<Dependency> getUniversalDependency(){
-        List<Dependency> result = new ArrayList<>();
-        Sentence sentence = new Sentence(nlText);
-        sentence.parse();
-        List<SemanticGraphEdge> edges = sentence.dependencyGraph().edgeListSorted();
-        for(SemanticGraphEdge edge : edges){
-            result.add(new Dependency(edge));
-        }
-        return result;
+    public List<Dependency> getUniversalDependency(){
+        return getTextStructureTree().dependencies;
     }
 
     public List<Feature> getFeatures(){
@@ -470,7 +468,7 @@ public class NLParser  {
      * @param words :
      * @return is a map from String to String
      */
-    static Map<String , String> getPossibleClass(Set<String> words){
+    public static Map<String , String> getPossibleClass(Set<String> words){
         Map<String , String> result = new HashMap<>();
         Map<String , String> resultNeedToTest = new HashMap<>();
         try {

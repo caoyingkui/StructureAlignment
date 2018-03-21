@@ -1,10 +1,13 @@
 package cn.edu.pku.sei.structureAlignment.tree;
 
+import cn.edu.pku.sei.structureAlignment.parser.nlp.Dependency;
 import cn.edu.pku.sei.structureAlignment.parser.nlp.NLParser;
 import edu.stanford.nlp.semgraph.SemanticGraphEdge;
 import edu.stanford.nlp.simple.*;
+import javafx.util.Pair;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,8 +16,16 @@ import java.util.Map;
  */
 public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tree<TextStructureTree>{
     private static int id;
-    private List<SemanticGraphEdge> dependencies;
+    public List<Dependency> dependencies;
 
+    // maxSimilarity用于在匹配节点时，如果maxSimilarity的值为1，就说明以前存在有完全匹配成功节点，那么部分相似的节点将不会加入matchedCodeNodeList
+    // 如果maxSimilarity的值小于1，说明前面匹配的节点都是部分相似的节点，如果匹配到完全相似的节点，那就把以前的匹配成功的节点全部清零。
+    // node中有maxSimilarity
+    // public double maxSimilarity = 0.0;
+
+    // matchedCodeNodeList 是用与记录当前节点的匹配历史
+    //map中的key，表示当前节点和k值指向的树存在相似或相同的节点，value存储的是list，表示树中匹配成功的节点编号
+    public Map<Integer , List<Integer>> matchedCodeNodeList ;
     public static void main(String[] args){
 
 
@@ -22,11 +33,11 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
         //NLParser parser = new NLParser("I have set rowCacheSize to 1000 (with your higher value, it took way too long)");
         //NLParser parser = new NLParser("I have set rowCacheSize to 1000");
 
-        NLParser parser = new NLParser("Finally assign the font instance to CellStyle instance");
+        NLParser parser = new NLParser("The first argument to the QueryParser constructor is the default search field");
         edu.stanford.nlp.trees.Tree tree = parser.getNLTree();
         tree.pennPrint();
         TextStructureTree structTree = new TextStructureTree(0);
-        structTree.construct(new Sentence("Finally assign the font instance to CellStyle instance"));
+        structTree.construct(new Sentence("you won't get the destination"));
 
         structTree.print();
         /*JFrame frame = new JFrame();
@@ -42,35 +53,65 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
 
     public TextStructureTree(int id){
         this.id = id;
-        children = new ArrayList<Tree>();
+        children = new ArrayList<TextStructureTree>();
+        matchedCodeNodeList = new HashMap<>();
     }
 
     private TextStructureTree(){
-        children = new ArrayList<Tree>();
+        children = new ArrayList<TextStructureTree>();
+        matchedCodeNodeList = new HashMap<>();
     }
 
     public synchronized void construct(Sentence sentence){
 
         construct(sentence.parse() , null);
 
-        List<TextStructureTree> leafs = new ArrayList<>();
-        Map<Integer , Node> leafNodes = getAllLeafNodes();
-        // the tree's order will be the same as the sentence's tokens' order
+        List<Integer> leafNodeIndexInTextTree = new ArrayList<>();
+        List<Node> leafNodes = getAllLeafNodes();
 
-        for(int i = 0 ; i <= endIndex ; i ++){
-            if(leafNodes.containsKey(i))
-                leafs.add((TextStructureTree) getTree(i));
+        // the tree's order will be the same as the sentence's tokens' order
+        for(Node node : leafNodes){
+            leafNodeIndexInTextTree.add(node.id);
         }
 
+        List<Dependency> dependencyList = new ArrayList<>();
         List<SemanticGraphEdge> edges = sentence.dependencyGraph().edgeListSorted();
         for(SemanticGraphEdge edge : edges){
+
+            Dependency dependency = new Dependency(edge);
+
+
             int source = edge.getSource().index();
             int target = edge.getTarget().index();
-            leafs.get(source - 1).addDependency(edge);
-            leafs.get(target - 1).addDependency(edge);
+            dependency.target.id = leafNodeIndexInTextTree.get(target - 1);
+            dependency.source.id = leafNodeIndexInTextTree.get(source - 1);
+            dependencyList.add(dependency);
         }
 
+        updateDependencyInfo(this , dependencyList);
+    }
 
+    private void updateDependencyInfo(TextStructureTree textTree , List<Dependency> dependencyList){
+        int startIndex = textTree.getStartIndex();
+        int endIndex = textTree.getEndIndex();
+
+        if(textTree.children.size() == 0) return;
+
+        List<Dependency> subDependencyList = new ArrayList<>();
+        for(Dependency dependency : dependencyList){
+            int targetIndex = dependency.source.id;
+            int sourceIndex = dependency.target.id;
+
+            if(targetIndex >= startIndex && targetIndex <= endIndex &&
+                    sourceIndex >= startIndex && sourceIndex <= endIndex){
+                subDependencyList.add(dependency);
+            }
+        }
+        textTree.dependencies = subDependencyList;
+
+        for(Tree child : textTree.children){
+            updateDependencyInfo((TextStructureTree) child , dependencyList);
+        }
     }
 
     private void construct(edu.stanford.nlp.trees.Tree tree , TextStructureTree parent) {
@@ -114,13 +155,14 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
         return result.trim();
     }
 
+
     public static NodeType getNodeType(String text){
         return NodeType.NULL;
     }
 
     public String getDisplayContent(){
-        return root.getDisplayContent();
-        //return root.getId() + ": " + root.getDisplayContent();
+        //return root.getDisplayContent();
+        return root.getId() + ": " + root.getDisplayContent();
     }
 
     public ArrayList<TextStructureTree> findAllVP(){
@@ -176,36 +218,19 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
         return result;
     }
 
-    public void addDependency(SemanticGraphEdge dependency){
-        if(dependencies == null){
-            dependencies = new ArrayList<>();
-        }
 
-        dependencies.add(dependency);
-    }
-
-    public List<String> getDependency(String relationName){
+    public List<Dependency> getDependency(String longName){
         String rootString = root.getContent();
-        List<String> result = new ArrayList<>();
+        List<Dependency> result = new ArrayList<>();
         if(children.size() > 0) return null;
         else{
-            for(SemanticGraphEdge edge : dependencies){
-                if(edge.getRelation().getLongName().compareTo(relationName) == 0){
-                    String sourceString = edge.getSource().word();
-                    String targetString = edge.getTarget().word();
-
-                    //两个中，总有一个是root结点的内容。
-                    if(sourceString.compareTo(rootString) != 0){
-                        result.add(sourceString);
-                    }else{
-                        result.add(targetString);
-                    }
+            for(Dependency dependency : dependencies){
+                if(dependency.getRelation().compareTo(longName) == 0){
+                    result.add(dependency);
                 }
             }
         }
-
         return result;
     }
-
 
 }

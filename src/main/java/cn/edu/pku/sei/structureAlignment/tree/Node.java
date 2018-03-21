@@ -10,6 +10,8 @@ import java.util.*;
  * Created by oliver on 2017/12/23.
  */
 public class Node {
+
+    public double maxSimilarity = 0;
     protected int id;
     protected NodeType type;
     protected String content;  // the original text of a node
@@ -85,7 +87,7 @@ public class Node {
      *          0.5: if two nodes' are partially identical
      *          0: if two nodes' are completely different
      */
-    public double compare(Node node){
+    public double  compare(Node node ){
         String content = this.getContent();
         String anotherContent = node.getContent();
 
@@ -95,7 +97,7 @@ public class Node {
         if(node.type == NodeType.CODE_StringLiteral) anotherContent = anotherContent.length() > 2 ? content.substring(1 , content.length() - 1) : "" ;
 
         if(content.trim().toLowerCase().compareTo(anotherContent.trim().toLowerCase()) == 0 || this.alternativesContains(anotherContent)) {
-            return 2;
+            return 1.0 ;
         }
 
         Set<String> words1 = new HashSet<String>();
@@ -107,7 +109,44 @@ public class Node {
         for(String word1 : words1){
             for(String word2 : words2 ){
                 if(word1.compareTo(word2) == 0){
-                    return 0.5;
+                    return 0.25;
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * @param node
+     * @return 2:  if two nodes' are completely identical and the content are not a class name.
+     *              I think this condition will be more reliable to predict two nodes are identical
+     *          1: if two nodes' are completely identical and the content are a class name
+     *          0.5: if two nodes' are partially identical
+     *          0: if two nodes' are completely different
+     */
+    public double compare(Node node , Map<String , Integer> tokenOccurFrequency){
+        String content = this.getContent();
+        String anotherContent = node.getContent();
+
+        //remove the punctuation "
+        if(this.type == NodeType.CODE_StringLiteral) content = content.length() > 2 ? content.substring(1 , content.length() - 1) : "";
+
+        if(node.type == NodeType.CODE_StringLiteral) anotherContent = anotherContent.length() > 2 ? content.substring(1 , content.length() - 1) : "" ;
+
+        if(content.trim().toLowerCase().compareTo(anotherContent.trim().toLowerCase()) == 0 || this.alternativesContains(anotherContent)) {
+            return 2.0 / tokenOccurFrequency.getOrDefault(anotherContent , 1);
+        }
+
+        Set<String> words1 = new HashSet<String>();
+        words1.addAll(Stemmer.stem(content + " " + this.getAdditionalInfo()));
+
+        Set<String> words2 = new HashSet<String>();
+        words2.addAll(Stemmer.stem(anotherContent + " " + node.getAdditionalInfo()));
+
+        for(String word1 : words1){
+            for(String word2 : words2 ){
+                if(word1.compareTo(word2) == 0){
+                    return 0.5 / tokenOccurFrequency.getOrDefault(anotherContent , 1);
                 }
             }
         }
