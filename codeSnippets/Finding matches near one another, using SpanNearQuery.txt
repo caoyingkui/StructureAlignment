@@ -1,0 +1,21 @@
+SpanQuery[] quick_brown_dog =new SpanQuery[]{quick, brown, dog};
+SpanNearQuery snq =new SpanNearQuery(quick_brown_dog, 0, true); // #1
+assertNoMatches(snq);
+dumpSpans(snq);
+snq = new SpanNearQuery(quick_brown_dog, 4, true); // #2
+assertNoMatches(snq);
+dumpSpans(snq);
+snq = new SpanNearQuery(quick_brown_dog, 5, true); // #3
+assertOnlyBrownFox(snq);
+dumpSpans(snq);
+// more slop to match
+snq = new SpanNearQuery(new SpanQuery[]{lazy, fox}, 3, false);// #4
+assertOnlyBrownFox(snq);
+dumpSpans(snq);
+PhraseQuery pq = new PhraseQuery(); // #5
+pq.add(new Term("f", "lazy")); // #5
+pq.add(new Term("f", "fox")); // #5
+pq.setSlop(4); // #5
+assertNoMatches(pq);
+pq.setSlop(5); // #6
+assertOnlyBrownFox(pq); 

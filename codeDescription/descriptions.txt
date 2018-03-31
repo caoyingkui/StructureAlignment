@@ -1,0 +1,7 @@
+Creating a TermRangeQuery using QueryParser
+BooleanQuery lets you logically AND the results from multiple queries
+Updating indexed Documents
+Searching for words that sound like one another
+QueryParser makes it trivial to translate search text into Query
+PrefixQuery finds all documents containing a specified prefix
+Demonstrates the simplicity of searching using a TermQuery
