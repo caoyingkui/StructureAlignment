@@ -1,12 +1,13 @@
 package cn.edu.pku.sei.structureAlignment;
 
 import cn.edu.pku.sei.structureAlignment.CodeLineRelation.CodeLineRelationGraph;
-import cn.edu.pku.sei.structureAlignment.feature.Feature;
-import cn.edu.pku.sei.structureAlignment.feature.FeatureFactory;
+import cn.edu.pku.sei.structureAlignment.feature.*;
 import cn.edu.pku.sei.structureAlignment.parser.code.CodeVisitor;
 import cn.edu.pku.sei.structureAlignment.parser.code.StatementVisitor;
 import cn.edu.pku.sei.structureAlignment.parser.nlp.Dependency;
 import cn.edu.pku.sei.structureAlignment.parser.nlp.NLParser;
+import cn.edu.pku.sei.structureAlignment.result.Result;
+import cn.edu.pku.sei.structureAlignment.result.ResultItem;
 import cn.edu.pku.sei.structureAlignment.tree.*;
 import cn.edu.pku.sei.structureAlignment.util.DoubleValue;
 import cn.edu.pku.sei.structureAlignment.util.Matrix;
@@ -35,17 +36,25 @@ public class Main {
     private static int codeLineCount = 0;
     private static int commentCount = 0;
 
+    private static Result noControlResult ;
+    private static Result controlResult;
+    private static Result result;
+
     public static void main(String[] args) throws IOException {
 
-        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\9.txt"));
-
-        //match(new File("C:\\Users\\oliver\\Desktop\\test code snippets\\6.txt"));
-
-        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\contianning control sentence\\67.txt"));
+        noControlResult = new Result();
+        controlResult = new Result();
+        result = new Result();
 
 
-        File d = new File("C:\\Users\\oliver\\Desktop\\数据\\contianning control sentence");
-        //File d = new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence");
+        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\192.txt"));
+
+        //match(new File("C:\\Users\\oliver\\Desktop\\test code snippets\\486.txt"));
+
+        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\contianning control sentence\\486.txt"));
+
+        //File d = new File("C:\\Users\\oliver\\Desktop\\数据\\contianning control sentence");
+        File d = new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence");
 
         //File d = new File("C:\\Users\\oliver\\Desktop\\数据\\stackoverflow");
         //File d = new File("C:\\Users\\oliver\\Desktop\\test code snippets");
@@ -58,94 +67,16 @@ public class Main {
                 System.out.flush();
             }
         }
+
+
+
         double precision = (globalWrong + globalRight) == 0 ? 0 : (double) globalRight / (globalRight + globalWrong) ;
         double recall = globalTotal == 0 ? 1 : (double)globalRight / globalTotal;
         System.out.printf("total code lines:%d total comments:%d\n" , codeLineCount , commentCount);
         System.out.printf("total:%d right:%d wrong:%d precision:%.2f recall:%.2f\n\n\n", globalTotal , globalRight , globalWrong , precision , recall);
         System.out.printf("");
 
-
-
-        /*File[] files = new File("codeSnippets").listFiles();
-
-        List<CodeLineRelationGraph> graphs = new ArrayList<>();
-        List<List<Feature>> features = new ArrayList<>();
-
-        for(File file : files){
-            String fileName = file.getName();
-            fileName = fileName.substring(0 , fileName.length() - 4);
-            //fileName = "Demonstrates the simplicity of searching using a TermQuery";
-            CodeLineRelationGraph graph = new CodeLineRelationGraph();
-
-            graph.build(file.getPath());
-            //graph.build("E:\\Intellij workspace\\StructureAlignment\\codeSnippets\\Demonstrates the simplicity of searching using a TermQuery.txt");
-
-            NLParser parser = new NLParser(fileName);
-
-            graphs.add(graph);
-
-            features.add(parser.getFeatures());
-        }
-
-        for(int i = 0 ; i < graphs.size() ; i ++){
-            for(int j = 0 ; j < graphs.size() ; j ++){
-                CodeLineRelationGraph graph = graphs.get(i);
-                List<Feature> feature = features.get(j);
-
-
-                System.out.print(i + "  " + j  + " : ");
-                System.out.print(graph.match(feature) + "  |   ");
-
-            }
-
-            System.out.println();
-        }
-
-
-        /*
-        CodeLineRelationGraph graph = new CodeLineRelationGraph();
-        graph.build("codeSnippets\\PrefixQuery finds all documents containing a specified prefix.txt");
-
-        NLParser parser = new NLParser("PrefixQuery finds all documents containing a specified prefix");
-
-        List<Feature> features = parser.getFeature();
-
-        int count = 0 ;
-        for(Feature feature : features){
-            if(feature.match(graph)){
-                count ++;
-            }
-        }
-
-        System.out.println(count);*
-
-        //compare("code.txt" , "text.txt");
-        /*List<CodeLineRelationGraph> graphs = new ArrayList<>();
-        List<String> description = new ArrayList<>();
-        File[] files = new File("codeSnippets").listFiles();
-        for(File file : files){
-            String path = file.getAbsolutePath();
-            CodeLineRelationGraph graph = new CodeLineRelationGraph();
-            graph.build(path);
-            graphs.add(graph);
-
-            String fileName = file.getName();
-            fileName = fileName.substring(0 , fileName.length() - 4);
-            description.add(fileName);
-        }
-
-        for(int i = 0 ; i < graphs.size() ; i ++){
-            System.out.println(i + " :" + description.get(i));
-            CodeLineRelationGraph graph = graphs.get(i);
-            graph.paint();
-            for(int j = 0 ; j < description.size() ; j ++){
-                if(graph.compare(description.get(j)) == 1){
-                    System.out.print(j + " ");
-                }
-            }
-            System.out.println();
-        }*/
-
+        result.print();
     }
 
     public static void compare(String codePath , String textPath){
@@ -431,14 +362,19 @@ public class Main {
         for(int i = 0 ; i < codeLeafCount ; i ++){
             Node codeNode = codeNodes.get(i);
             NodeType nodeType = codeNode.getType();
+            double factor = 2.0 / tokenOccurFrequency.get(codeNode.getContent());
+
+
             if(codeNode.getType() == NodeType.CODE_StringLiteral){
                 String codeText = codeNode.getContent();
                 codeText = codeText.length() > 2 ? codeText.substring(1 , codeText.length() - 1) : ""; // filter out the punctuation "
-                codeText = String.join(" " , codeText.trim().split("[ ]+"));
-                if(text.contains(codeText)){
-                    result += (4 * codeText.trim().split("[ ]{1}").length );
-                    matrix.cleanRow(i);
-                    continue;
+                if(codeText.trim().contains(" ")) {
+                    codeText = String.join(" ", codeText.trim().split("[ ]+"));
+                    if (text.contains(codeText)) {
+                        result += (4 * codeText.trim().split("[ ]{1}").length);
+                        matrix.cleanRow(i);
+                        continue;
+                    }
                 }
             }else if(nodeType == NodeType.ADDED_CHAR_LEFT_PARENTHESIS ||
                     nodeType == NodeType.ADDED_CHAR_RIGHT_PARENTHESIS ||
@@ -456,9 +392,10 @@ public class Main {
             }
 
             for(int j = 0 ; j < textLeafCount ; j ++){
+
                 Node textNode = textNodes.get(j);
-                matrix.setValue(i , j , codeNode.compare(textNode));
-                //matrix.setValue(i , j , codeNode.compare(textNode , tokenOccurFrequency));
+                double sim = codeNode.compare(textNode) * factor;
+                matrix.setValue(i , j , sim);
             }
         }
 
@@ -470,31 +407,18 @@ public class Main {
             matrix.cleanRow(codeId);
             matrix.cleanColumn( textId);
         }
-        /*
-        while((max = matrix.getMax(2)) != null){
-            int codeId = max.getKey();
-            int textId = max.getValue();
-            result += 4;
-            matrix.cleanRow(codeId);
-            matrix.cleanColumn(textId);
-        }
 
-        while((max = matrix.getMax(1)) != null){
-            int codeId = max.getKey();
-            int textId = max.getValue();
-            result += 2;
-            matrix.cleanRow(codeId);
-            matrix.cleanColumn(textId);
-        }
+        CreateClassFeature feature = new CreateClassFeature();
+        if(feature.getFeature(textTree))
+            result += feature.match(codeTree);
 
-        while((max = matrix.getMax(0.5)) != null){
-            int codeId = max.getKey();
-            int textId = max.getValue();
-            result += 1;
-            matrix.cleanRow(codeId);
-            matrix.cleanColumn(textId);
-        }*/
+        KeyWordFeature keyWordFeature = new KeyWordFeature();
+        if(keyWordFeature.getFeature(textTree))
+            result += keyWordFeature.match(codeTree);
 
+        /*MethodInvocationFeature methodInvocationFeature = new MethodInvocationFeature();
+        if(methodInvocationFeature.getFeature(textTree))
+            result += methodInvocationFeature.match(codeTree);*/
         return result;
     }
 
@@ -518,16 +442,7 @@ public class Main {
             //featureList.add(FeatureFactory.getFeatures(comment));
         }
 
-        List<String> tokens = Stemmer.tokenize(codeString);
-        Map<String , Integer> tokenOccurFrequency = new HashMap<>();
-        for(String token : tokens){
-            token = token.toLowerCase();
-            if(tokenOccurFrequency.containsKey(token))
-                tokenOccurFrequency.put(token , tokenOccurFrequency.get(token));
-            else
-                tokenOccurFrequency.put(token , 1);
-        }
-
+        Map<String , Integer> tokenOccurFrequency = codeGraph.tokenOccurFrequency;
 
         int codeTreeCount = codeTrees.size();
         int textTreeCount = textTrees.size();
@@ -649,16 +564,17 @@ public class Main {
             // endregion <read comments>
 
             //region <read annotations>
-            Map<Integer, Integer> annotations = new HashMap<>();
+            Map<Integer, List<Integer>> annotations = new HashMap<>();
             int codeLineNum;
             int commentNum;
             while((line = reader.readLine()).compareTo("END") != 0 ){
                 String[] nums = line.split(" ");
                 commentNum = Integer.parseInt(nums[1]);
-                for(String s : nums[0].split("\\|")){
-                    codeLineNum = Integer.parseInt(s);
-                    annotations.put(codeLineNum , commentNum);
+                List<Integer> codes = new ArrayList<>();
+                for(String codeNum : nums[0].split("\\|")){
+                    codes.add(Integer.parseInt(codeNum));
                 }
+                annotations.put(commentNum , codes);
             }
             result.add(annotations);
             //endregion <read annotations>
@@ -690,7 +606,7 @@ public class Main {
 
             String codeString = (String)metaInfo.get(0);
             List<String> comments = (List<String>) metaInfo.get(1);
-            Map<Integer, Integer> annotations = (Map<Integer , Integer>) metaInfo.get(2);
+            Map<Integer, List<Integer>> annotations = (Map<Integer , List<Integer>>) metaInfo.get(2);
 
             CodeLineRelationGraph graph = new CodeLineRelationGraph();
             graph.build(codeString);
@@ -707,14 +623,14 @@ public class Main {
         return 0;
     }
 
-    private static void analysesResult(List<Pair<Integer , Integer>> matchScheme , Map<Integer, Integer> annotations ){
+    private static void outputSingleResult(List<Pair<Integer , Integer>> matchScheme , Map<Integer, List<Integer>> annotations){
         int codeLineNum = 0 , commentNum = 0 ;
         int right = 0, wrong = 0;
         if(matchScheme != null) {
             for (Pair<Integer, Integer> pair : matchScheme) {
                 codeLineNum = pair.getKey() + 1;
                 commentNum = pair.getValue() + 1;
-                if (annotations.containsKey(codeLineNum) && annotations.get(codeLineNum) == commentNum) {
+                if (annotations.containsKey(commentNum) && annotations.get(commentNum).contains(codeLineNum)) {
                     right++;
                     System.out.print("  right:");
                 } else {
@@ -725,13 +641,105 @@ public class Main {
             }
         }
 
-        int total = annotations.size();
+        int total = 0;
+
+        for(Integer commentLine : annotations.keySet()){
+            total += annotations.get(commentLine).size();
+        }
+
         globalTotal += total;
         globalRight += right;
         globalWrong += wrong;
         double precision = (wrong + right) == 0 ? 0 : (double) right / (right + wrong) ;
         double recall = total == 0 ? 1 : (double)right / total;
         System.out.printf("total:%d right:%d wrong:%d precision:%.2f recall:%.2f\n\n\n", total , right , wrong , precision , recall);
+
+    }
+
+    private static void analysesResult(List<Pair<Integer , Integer>> matchScheme , Map<Integer, List<Integer>> annotations ){
+
+        outputSingleResult(matchScheme , annotations);
+
+
+        Map<Integer , Integer> code2comment = new HashMap<Integer , Integer> ();
+        for(int commentNum : annotations.keySet()){
+            for(Integer code : annotations.get(commentNum)){
+                code2comment.put(code , commentNum);
+            }
+        }
+
+        Map<Integer , List<Integer>> scheme = new HashMap<>();
+        for(Pair<Integer , Integer> pair : matchScheme){
+            int codeLine = pair.getKey() + 1;
+            int commentLine = pair.getValue() + 1;
+
+            if(scheme.containsKey(commentLine)){
+                scheme.get(commentLine).add(codeLine);
+            }else{
+                List<Integer> temp = new ArrayList<>();
+                temp.add(codeLine);
+                scheme.put(commentLine , temp);
+            }
+        }
+
+        for(int comment : annotations.keySet()){
+            List<Integer> annotation = annotations.get(comment);
+            int size = annotation.size();
+            if(size == 2){
+                int breakPoint = 0;
+            }
+
+            ResultItem item ;
+            if(result.items.containsKey(size)){
+                item = result.items.get(size);
+            }else{
+                item = new ResultItem();
+                result.items.put(size , item);
+            }
+            item.exampleCount ++;
+
+            if(scheme.containsKey(comment)){
+                List<Integer> matchResult = scheme.get(comment);
+
+                boolean wronglyMatch = false;
+                for(Integer code : matchResult){
+
+                    if(code2comment.containsKey(code) && code2comment.get(code) != comment){
+                        wronglyMatch = true;
+                        break;
+                    }
+                }
+
+                if(wronglyMatch){
+                    item.wronglyMatch  ++;
+                }else{
+
+                    boolean completely = true;
+                    int count = 0;
+                    for(int code : annotation){
+                        if(!matchResult.contains(code)){
+                            completely = false;
+                        }else{
+                            count ++;
+                        }
+                    }
+
+                    if(completely && count > 0){
+                        item.completelyMatch ++;
+                    }else if(!completely && count > 0){
+                        item.partlyMatch ++;
+                    }else if(count == 0){
+                        item.wronglyMatch ++;
+                    }
+                }
+
+            }else{
+                item.noMatch ++;
+            }
+        }
+
+
+
     }
 
 }

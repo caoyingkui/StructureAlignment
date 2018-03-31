@@ -315,7 +315,7 @@ public class NLParser  {
     }
 
     public List<Feature> getFeatures(){
-        if(features != null) return features;
+        /*if(features != null) return features;
         else features = new ArrayList<>();
 
         //region <how many class names are occurring in the text>
@@ -343,7 +343,8 @@ public class NLParser  {
         }
         //endregion <feature based on universal dependency>
 
-        return features;
+        return features;*/
+        return null;
     }
 
     ContainClassFeature getFeature_containClass(){
@@ -368,6 +369,8 @@ public class NLParser  {
      * @return
      */
     List<MethodInvocationFeature> getFeature_verbsToFeature(){
+        return null;
+        /*
         List<MethodInvocationFeature> result = new ArrayList<>();
         List<String> verbs = Stemmer.stem(findAllVerb(this.nlTree));
 
@@ -432,7 +435,7 @@ public class NLParser  {
         }
 
 
-        return result.size() > 0 ? result : null;
+        return result.size() > 0 ? result : null;*/
     }
 
     //region <get feature for different dependency>
@@ -446,6 +449,7 @@ public class NLParser  {
 
 
 
+        /*
         if(word2class.containsKey(dependency.source.word)){
             result.addReturnFeature(word2class.get(dependency.source.word));
             signal = true;
@@ -454,7 +458,7 @@ public class NLParser  {
         if(word2class.containsKey(dependency.target.word)){
             result.addIdentifierFeature(word2class.get(dependency.target.word));
             signal = true;
-        }
+        }*/
         //沒有加parameter
 
         return signal ? result : null;

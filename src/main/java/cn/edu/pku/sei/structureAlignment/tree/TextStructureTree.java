@@ -18,14 +18,7 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
     private static int id;
     public List<Dependency> dependencies;
 
-    // maxSimilarity用于在匹配节点时，如果maxSimilarity的值为1，就说明以前存在有完全匹配成功节点，那么部分相似的节点将不会加入matchedCodeNodeList
-    // 如果maxSimilarity的值小于1，说明前面匹配的节点都是部分相似的节点，如果匹配到完全相似的节点，那就把以前的匹配成功的节点全部清零。
-    // node中有maxSimilarity
-    // public double maxSimilarity = 0.0;
 
-    // matchedCodeNodeList 是用与记录当前节点的匹配历史
-    //map中的key，表示当前节点和k值指向的树存在相似或相同的节点，value存储的是list，表示树中匹配成功的节点编号
-    public Map<Integer , List<Integer>> matchedCodeNodeList ;
     public static void main(String[] args){
 
 
@@ -33,11 +26,11 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
         //NLParser parser = new NLParser("I have set rowCacheSize to 1000 (with your higher value, it took way too long)");
         //NLParser parser = new NLParser("I have set rowCacheSize to 1000");
 
-        NLParser parser = new NLParser("The first argument to the QueryParser constructor is the default search field");
+        NLParser parser = new NLParser("Create IndexWriter.");
         edu.stanford.nlp.trees.Tree tree = parser.getNLTree();
         tree.pennPrint();
         TextStructureTree structTree = new TextStructureTree(0);
-        structTree.construct(new Sentence("you won't get the destination"));
+        structTree.construct(new Sentence("Create a BooleanQuery for Author a1 and title t1."));
 
         structTree.print();
         /*JFrame frame = new JFrame();
@@ -54,12 +47,10 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
     public TextStructureTree(int id){
         this.id = id;
         children = new ArrayList<TextStructureTree>();
-        matchedCodeNodeList = new HashMap<>();
     }
 
     private TextStructureTree(){
         children = new ArrayList<TextStructureTree>();
-        matchedCodeNodeList = new HashMap<>();
     }
 
     public synchronized void construct(Sentence sentence){
@@ -79,7 +70,6 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
         for(SemanticGraphEdge edge : edges){
 
             Dependency dependency = new Dependency(edge);
-
 
             int source = edge.getSource().index();
             int target = edge.getTarget().index();
@@ -122,13 +112,15 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
 
         if(tree.children().length == 0){
             String content = tree.nodeString().trim();
-            root = new Node(type , content , id ++);
+            root = new Node(parent.root.getType() , content , id ++);
             root.setDisplayContent(rootLabel);
             startIndex = endIndex = root.getId();
 
         }else{
             int r_id = id ++;
             int e_id = 0; // endIndex
+            root = new Node(type , "" , r_id);
+            root.setDisplayContent(rootLabel);
             for(edu.stanford.nlp.trees.Tree child : tree.children()){
                 TextStructureTree temp = new TextStructureTree();
                 temp.construct(child , this);
@@ -136,8 +128,7 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
                 e_id = temp.getEndIndex();
             }
             String content = combineContentOfChildNode();
-            root = new Node(type , content , r_id);
-            root.setDisplayContent(rootLabel);
+            root.setContent(content);
             startIndex = r_id;
             endIndex = e_id;
         }
@@ -157,7 +148,131 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
 
 
     public static NodeType getNodeType(String text){
-        return NodeType.NULL;
+        if(text.compareTo("R") == 0){
+            return NodeType.TEXT_R ;
+        }else if(text.compareTo("S") == 0){
+            return NodeType.TEXT_S ;
+        }else if(text.compareTo("SBAR") == 0){
+            return NodeType.TEXT_SBAR ;
+        }else if(text.compareTo("SBARQ") == 0){
+            return NodeType.TEXT_SBARQ ;
+        }else if(text.compareTo("SINV") == 0){
+            return NodeType.TEXT_SINV;
+        }else if(text.compareTo("SQ") == 0){
+            return NodeType.TEXT_SQ ;
+        }else if(text.compareTo("ADJP") == 0){
+            return NodeType.TEXT_ADJP ;
+        }else if(text.compareTo("CONJP") == 0){
+            return NodeType.TEXT_CONJP ;
+        }else if(text.compareTo("FRAG") == 0){
+            return NodeType.TEXT_FRAG ;
+        }else if(text.compareTo("INTJ") == 0){
+            return NodeType.TEXT_INTJ ;
+        }else if(text.compareTo("LST") == 0){
+            return NodeType.TEXT_LST ;
+        }else if(text.compareTo("NAC") == 0){
+            return NodeType.TEXT_NAC ;
+        }else if(text.compareTo("NP") == 0){
+            return NodeType.TEXT_NP ;
+        }else if(text.compareTo("NX") == 0){
+            return NodeType.TEXT_NX ;
+        }else if(text.compareTo("PP") == 0){
+            return NodeType.TEXT_PP ;
+        }else if(text.compareTo("PRN") == 0){
+            return NodeType.TEXT_PRN ;
+        }else if(text.compareTo("PRT") == 0){
+            return NodeType.TEXT_PRT ;
+        }else if(text.compareTo("QP") == 0){
+            return NodeType.TEXT_QP ;
+        }else if(text.compareTo("RRC") == 0){
+            return NodeType.TEXT_RRC ;
+        }else if(text.compareTo("UCP") == 0){
+            return NodeType.TEXT_UCP ;
+        }else if(text.compareTo("VP") == 0){
+            return NodeType.TEXT_VP ;
+        }else if(text.compareTo("WHADJP") == 0){
+            return NodeType.TEXT_WHADJP ;
+        }else if(text.compareTo("WHAVP") == 0){
+            return NodeType.TEXT_WHAVP ;
+        }else if(text.compareTo("WHNP") == 0){
+            return NodeType.TEXT_WHNP ;
+        }else if(text.compareTo("WHPP") == 0){
+            return NodeType.TEXT_WHPP ;
+        }else if(text.compareTo("X") == 0){
+            return NodeType.TEXT_X ;
+        }else if(text.compareTo("CD") == 0){
+            return NodeType.TEXT_CD ;
+        }else if(text.compareTo("DT") == 0){
+            return NodeType.TEXT_DT ;
+        }else if(text.compareTo("EX") == 0){
+            return NodeType.TEXT_EX ;
+        }else if(text.compareTo("FW") == 0){
+            return NodeType.TEXT_FW ;
+        }else if(text.compareTo("IN") == 0){
+            return NodeType.TEXT_IN ;
+        }else if(text.compareTo("JJ") == 0){
+            return NodeType.TEXT_JJ ;
+        }else if(text.compareTo("JJR") == 0){
+            return NodeType.TEXT_JJR ;
+        }else if(text.compareTo("JJS") == 0){
+            return NodeType.TEXT_JJS ;
+        }else if(text.compareTo("LS") == 0){
+            return NodeType.TEXT_LS ;
+        }else if(text.compareTo("MD") == 0){
+            return NodeType.TEXT_MD ;
+        }else if(text.compareTo("NN") == 0){
+            return NodeType.TEXT_NN ;
+        }else if(text.compareTo("NNS") == 0){
+            return NodeType.TEXT_NNS ;
+        }else if(text.compareTo("NNP") == 0){
+            return NodeType.TEXT_NNP ;
+        }else if(text.compareTo("NNPS") == 0){
+            return NodeType.TEXT_NNPS ;
+        }else if(text.compareTo("PDT") == 0){
+            return NodeType.TEXT_PDT ;
+        }else if(text.compareTo("POS") == 0){
+            return NodeType.TEXT_POS ;
+        }else if(text.compareTo("PRP") == 0){
+            return NodeType.TEXT_PRP ;
+        }else if(text.compareTo("PRP$") == 0){
+            return NodeType.TEXT_PRP$ ;
+        }else if(text.compareTo("RB") == 0){
+            return NodeType.TEXT_RB ;
+        }else if(text.compareTo("RBR") == 0){
+            return NodeType.TEXT_RBR ;
+        }else if(text.compareTo("RBS") == 0){
+            return NodeType.TEXT_RBS ;
+        }else if(text.compareTo("RP") == 0){
+            return NodeType.TEXT_RP ;
+        }else if(text.compareTo("SYM") == 0){
+            return NodeType.TEXT_SYM ;
+        }else if(text.compareTo("TO") == 0){
+            return NodeType.TEXT_TO ;
+        }else if(text.compareTo("UH") == 0){
+            return NodeType.TEXT_UH ;
+        }else if(text.compareTo("VB") == 0){
+            return NodeType.TEXT_VB ;
+        }else if(text.compareTo("VBD") == 0){
+            return NodeType.TEXT_VBD ;
+        }else if(text.compareTo("VBG") == 0){
+            return NodeType.TEXT_VBG ;
+        }else if(text.compareTo("VBN") == 0){
+            return NodeType.TEXT_VBN ;
+        }else if(text.compareTo("VBP") == 0){
+            return NodeType.TEXT_VBP ;
+        }else if(text.compareTo("VBZ") == 0){
+            return NodeType.TEXT_VBZ ;
+        }else if(text.compareTo("WDT") == 0){
+            return NodeType.TEXT_WDT ;
+        }else if(text.compareTo("WP") == 0){
+            return NodeType.TEXT_WP ;
+        }else if(text.compareTo("WP$") == 0){
+            return NodeType.TEXT_WP$ ;
+        }else if(text.compareTo("WRB") == 0){
+            return NodeType.TEXT_WRB ;
+        }else {
+            return NodeType.NULL;
+        }
     }
 
     public String getDisplayContent(){
@@ -218,11 +333,10 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
         return result;
     }
 
-
     public List<Dependency> getDependency(String longName){
         String rootString = root.getContent();
         List<Dependency> result = new ArrayList<>();
-        if(children.size() > 0) return null;
+        if(dependencies.size() == 0) return null;
         else{
             for(Dependency dependency : dependencies){
                 if(dependency.getRelation().compareTo(longName) == 0){

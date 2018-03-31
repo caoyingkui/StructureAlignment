@@ -2,6 +2,7 @@ package cn.edu.pku.sei.structureAlignment.feature;
 
 import cn.edu.pku.sei.structureAlignment.CodeLineRelation.CodeLineRelationGraph;
 import cn.edu.pku.sei.structureAlignment.tree.CodeStructureTree;
+import cn.edu.pku.sei.structureAlignment.tree.TextStructureTree;
 
 import java.util.Map;
 
@@ -18,9 +19,9 @@ public abstract class Feature {
         return weight;
     }
 
-    public abstract boolean getFeature(String nlText );
+    public abstract boolean getFeature(TextStructureTree textTree);
 
     public abstract boolean getFeature(String nlText , Object... arguments);
 
-    public abstract boolean match(CodeStructureTree codeStructureTree);
+    public abstract double match(CodeStructureTree codeStructureTree);
 }

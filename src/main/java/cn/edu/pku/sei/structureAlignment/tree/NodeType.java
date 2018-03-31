@@ -156,5 +156,75 @@ public enum NodeType {
     ADDED_CHAR_QUESTION,            //?
     ADDED_CHAR_AT,                   // @
     ADDED_CHAR_ELLIPSIS,             // ...
+
+
+    TEXT_R,
+
+    //Clause Level
+    TEXT_S , //simple declarative clause, i.e. one that is not introduced by a (possible empty) subordinating conjunction or a wh-word and that does not exhibit subject-verb inversion.
+    TEXT_SBAR , //Clause introduced by a (possibly empty) subordinating conjunction.
+    TEXT_SBARQ , //Direct question introduced by a wh-word or a wh-phrase. Indirect questions and relative clauses should be bracketed as SBAR, not SBARQ.
+    TEXT_SINV , //Inverted declarative sentence, i.e. one in which the subject follows the tensed verb or modal.
+    TEXT_SQ  ,  //Inverted yes/no question, or main clause of a wh-question, following the wh-phrase in SBARQ.
+
+    //Phrase Level
+    TEXT_ADJP , //Adjective Phrase.
+    TEXT_ADVP , //Adverb Phrase.
+    TEXT_CONJP , //Conjunction Phrase.
+    TEXT_FRAG , //Fragment.
+    TEXT_INTJ , //Interjection. Corresponds approximately to the part-of-speech tag UH.
+    TEXT_LST , //List marker. Includes surrounding punctuation.
+    TEXT_NAC , // Not a Constituent; used to show the scope of certain prenominal modifiers within an NP.
+    TEXT_NP , //Noun Phrase.
+    TEXT_NX , //Used within certain complex NPs to mark the head of the NP. Corresponds very roughly to N-bar level but used quite differently.
+    TEXT_PP , //Prepositional Phrase.
+    TEXT_PRN , //Parenthetical.
+    TEXT_PRT , //Particle. Category for words that should be tagged RP.
+    TEXT_QP , //Quantifier Phrase (i.e. complex measure/amount phrase); used within NP.
+    TEXT_RRC , //Reduced Relative Clause.
+    TEXT_UCP , //Unlike Coordinated Phrase.
+    TEXT_VP , //Vereb Phrase.
+    TEXT_WHADJP , //Wh-adjective Phrase. Adjectival phrase containing a wh-adverb, as in how hot.
+    TEXT_WHAVP , //Wh-adverb Phrase. Introduces a clause with an NP gap. May be null (containing the 0 complementizer) or lexical, containing a wh-adverb such as how or why.
+    TEXT_WHNP , //Wh-noun Phrase. Introduces a clause with an NP gap. May be null (containing the 0 complementizer) or lexical, containing some wh-word, e.g. who, which book, whose daughter, none of which, or how many leopards.
+    TEXT_WHPP , //Wh-prepositional Phrase. Prepositional phrase containing a wh-noun phrase (such as of which or by whose authority) that either introduces a PP gap or is contained by a WHNP.
+    TEXT_X , //Unknown, uncertain, or unbracketable. X is often used for bracketing typos and in bracketing the...the-constructions.
+
+    //Word level
+    TEXT_CD , //Cardinal number
+    TEXT_DT , //Determiner
+    TEXT_EX , //Existential there
+    TEXT_FW , //Foreign word
+    TEXT_IN , //Preposition or subordinating conjunction
+    TEXT_JJ , //Adjective
+    TEXT_JJR , //Adjective, comparative
+    TEXT_JJS , //Adjective, superlative
+    TEXT_LS , //List item marker
+    TEXT_MD , //Modal
+    TEXT_NN , //Noun, singular or mass
+    TEXT_NNS , //Noun, plural
+    TEXT_NNP , //Proper noun, singular
+    TEXT_NNPS , //Proper noun, plural
+    TEXT_PDT , //Predeterminer
+    TEXT_POS , //Possessive ending
+    TEXT_PRP , //Personal pronoun
+    TEXT_PRP$ , //Possessive pronoun (prolog version PRP-S)
+    TEXT_RB , //Adverb
+    TEXT_RBR , //Adverb, comparative
+    TEXT_RBS , //Adverb, superlative
+    TEXT_RP , //Particle
+    TEXT_SYM , //Symbol
+    TEXT_TO , //to
+    TEXT_UH , //Interjection
+    TEXT_VB , //Verb, base form
+    TEXT_VBD , //Verb, past tense
+    TEXT_VBG , //Verb, gerund or present participle
+    TEXT_VBN , //Verb, past participle
+    TEXT_VBP , //Verb, non-3rd person singular present
+    TEXT_VBZ , //Verb, 3rd person singular present
+    TEXT_WDT , //Wh-determiner
+    TEXT_WP , //Wh-pronoun
+    TEXT_WP$ , // Possessive wh-pronoun (prolog version WP-S)
+    TEXT_WRB , //Wh-adverb
     NULL
 }

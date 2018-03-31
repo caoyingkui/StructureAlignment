@@ -108,7 +108,7 @@ public class CamelCaseDictionary {
                 former = former.subWords.get(token);
                 token = ++ index < tokenCount ? tokens[index].toLowerCase() : "";
             }
-            if(former.subWords.containsKey("")){
+            if(former.subWords.containsKey("") && former.baseWord.length() > 0){
                 String camelCaseWord = former.baseWord;
                 tokens[i] = camelCaseWord;
                 for(int j = i + 1 ; j <= index ; j ++){

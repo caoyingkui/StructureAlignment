@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 public class Stemmer {
     public static void  main(String[] args){
 
-        String words = "owner owned";
+        String words = "exists existing";
 
 
         for(String token : stem(words)){

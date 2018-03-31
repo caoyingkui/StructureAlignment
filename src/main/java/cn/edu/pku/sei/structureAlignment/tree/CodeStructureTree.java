@@ -37,7 +37,7 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
         ASTParser parser = ASTParser.newParser(AST.JLS8);
         ///parser.setSource("XSSFCellStyle style = new XSSFCellStyle(new StylesTable());".toCharArray());
         parser.setSource((
-                "A.var idField = new Field(\"id\", \"MyItemId\", Field.Store.YES, Field.Index.NOT_ANALYZED);"
+                "QueryParser parser = new QueryParser(Version.LUCENE_CURRENT,F, analyzer); "
 
                 ).toCharArray());
         //parser.setSource("d = null;".toCharArray());

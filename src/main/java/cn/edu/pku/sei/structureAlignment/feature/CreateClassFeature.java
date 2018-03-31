@@ -1,13 +1,17 @@
 package cn.edu.pku.sei.structureAlignment.feature;
 
+import cn.edu.pku.sei.structureAlignment.database.ApiDB;
 import cn.edu.pku.sei.structureAlignment.parser.nlp.Dependency;
 import cn.edu.pku.sei.structureAlignment.parser.nlp.NLParser;
 import cn.edu.pku.sei.structureAlignment.tree.CodeStructureTree;
 import cn.edu.pku.sei.structureAlignment.tree.NodeType;
+import cn.edu.pku.sei.structureAlignment.tree.TextStructureTree;
 import cn.edu.pku.sei.structureAlignment.tree.Tree;
 import cn.edu.pku.sei.structureAlignment.util.ClassNameList;
 
 import java.util.*;
+
+import static cn.edu.pku.sei.structureAlignment.tree.NodeType.CODE_VariableDeclarationStatement;
 
 /**
  * Created by oliver on 2018/3/10.
@@ -15,9 +19,11 @@ import java.util.*;
 public class CreateClassFeature extends Feature {
 
     Set<String> classSet ;
+    Set<String> optionalClassSet;
 
     public CreateClassFeature(){
         classSet = new HashSet<>();
+        optionalClassSet = new HashSet<>();
         weight = Feature.defaultWeight;
     }
 
@@ -26,31 +32,49 @@ public class CreateClassFeature extends Feature {
     }
 
     @Override
-    public  boolean getFeature(String nlText ){
-        NLParser nlParser = new NLParser(nlText);
+    public  boolean getFeature(TextStructureTree textTree){
+        boolean result = false;
+        List<Dependency> dependencies = textTree.getDependency("direct object");
+        if(dependencies != null) {
+            for (Dependency dependency : dependencies) {
+                ApiDB.conn.setPreparedStatement("select name from api where name = ? and type = 'CLASS'");
+                String verb = dependency.getSource().toLowerCase();
+                if (verb.compareTo("create") == 0 ||
+                        verb.compareTo("get") == 0 ||
+                        verb.compareTo("instantiate") == 0) {
+                    String object = dependency.getTarget();
 
-        if(nlText.toLowerCase().contains("create")){
-            List<Dependency> dependencies = nlParser.getUniversalDependency();
-            for(Dependency dependency : dependencies){
-                if(dependency.getSource().toLowerCase().compareTo("create") == 0){
-                    String target = dependency.getTarget();
-                    if(ClassNameList.contains(target)){
-                        classSet.add(target);
+                    ApiDB.conn.setString(1, object);
+                    try {
+                        if (ApiDB.conn.executeQuery().next()) {
+                            classSet.add(object);
+                            result = true;
+                        }else{
+                            optionalClassSet.add(object);
+                            result = true;
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
             }
+        }
 
-            if(classSet.size() == 0){
-                Map<String , String> word2class = nlParser.getWord2class();
-                for(String token : word2class.keySet()){
-                    classSet.add(word2class.get(token));
+        dependencies = textTree.getDependency("nmod_preposition");
+        dependencies.addAll(textTree.getDependency("nominal modifier"));
+        if(dependencies != null){
+            for(Dependency dependency : dependencies){
+                String verb = dependency.getSource().toLowerCase();
+                if(verb.compareTo("create") == 0 ||
+                        verb.compareTo("get") == 0){
+                    String object = dependency.getTarget();
+                    optionalClassSet.add(object);
+                    result = true;
                 }
-
             }
         }
 
-        if(classSet.size() == 0) return false;
-        else return true;
+        return result;
     }
 
     @Override
@@ -59,18 +83,56 @@ public class CreateClassFeature extends Feature {
     }
 
     @Override
-    public boolean match(CodeStructureTree codeStructureTree) {
+    public double match(CodeStructureTree codeStructureTree) {
 
-        List<CodeStructureTree> trees = findClassInstanceCreationNode(codeStructureTree);
+        if(classSet.size() > 0){
+            if(findVariableDeclarationStatement(codeStructureTree , classSet))
+                return 4;
+            else
+                return -4;
+        }else if(optionalClassSet.size() > 0){
+            if(findVariableDeclarationStatement(codeStructureTree , optionalClassSet))
+                return 4;
+            else
+                return 0;
+        }
 
-        for(CodeStructureTree tree : trees){
-            String code = tree.getCode();
-            for(String clazz : classSet){
-                if(code.contains(clazz))
-                    return true;
+        return 0;
+    }
+
+    private boolean findVariableDeclarationStatement(CodeStructureTree codeTree , Set<String> clazzSet){
+        if(codeTree.root.getType() == CODE_VariableDeclarationStatement ){
+            return findClassName(codeTree , clazzSet);
+        }else{
+            List<CodeStructureTree> children = codeTree.getChildren();
+            if(children.size() > 0){
+                for(CodeStructureTree child : children){
+                    if(findVariableDeclarationStatement(child , clazzSet))
+                        return true;
+                }
+                return false;
+            }else{
+                return false;
             }
         }
-        return false;
+    }
+
+    private boolean findClassName(CodeStructureTree codeTree , Set<String> clazzSet){
+
+        List<CodeStructureTree> children = codeTree.getChildren();
+        if(children.size() == 0){
+            if(clazzSet.contains(codeTree.getCode())){
+                return true;
+            }else{
+                return false;
+            }
+        }else{
+            for(CodeStructureTree child : children){
+                if(findClassName(child , clazzSet))
+                    return true;
+            }
+            return false;
+        }
     }
 
     private List<CodeStructureTree> findClassInstanceCreationNode(CodeStructureTree tree){

@@ -9,6 +9,7 @@ import mySql.SqlConnector;
 import org.eclipse.jdt.core.dom.*;
 
 
+import java.io.*;
 import java.sql.ResultSet;
 import java.util.*;
 
@@ -2556,6 +2557,8 @@ public class CodeVisitor extends ASTVisitor {
     @Override
     public boolean visit(StringLiteral node) {
 
+
+
         Node root = new Node(NodeType.CODE_StringLiteral , node.toString(), id ++);
         root.setDisplayContent(node.toString()); // 显示的是带引号的，如"test" , 实际匹配的时候用的是不带引号的， 如test.
         String camelCasePattern = "([^\\p{L}\\d]+)|(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)|(?<=[\\p{L}&&[^\\p{Lu}]])(?=\\p{Lu})|(?<=\\p{Lu})(?=\\p{Lu}[\\p{L}&&[^\\p{Lu}]])";
@@ -2563,6 +2566,22 @@ public class CodeVisitor extends ASTVisitor {
                 String.join("" ,
                         node.toString().split(camelCasePattern))
         );
+
+        StringBuilder content = new StringBuilder(node.toString());
+        String additionalInfo = content.substring(1 , content.length() - 1).replaceAll("[{|}]" , " curly bracket ").
+                replaceAll("[\\[|\\]]" , " square bracket ").
+                replaceAll(":" , " colon ").
+                replaceAll("\\." , " period ").
+                replaceAll("," , " comma ").
+                replaceAll("\\?" , " question mark ").
+                replaceAll("\\.\\.\\." , " ellipsis ").
+                replaceAll("@" , " at ").
+                replaceAll("\\*" , " asterisk ").
+                replaceAll("['|\"]" , " quotation mark ");
+
+        if(additionalInfo.compareTo(node.toString())!= 0)
+            root.setAdditionalInfo(additionalInfo);
+
         tree = new CodeStructureTree(root ,  node.toString() , parent);
 
         return false;
@@ -3560,12 +3579,13 @@ public class CodeVisitor extends ASTVisitor {
                     }
                     System.out.println();
                 }else{
-                    System.out.println("Warning from CodeVisitor.getMostPossibleAPIInfo:");
+                    ;
+                    /*System.out.println("Warning from CodeVisitor.getMostPossibleAPIInfo:");
                     System.out.print("  There is no result: ");
                     for(String feature : features.keySet()){
                         System.out.print(feature + " = '" + features.get(feature) + "' ");
                     }
-                    System.out.println();
+                    System.out.println();*/
                 }
             }catch (Exception e){
                 e.printStackTrace();

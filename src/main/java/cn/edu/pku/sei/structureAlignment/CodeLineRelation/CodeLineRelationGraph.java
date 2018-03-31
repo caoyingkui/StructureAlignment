@@ -67,6 +67,8 @@ public class CodeLineRelationGraph extends JPanel{
     private List<CodeStructureTree> codeLineTrees;
     public Matrix<DoubleValue> slicesMatrix;
 
+    public Map<String , Integer> tokenOccurFrequency;
+
     public String getCode(){
         return code;
     }
@@ -77,13 +79,40 @@ public class CodeLineRelationGraph extends JPanel{
 
     public static void main(String[] args){
         CodeLineRelationGraph graph = new CodeLineRelationGraph();
-        graph.build("code.txt ");
+        graph.build("Metadata metadata = new Metadata();\n" +
+                "metadata.set(Metadata.RESOURCE_NAME_KEY, f.getName()); // 4\n" +
+                "InputStream is = new FileInputStream(f); // 5\n" +
+                "Parser parser = new AutoDetectParser(); // 6\n" +
+                "ContentHandler handler = new BodyContentHandler(); // 7\n" +
+                "ParseContext context = new ParseContext(); // 8\n" +
+                "context.set(Parser.class, parser); // 8\n" +
+                "try {\n" +
+                "\tparser.parse(is, handler, metadata, new ParseContext()); // 9\n" +
+                "} finally {\n" +
+                "\tis.close();}\n" +
+                "Document doc = new Document();\n" +
+                "doc.add(new Field(\"contents\", handler.toString(), Field.Store.NO, Field.Index.ANALYZED)); // 10\n" +
+                "if (DEBUG) {\n" +
+                "\tSystem.out.println(\" all text: \" + handler.toString());}\n" +
+                "for(String name : metadata.names()) { //11\n" +
+                "\tString value = metadata.get(name);\n" +
+                "\tif (textualMetadataFields.contains(name)) {\n" +
+                "\t\tdoc.add(new Field(\"contents\", value, Field.Store.NO, Field.Index.ANALYZED));} // 12\n" +
+                "\tdoc.add(new Field(name, value, Field.Store.YES, Field.Index.NO)); //13\n" +
+                "\tif (DEBUG) {\n" +
+                "\t\tSystem.out.println(\" \" + name + \": \" + value);}}\n" +
+                "if (DEBUG) {\n" +
+                "\tSystem.out.println();}\n" +
+                "doc.add(new Field(\"filename\", f.getCanonicalPath(), //14\n" +
+                "Field.Store.YES, Field.Index.NOT_ANALYZED));\n" +
+                "return doc;");
         graph.paint();
     }
 
     public CodeLineRelationGraph(){
         codeLineRelationNodes = new ArrayList<>();
         codeLineTrees = new ArrayList<>();
+        tokenOccurFrequency = new HashMap<>();
     }
 
 
@@ -111,6 +140,7 @@ public class CodeLineRelationGraph extends JPanel{
     public void build(String code){
         this.code = code;
         build(getStatements(code));
+        calculateTokenOccurFrequency();
     }
 
     /**
@@ -438,6 +468,7 @@ public class CodeLineRelationGraph extends JPanel{
         int statementsCount = statements.size();
         slicesMatrix = new Matrix<>(statementsCount , statementsCount , new DoubleValue(0));
 
+        //line_variable记录在某行中，一共定义了多少变量名
         Map<Integer , List<String>> line_variable = new HashMap<>();
         for(String variable : variable_declarationLine.keySet()){
             int line = variable_declarationLine.get(variable);
@@ -519,49 +550,69 @@ public class CodeLineRelationGraph extends JPanel{
 
             }else if(statement instanceof IfStatement ||
                     statement instanceof WhileStatement ||
-                    statement instanceof ForStatement){
-                int size = (int)statement.getProperty("size");
-                if(size == 2){
-                    int start = (int) statement.getProperty("start");
-                    int end = (int) statement.getProperty("end");
+                    statement instanceof ForStatement ||
+                    statement instanceof TryStatement ||
+                    statement instanceof EnhancedForStatement ||
+                    statement instanceof DoStatement){
 
-                    slicesMatrix.setValue(start , end , 1);
-                    slicesMatrix.setValue(end , start , 1);
-                    i = end;
+                int statementCount = 0;
+                int start = (int) statement.getProperty("start");
+                int end = (int) statement.getProperty("end");
+                for(int j = start + 1 ; j < end ; ){
+                    ASTNode statementTemp = statements.get(j);
+                    statementCount ++ ;
+
+                    Object next = statementTemp.getProperty("end");
+                    if(next == null)
+                        j ++;
+                    else
+                        j = (int) next + 1;
                 }
 
+                if(statementCount < 4) { // 一个这样的切块不能超过两句
+                    String blockString = "";
+                    for(int j = start ; j < end ; j++){
+                        blockString += statements.get(j).toString() + "\n";
+                        slicesMatrix.setValue(j , j + 1 , 1);
+                        slicesMatrix.setValue(j + 1 , j , 1);
+                    }
+
+                    for(int j = start - 1; j > -1 ; j --){
+                        if(line_variable.containsKey(j)){
+                            boolean signal = false;
+                            for(String variable : line_variable.get(j)){
+                                if(blockString.contains(variable)){
+                                    signal = true;
+                                    slicesMatrix.setValue(j , j + 1 , 1);
+                                    slicesMatrix.setValue(j + 1 , j , 1);
+                                    break;
+                                }
+                            }
+                            if(!signal)
+                                break;
+                        }else {
+                            break;
+                        }
+                    }
+                }
             }
         }
 
-        //slicesMatrix.print(0);
+        return;
+    }
 
-        /*for(int i = 0 ; i < statementsCount ; i ++){
-            List<Integer> list = new ArrayList<>();
-            Collections.sort(list, new Comparator<Integer>() {
-                @Override
-                public int compare(Integer o1, Integer o2) {
-                    return o1 - o2;
+    private void calculateTokenOccurFrequency(){
+        for(CodeStructureTree codeTree : codeLineTrees){
+            List<Node> leafNodes = codeTree.getAllLeafNodes();
+            for(Node leafNode : leafNodes){
+                String content = leafNode.getContent();
+
+                if(tokenOccurFrequency.containsKey(content)){
+                    tokenOccurFrequency.put(content , tokenOccurFrequency.get(content) + 1);
+                }else{
+                    tokenOccurFrequency.put(content , 1);
                 }
-            });
-
-            list.add(i);
-            int temp = i;
-            while(temp > 0 && slicesMatrix.getCell(temp , temp - 1).getValue() == 1 ){
-                list.add(temp - 1);
-                temp = temp - 1;
             }
-
-            temp = i + 1;
-            while(temp < statementsCount && slicesMatrix.getCell(temp - 1 , temp).getValue() == 1 ){
-                list.add(temp);
-                temp = temp + 1;
-            }
-
-            System.out.print(i + 1 + " : " );
-            for(int index : list){
-                System.out.print(index + 1 + " ");
-            }
-            System.out.println();
-        }*/
+        }
     }
 }

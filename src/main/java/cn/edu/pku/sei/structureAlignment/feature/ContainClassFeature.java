@@ -9,7 +9,7 @@ import java.util.*;
 /**
  * Created by oliver on 2018/1/19.
  */
-public class ContainClassFeature extends Feature {
+public class ContainClassFeature {
     List<Set<String>> classes ;
 
     public ContainClassFeature(){
@@ -77,23 +77,23 @@ public class ContainClassFeature extends Feature {
     }
 
 
-    @Override
+
     public double getWeight() {
-        return super.getWeight();
+        return 0;
     }
 
-    @Override
+
     public boolean getFeature(String nlText) {
         return false;
     }
 
-    @Override
+
     public boolean getFeature(String nlText, Object... arguments) {
         return false;
     }
 
-    @Override
-    public boolean match(CodeStructureTree codeStructureTree) {
-        return false;
+
+    public double match(CodeStructureTree codeStructureTree) {
+        return 1;
     }
 }

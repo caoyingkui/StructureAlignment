@@ -8,112 +8,16 @@ import cn.edu.pku.sei.structureAlignment.tree.NodeType;
 import cn.edu.pku.sei.structureAlignment.tree.TextStructureTree;
 import cn.edu.pku.sei.structureAlignment.util.Stemmer;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by oliver on 2018/1/18.
  */
-public class MethodInvocationFeature extends Feature{
-    Set<String> qualifiedNameFeature;
-    Set<String> returnFeature;
-    Set<String> identifierFeature;
-    Set<String> parameterFeature;
-
-    public static void main(String[] args){
-        MethodInvocationFeature feature = new MethodInvocationFeature();
-        feature.getFeature("Looking at your code I think you need to add each query " +
-                "(one for the SearchKey and one for the Type) to the BooleanQuery like below");
-    }
+public class MethodInvocationFeature extends Feature {
+    Map<String , Set<String>> verbObjectGroup ;
 
     public MethodInvocationFeature(){
-        returnFeature = null;
-        identifierFeature = null;
-        parameterFeature = null;
-    }
-
-    public void addReturnFeature(String feature){
-        if(returnFeature == null)
-            returnFeature = new HashSet<>();
-        returnFeature.add(feature);
-    }
-
-    public void addIdentifierFeature(String feature){
-        if(identifierFeature == null)
-            identifierFeature = new HashSet<>();
-        identifierFeature.add(feature);
-    }
-
-    public void addParameterFeature(String feature){
-        if(parameterFeature == null)
-            parameterFeature = new HashSet<>();
-        parameterFeature.add(feature);
-    }
-
-    public void setReturnFeature(Set<String> classes){
-        returnFeature = new HashSet<>();
-        returnFeature.addAll(classes);
-    }
-
-    public void setIdentifierFeature(Set<String> classes){
-        identifierFeature = new HashSet<>();
-        identifierFeature.addAll(classes);
-    }
-
-    public void setParameterFeature(Set<String> parameterFeature){
-        this.parameterFeature = new HashSet<String>();
-
-        ArrayList<String> temp = new ArrayList<>();
-        temp.addAll(parameterFeature);
-        parameterFeature.addAll(Stemmer.stem(temp));
-    }
-
-    public boolean match(CodeLineRelationGraph graph) {
-        boolean result = false;
-        for(CodeStructureTree tree : graph.getCodeLineTrees()){
-            String code = tree.getCode();
-            List<String> tokens = Stemmer.stem(code);
-
-            if(returnFeature != null){
-                result = false;
-                for(String clazz : returnFeature){
-                    if(tokens.contains(clazz)){
-                        result = true;
-                        break;
-                    }
-                }
-            }
-
-            if(!result) continue;
-
-            if(identifierFeature != null){
-                result = false;
-                for(String clazz : identifierFeature){
-                    if(tokens.contains(clazz)){
-                        result = true;
-                        break;
-                    }
-                }
-            }
-
-            if(!result) continue;
-
-            if(parameterFeature != null){
-                result = false;
-                for(String clazz : parameterFeature){
-                    if(tokens.contains(clazz)) {
-                        result = true;
-                        break;
-                    }
-                }
-            }
-
-            if(result) break;
-        }
-
-        return result;
+        verbObjectGroup = new HashMap<>();
     }
 
     @Override
@@ -122,26 +26,25 @@ public class MethodInvocationFeature extends Feature{
     }
 
     @Override
-    public boolean getFeature(String nlText) {
+    public boolean getFeature(TextStructureTree textTree) {
+        boolean result = false;
+        List<Dependency> dependencies = textTree.getDependency("direct object");
+        if(dependencies.size() > 0 ){
+            result = true;
+            for(Dependency dependency : dependencies){
+                String verb = dependency.getSource().toLowerCase();
+                String object = dependency.getTarget().toLowerCase();
 
-        NLParser nlParser = new NLParser(nlText);
-        TextStructureTree textTree = nlParser.getTextStructureTree();
-
-        List<Dependency> dobjDependencies = textTree.getDependency("direct object");
-        List<Dependency> nmodDependencies = textTree.getDependency("nominal modifier");
-
-        for(Dependency dependency : dobjDependencies){
-            int verbId = dependency.source.id;
-
-
-
+                if(verbObjectGroup.containsKey(verb)){
+                    verbObjectGroup.get(verb).add(object);
+                }else{
+                    Set<String> objects = new HashSet<>();
+                    objects.add(object);
+                    verbObjectGroup.put(verb , objects);
+                }
+            }
         }
-
-
-
-
-
-        return false;
+        return result;
     }
 
     @Override
@@ -150,7 +53,70 @@ public class MethodInvocationFeature extends Feature{
     }
 
     @Override
-    public boolean match(CodeStructureTree codeStructureTree) {
-        return false;
+    public double match(CodeStructureTree codeStructureTree) {
+        return 4 * findMethodInvocation(codeStructureTree);
+    }
+
+    private double findMethodInvocation(CodeStructureTree codeTree){
+        double result = 0 ;
+        List<CodeStructureTree> children = codeTree.getChildren();
+        if(children.size() == 0)
+            return 0;
+        else{
+            if(codeTree.root.getType() == NodeType.CODE_MethodInvocation){
+                for(String verb : verbObjectGroup.keySet()){
+                    double findVerbResult = findVerb(codeTree , verb);
+                    if(findVerbResult >= 0)
+                        result += findVerbResult * findObjects(codeTree , verbObjectGroup.get(verb));
+                }
+                return result;
+            }else{
+                for(CodeStructureTree child : children){
+                    result += findMethodInvocation(child);
+                }
+                return result;
+            }
+        }
+    }
+
+    private double findVerb(CodeStructureTree codeTree , String verb ){
+        double result = 0;
+        List<CodeStructureTree> children = codeTree.getChildren();
+        if(children.size() == 0){
+            String content = codeTree.getContent().toLowerCase();
+            if(content.compareTo(verb) == 0 ||
+                    content.contains(verb)){
+                return 1;
+            }
+        }else{
+            for(CodeStructureTree child : children){
+                result = findVerb(child , verb);
+                if(result > 0)
+                    return result;
+            }
+
+        }
+        return 0;
+    }
+
+    private double findObjects(CodeStructureTree codeTree , Set<String> objects){
+        double result = 0;
+        if(objects.size() == 0)
+            return 0;
+        List<CodeStructureTree> children = codeTree.getChildren();
+        if(children.size() == 0){
+            String content = codeTree.getContent().toLowerCase();
+            if(objects.contains(content)){
+                objects.remove(content);
+                return 1;
+            }else{
+                return 0;
+            }
+        }else{
+            for(CodeStructureTree child : children){
+                result += findObjects(codeTree , objects);
+            }
+            return result;
+        }
     }
 }
