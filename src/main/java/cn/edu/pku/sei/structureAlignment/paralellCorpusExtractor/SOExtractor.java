@@ -6,6 +6,7 @@ import cn.edu.pku.sei.structureAlignment.parser.nlp.Dependency;
 import cn.edu.pku.sei.structureAlignment.parser.nlp.NLParser;
 import cn.edu.pku.sei.structureAlignment.tree.*;
 import cn.edu.pku.sei.structureAlignment.util.CamelCaseDictionary;
+import cn.edu.pku.sei.structureAlignment.util.Stemmer;
 import cn.edu.pku.sei.structureAlignment.util.StopWordList;
 import edu.stanford.nlp.simple.Sentence;
 import javafx.util.Pair;
@@ -33,17 +34,22 @@ public class SOExtractor {
     private ASTParser parser;
     private int pairs = 0;
     private static int testID = 12;
+    private static int parallelCount = 0;
+    private static int postsCount = 0;
 
     public static void main(String[] args) {
         SOExtractor extractor = new SOExtractor();
-        //extractor.selectPosts();
+        extractor.selectPosts();
+        extractor.parseSOPosts();
+        System.out.println("parallel:" + parallelCount);
+        System.out.println("posts:" + postsCount);
         //extractor.extractParallelCorpus();
 
         /*List<String> sentences = new ArrayList<>();
         sentences.add(" I think you need to add each query to the BooleanQuery like below.");
         extractor.match(sentences , null);*/
 
-        try {
+        /*try {
             BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\oliver\\Desktop\\数据\\stackoverflow\\379345.txt"));
             String line = "";
             String code = "";
@@ -72,7 +78,7 @@ public class SOExtractor {
             System.out.println("end.");
         }catch (Exception e){
              e.printStackTrace();
-        }
+        }*/
 
 
 
@@ -173,6 +179,58 @@ public class SOExtractor {
         connSelector.close();
     }
 
+    private void parseSOPosts(){
+        connSelector = new SqlConnector("jdbc:mysql://127.0.0.1:3306/lucene",
+                "root",
+                "woxnsk",
+                "com.mysql.jdbc.Driver");
+
+        connSelector.start();
+
+        String sql = "select post , text , code from textCode";
+        connSelector.setPreparedStatement(sql);
+        ResultSet rs = connSelector.executeQuery();
+        try {
+            while (rs.next()) {
+                postsCount ++;
+                int post = rs.getInt(1);
+                String text = Stemmer.filterHtmlTags(rs.getString(2));
+                String code = rs.getString(3);
+
+                System.out.println("***********************************");
+                System.out.println(post);
+                parseSOPosts(text , code);
+                System.out.println();
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally {
+            connSelector.close();
+        }
+    }
+
+    private void parseSOPosts(String text , String code){
+        List<String> sentences = Stemmer.string2sentence(text);
+
+        List<TextStructureTree> textTrees = new ArrayList<>();
+        for(String sentence : sentences){
+            if(sentence.length() < 30)
+                continue;
+
+            TextStructureTree textTree = new TextStructureTree(0);
+            textTree.construct(new Sentence(sentence + "."));
+            textTrees.add(textTree);
+        }
+
+        CodeLineRelationGraph graph = new CodeLineRelationGraph();
+        graph.build(code);
+
+
+        match( graph.getCodeLineTrees() , textTrees);
+
+    }
+
+
     private List<Pair<String , String>> extractCodeAndText(String postBody){
         Pattern pattern = Pattern.compile("<code>([\\s\\S]*?)</code>");
         Matcher matcher  = pattern.matcher(postBody);
@@ -185,7 +243,7 @@ public class SOExtractor {
         }
 
         List<Pair<String , String> > result = new ArrayList<>();
-        if(codeSnippets.size() > 0){
+        if(codeSnippets.size() == 1){
             for (String snippet : codeSnippets) {
                 if(snippet.length() > 50)
                     postBody = postBody.replace("<code>" + snippet + "</code>", " ");
@@ -201,11 +259,12 @@ public class SOExtractor {
             postBody = postBody.replace("</code>" , "");
 
             for(String snippet : codeSnippets){
-                if(snippet.length() > 50) {
+                if(snippet.length() > 50 ) {
                     parser.setSource(snippet.toCharArray());
                     parser.setKind(ASTParser.K_STATEMENTS);
                     Block block = (Block) parser.createAST(null);
-                    if (block.statements().size() > 0)
+                    if (block.statements().size() > 0)// && block.statements().size() < 10 &&
+                            //postBody.length() * 1.0 / snippet.length() <= 10)
                         result.add(new Pair<String, String>(postBody, snippet));
                 }
             }
@@ -407,7 +466,7 @@ public class SOExtractor {
 
         tryToMatchLeafNode(codeTrees , textTrees);
 
-        outputResult( textTrees , codeTrees);
+        //outputResult( textTrees , codeTrees);
 
         tryToMatchNonleafNode(codeTrees, textTrees);
     }
@@ -459,21 +518,21 @@ public class SOExtractor {
             tryToMatchNonleafNode(codeTrees , tree , textTreeNum);
         }
 
-        System.out.println("\n\n\n\nbefore propagation!");
-        outputResult(textTrees , codeTrees);
+        //System.out.println("\n\n\n\nbefore propagation!");
+        //outputResult(textTrees , codeTrees);
 
         for(TextStructureTree textTree : textTrees){
             firstBackPropagationForPruning(textTree , new HashSet<>());
         }
 
-        System.out.println("\n\n\n\nFirst Back Propagation!");
-        outputResult( textTrees , codeTrees);
+        //System.out.println("\n\n\n\nFirst Back Propagation!");
+        //outputResult( textTrees , codeTrees);
 
         for(TextStructureTree textTree : textTrees){
             pushUp(textTree);
         }
-        System.out.println("\n\n\n\nPush Up!");
-        outputResult( textTrees , codeTrees);
+        //System.out.println("\n\n\n\nPush Up!");
+        //outputResult( textTrees , codeTrees);
 
         for(TextStructureTree textTree : textTrees){
             secondBackPropagationFor(textTree, new ArrayList<>());
@@ -559,8 +618,6 @@ public class SOExtractor {
             return textTree.root.matchedCodeNodeList;
         }
     }
-
-
 
     void firstBackPropagationForPruning(TextStructureTree textTree ,Set<Integer> parentHasBeenMatchedToTheseTrees){
 
@@ -650,6 +707,7 @@ public class SOExtractor {
                 if(matchedCodeNodeList != null && matchedCodeNodeList.size() > 0){
                     System.out.println(i + " " + nonLeafTree.getId() + " " + nonLeafTree.getContent());
                     for(MatchedNode matchedNode : matchedCodeNodeList){
+                        parallelCount ++;
                         System.out.println("        " + matchedNode.matchedTreeID + " " + matchedNode.matchedNodeID + " " +  codeTrees.get(matchedNode.matchedTreeID).getTree(matchedNode.matchedNodeID).getCode() +  " : " + matchedNode.similarity);
                     }
                     System.out.println("***************************************");
