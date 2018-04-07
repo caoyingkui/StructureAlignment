@@ -30,7 +30,7 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
         edu.stanford.nlp.trees.Tree tree = parser.getNLTree();
         tree.pennPrint();
         TextStructureTree structTree = new TextStructureTree(0);
-        structTree.construct(new Sentence("Create a BooleanQuery for Author a1 and title t1."));
+        structTree.construct(new Sentence("Any of these terms may be in first position to match"));
 
         structTree.print();
         /*JFrame frame = new JFrame();
@@ -276,8 +276,8 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
     }
 
     public String getDisplayContent(){
-        //return root.getDisplayContent();
-        return root.getId() + ": " + root.getDisplayContent();
+        return root.getDisplayContent();
+        //return root.getId() + ": " + root.getDisplayContent();
     }
 
     public ArrayList<TextStructureTree> findAllVP(){

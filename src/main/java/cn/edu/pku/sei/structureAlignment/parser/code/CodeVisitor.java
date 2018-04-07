@@ -1103,7 +1103,7 @@ public class CodeVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(ExpressionStatement node) {
-        //grammar: StatementExpression
+        //grammar: StatementExpression ;
 
         Node root = new Node(NodeType.CODE_ExpressionStatement , "" , id ++);
         this.tree = new CodeStructureTree(root , node.toString() , parent);
@@ -1115,6 +1115,9 @@ public class CodeVisitor extends ASTVisitor {
         statement.accept(statementVisitor);
         CodeStructureTree statementTree = statementVisitor.getTree();
         children.add(statementTree);
+
+        CodeStructureTree commaTree = buildPunctuationTree(";" , NodeType.ADDED_CHAR_COMMA , tree);
+        children.add(commaTree);
 
         tree.setChildren(children);
         return false;
@@ -2556,9 +2559,6 @@ public class CodeVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(StringLiteral node) {
-
-
-
         Node root = new Node(NodeType.CODE_StringLiteral , node.toString(), id ++);
         root.setDisplayContent(node.toString()); // 显示的是带引号的，如"test" , 实际匹配的时候用的是不带引号的， 如test.
         String camelCasePattern = "([^\\p{L}\\d]+)|(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)|(?<=[\\p{L}&&[^\\p{Lu}]])(?=\\p{Lu})|(?<=\\p{Lu})(?=\\p{Lu}[\\p{L}&&[^\\p{Lu}]])";

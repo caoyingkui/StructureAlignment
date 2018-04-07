@@ -39,7 +39,7 @@ public class SOExtractor {
 
     public static void main(String[] args) {
         SOExtractor extractor = new SOExtractor();
-        extractor.selectPosts();
+        //extractor.selectPosts();
         extractor.parseSOPosts();
         System.out.println("parallel:" + parallelCount);
         System.out.println("posts:" + postsCount);
@@ -194,12 +194,16 @@ public class SOExtractor {
             while (rs.next()) {
                 postsCount ++;
                 int post = rs.getInt(1);
+                if(post == 1827116) {
+                    int a = 1;
+                }
                 String text = Stemmer.filterHtmlTags(rs.getString(2));
+                //String text = rs.getString(2);
                 String code = rs.getString(3);
 
                 System.out.println("***********************************");
                 System.out.println(post);
-                parseSOPosts(text , code);
+                parseSOPosts(post , text , code);
                 System.out.println();
             }
         }catch(Exception e){
@@ -209,9 +213,10 @@ public class SOExtractor {
         }
     }
 
-    private void parseSOPosts(String text , String code){
-        List<String> sentences = Stemmer.string2sentence(text);
+    private void parseSOPosts(int post , String text , String code){
+        //List<String> sentences = Stemmer.string2sentence(text);
 
+        String[] sentences = text.split("\\.");
         List<TextStructureTree> textTrees = new ArrayList<>();
         for(String sentence : sentences){
             if(sentence.length() < 30)
@@ -226,8 +231,62 @@ public class SOExtractor {
         graph.build(code);
 
 
-        match( graph.getCodeLineTrees() , textTrees);
+        List<CodeStructureTree> codeTree = graph.getCodeLineTrees();
 
+        //匹配
+        match( codeTree , textTrees);
+
+        //将结果存入数据库
+        storeResult(post , code , sentences , codeTree , textTrees );
+
+    }
+
+    private void storeResult(int post , String code , String[] sentences , List<CodeStructureTree> codeTrees , List<TextStructureTree> textTrees){
+        SqlConnector conn = new SqlConnector("jdbc:mysql://127.0.0.1:3306/lucene",
+                "root",
+                "woxnsk",
+                "com.mysql.jdbc.Driver");
+
+        conn.start();
+        conn.setPreparedStatement("select Body from lucene_answer where id = " + post);
+        ResultSet rs = conn.executeQuery();
+        String postBody = "";
+        try {
+            if (rs.next())
+                postBody = rs.getString(1);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        String text = "";
+        for(String sentence : sentences){
+            text += ("<p>" + sentence + "<p>");
+        }
+        conn.setPreparedStatement("insert into SOParallel (id , post , code , sentences , pair) values (? , ? , ? , ? , ?)");
+
+        for(int i = 0 ; i < textTrees.size(); i ++ ){
+            TextStructureTree textTree = textTrees.get(i);
+            List<TextStructureTree> nonLeafTrees = textTree.getAllNonleafTrees();
+            for(TextStructureTree nonLeafTree : nonLeafTrees){
+                List<MatchedNode> matchedCodeNodeList = nonLeafTree.root.matchedCodeNodeList;
+                if(matchedCodeNodeList != null && matchedCodeNodeList.size() > 0){
+                    System.out.println(i + " " + nonLeafTree.getId() + " " + nonLeafTree.getContent());
+                    String pair = "<p>" + nonLeafTree.getContent() + "</p>";
+                    for(MatchedNode matchedNode : matchedCodeNodeList){
+                        pair += "<pre><code>" + codeTrees.get(matchedNode.matchedTreeID).getTree(matchedNode.matchedNodeID).getCode() + "</code></pre>";
+                    }
+
+                    conn.setInt(1 , post);
+                    conn.setString(2 , postBody);
+                    conn.setString(3 , code );
+                    conn.setString(4 , text);
+                    conn.setString(5 , pair);
+                    conn.execute();
+                }
+            }
+        }
+
+        conn.close();
     }
 
 

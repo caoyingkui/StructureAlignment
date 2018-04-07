@@ -1,16 +1,23 @@
 package cn.edu.pku.sei.structureAlignment.util;
 
+import edu.stanford.nlp.ling.HasWord;
+import edu.stanford.nlp.ling.SentenceUtils;
+import edu.stanford.nlp.process.DocumentPreprocessor;
 import org.apache.commons.text.similarity.CosineSimilarity;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.core.StopAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.tartarus.snowball.ext.EnglishStemmer;
+
+import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
@@ -20,12 +27,10 @@ import java.util.stream.Collectors;
 public class Stemmer {
     public static void  main(String[] args){
 
-        String words = "exists existing";
+        String words = "Applying a boost there doesn't really accomplish anything. Boosts are used to enhance the impact of a subquery within the overall query. So it would be something like this:. There, your mlt query would be boosted to 50 times it's normal score relative to the other subquery. The particular reason that changing the boost may even result in lower scores is because of the queryNorm scoring factor. The overall score is multiplied by:";
 
-
-        for(String token : stem(words)){
-            System.out.println(token);
-        }
+        string2sentence(filterHtmlTags(words));
+        System.out.println(filterHtmlTags(words));
     }
 
     public static String stemSingleWord(String word){
@@ -147,5 +152,46 @@ public class Stemmer {
         }
 
         return result;*/
+    }
+
+    public static String filterHtmlTags(String text){
+        StringBuilder result = new StringBuilder("");
+
+        Pattern linkPattern = Pattern.compile("(<a[^>]*>([^<]*)</a>)|([a-zA-z]+://[^\\s]*)");
+        Matcher matcher = linkPattern.matcher(text);
+
+        int start = -1;
+        int length = 0;
+        while(matcher.find()){
+            length = matcher.start() - start - 1;
+            if(length > 0){
+                result.append(text.substring(start + 1 , matcher.start()));
+            }
+
+            result.append(" " + matcher.group(2) + " ");
+            start = matcher.end() - 1;
+        }
+
+        if(text.length() - start - 1 > 0){
+            result.append(text.substring(start + 1 , text.length()));
+        }
+
+        return result.toString();
+
+    }
+
+    public static List<String> string2sentence(String string){
+        List<String> result = new ArrayList<>();
+        Reader reader = new StringReader(string);
+        DocumentPreprocessor dp = new DocumentPreprocessor(reader);
+        List<String> sentenceList = new ArrayList<String>();
+
+        for (List<HasWord> sentence : dp) {
+            // SentenceUtils not Sentence
+            String sentenceString = SentenceUtils.listToString(sentence);
+            result.add(sentenceString);
+        }
+
+        return result;
     }
 }

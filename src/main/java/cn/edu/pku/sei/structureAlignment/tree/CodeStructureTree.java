@@ -37,7 +37,7 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
         ASTParser parser = ASTParser.newParser(AST.JLS8);
         ///parser.setSource("XSSFCellStyle style = new XSSFCellStyle(new StylesTable());".toCharArray());
         parser.setSource((
-                "QueryParser parser = new QueryParser(Version.LUCENE_CURRENT,F, analyzer); "
+                "query.add(new Term(\"field\", \"fox\")); "
 
                 ).toCharArray());
         //parser.setSource("d = null;".toCharArray());
@@ -53,7 +53,7 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
         //block.accept(visitor);
 
         CodeStructureTree tree = visitor.getTree();
-        tree.print();;
+        tree.print();
         //tree.findCommonParents(16 , 19 , 4);
 
         /*JFrame frame = new JFrame();
@@ -64,7 +64,6 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
         frame.setSize(1200, 1200);
         frame.setVisible(true);*/
 
-        tree.print();
     }
 
     public String getCode() {
@@ -139,7 +138,7 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
 
     public String getDisplayContent(){
         String result = "";
-        result += root.getId() + ": ";
+        //result += root.getId() + ": ";
         if(children.size() == 0) result += root.getDisplayContent();//result += root.getAdditionalInfo() + " " + root.getDisplayContent( ) ;
         else result += root.getType().toString().substring(5);
 
@@ -167,5 +166,6 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
 
         }
     }
+
 
 }
