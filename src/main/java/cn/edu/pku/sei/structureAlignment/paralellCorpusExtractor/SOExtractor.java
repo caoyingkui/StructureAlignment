@@ -272,9 +272,11 @@ public class SOExtractor {
                 if(matchedCodeNodeList != null && matchedCodeNodeList.size() > 0){
                     System.out.println(i + " " + nonLeafTree.getId() + " " + nonLeafTree.getContent());
                     String pair = "<p>" + nonLeafTree.getContent() + "</p>";
+                    pair += "<pre><code>";
                     for(MatchedNode matchedNode : matchedCodeNodeList){
-                        pair += "<pre><code>" + codeTrees.get(matchedNode.matchedTreeID).getTree(matchedNode.matchedNodeID).getCode() + "</code></pre>";
+                        pair +=  codeTrees.get(matchedNode.matchedTreeID).getTree(matchedNode.matchedNodeID).getCode();
                     }
+                    pair += "</code></pre>";
 
                     conn.setInt(1 , post);
                     conn.setString(2 , postBody);
