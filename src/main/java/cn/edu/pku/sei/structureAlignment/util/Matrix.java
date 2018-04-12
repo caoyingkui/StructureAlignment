@@ -205,14 +205,14 @@ public class Matrix <T extends Valuable>{
         if(m1 >= m2 || n1 >= n2) return null;
 
         List<Pair<Integer , Integer>> result = null;
-        double max = this.getCell(m1 , n1).getValue();
-        int max_m = m1;
-        int max_n = n1;
+        double max = -1;
+        int max_m = -1;
+        int max_n = -1;
 
 
 
         // 从上到下，从左到右匹配
-        /*for(int i = m1 ; i < m2 ; i ++){
+        for(int i = m1 ; i < m2 ; i ++){
             for(int j = n1 ; j < n2 ; j++){
                 if(max < this.getCell(i , j).getValue()){
                     max = this.getCell(i , j ).getValue();
@@ -220,10 +220,10 @@ public class Matrix <T extends Valuable>{
                     max_n = j;
                 }
             }
-        }*/
+        }
 
         // 从下到上，从右到左匹配
-        for(int i = m2 - 1 ; i >= m1 ; i --){
+        /*for(int i = m2 - 1 ; i >= m1 ; i --){
             for(int j = n2 - 1 ; j >= n1 ; j--){
                 if(max < this.getCell(i , j).getValue()){
                     max = this.getCell(i , j ).getValue();
@@ -231,7 +231,7 @@ public class Matrix <T extends Valuable>{
                     max_n = j;
                 }
             }
-        }
+        }*/
 
         if(max >= bound){
             result = new ArrayList<>();

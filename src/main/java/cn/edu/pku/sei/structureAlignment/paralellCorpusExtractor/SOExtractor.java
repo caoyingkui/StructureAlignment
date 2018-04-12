@@ -214,16 +214,16 @@ public class SOExtractor {
     }
 
     private void parseSOPosts(int post , String text , String code){
-        //List<String> sentences = Stemmer.string2sentence(text);
+        List<String> sentences = Stemmer.string2sentence(text);
 
-        String[] sentences = text.split("\\.");
+        //String[] sentences = text.split("\\.");
         List<TextStructureTree> textTrees = new ArrayList<>();
         for(String sentence : sentences){
             if(sentence.length() < 30)
                 continue;
 
             TextStructureTree textTree = new TextStructureTree(0);
-            textTree.construct(new Sentence(sentence + "."));
+            textTree.construct(new Sentence(sentence));
             textTrees.add(textTree);
         }
 
@@ -241,7 +241,7 @@ public class SOExtractor {
 
     }
 
-    private void storeResult(int post , String code , String[] sentences , List<CodeStructureTree> codeTrees , List<TextStructureTree> textTrees){
+    private void storeResult(int post , String code , List<String> sentences , List<CodeStructureTree> codeTrees , List<TextStructureTree> textTrees){
         SqlConnector conn = new SqlConnector("jdbc:mysql://127.0.0.1:3306/lucene",
                 "root",
                 "woxnsk",
@@ -262,7 +262,7 @@ public class SOExtractor {
         for(String sentence : sentences){
             text += ("<p>" + sentence + "<p>");
         }
-        conn.setPreparedStatement("insert into SOParallel (id , post , code , sentences , pair) values (? , ? , ? , ? , ?)");
+        conn.setPreparedStatement("insert into SOParallel (id , postId , post , code , sentences , pair) values (0 , ? , ? , ? , ? , ?)");
 
         for(int i = 0 ; i < textTrees.size(); i ++ ){
             TextStructureTree textTree = textTrees.get(i);
@@ -270,11 +270,11 @@ public class SOExtractor {
             for(TextStructureTree nonLeafTree : nonLeafTrees){
                 List<MatchedNode> matchedCodeNodeList = nonLeafTree.root.matchedCodeNodeList;
                 if(matchedCodeNodeList != null && matchedCodeNodeList.size() > 0){
-                    System.out.println(i + " " + nonLeafTree.getId() + " " + nonLeafTree.getContent());
+                    //System.out.println(i + " " + nonLeafTree.getId() + " " + nonLeafTree.getContent());
                     String pair = "<p>" + nonLeafTree.getContent() + "</p>";
                     pair += "<pre><code>";
                     for(MatchedNode matchedNode : matchedCodeNodeList){
-                        pair +=  codeTrees.get(matchedNode.matchedTreeID).getTree(matchedNode.matchedNodeID).getCode();
+                        pair +=  codeTrees.get(matchedNode.matchedTreeID).getTree(matchedNode.matchedNodeID).getCode() + "\n";
                     }
                     pair += "</code></pre>";
 
@@ -290,7 +290,6 @@ public class SOExtractor {
 
         conn.close();
     }
-
 
     private List<Pair<String , String>> extractCodeAndText(String postBody){
         Pattern pattern = Pattern.compile("<code>([\\s\\S]*?)</code>");
@@ -660,13 +659,19 @@ public class SOExtractor {
             if(matchedCodeNodeList.size() > 0) {//当前节点是被merge成功的节点，不能被子树信息更新
                 return matchedCodeNodeList;
             }else{
+                int sourceCount = 0;
                 for(TextStructureTree child : children){
-                    result.addAll(pushUp( child));
+                    List<MatchedNode> temp = pushUp(child);
+                    if(temp.size() > 0) {
+                        sourceCount++;
+                        result.addAll(pushUp(child));
+                    }
                 }
 
-                if(result.size() == 1){
-                    MatchedNode node = result.get(0);
-                    textTree.root.addMatchedNode(new MatchedNode(node.matchedTreeID , node.matchedNodeID , node.matchedNode , node.similarity) );
+                if(sourceCount == 1){
+                    for(MatchedNode node : result) {
+                        textTree.root.addMatchedNode(new MatchedNode(node.matchedTreeID, node.matchedNodeID, node.matchedNode, node.similarity));
+                    }
                     return result;
                 }else{
                     if(result.size() > 0)

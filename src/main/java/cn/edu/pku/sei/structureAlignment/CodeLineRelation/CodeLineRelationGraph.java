@@ -143,6 +143,14 @@ public class CodeLineRelationGraph extends JPanel{
         calculateTokenOccurFrequency();
     }
 
+    public void build(Block block){
+        this.code = block.toString();
+
+        StatementVisitor statementVisitor = new StatementVisitor(block);
+        build(statementVisitor.getStatements());
+        calculateTokenOccurFrequency();
+    }
+
     /**
      * In CodeVisitor, there is a static map variableDictionary. When we parse several lines of code, it will be regard as code snippets,
      * So variableDictionary is used to store all the variable which are declared in those lines of code, the variable name will be mapped to the variable type.
@@ -152,7 +160,7 @@ public class CodeLineRelationGraph extends JPanel{
      * if  code line A uses some variable which are declared in code line B, then the node A will be the node B's child, and B will be the parent of A.
      *
      */
-    public void build(List<ASTNode> statements){
+    private void build(List<ASTNode> statements){
         try{
             CodeVisitor.initialize();
 

@@ -42,6 +42,7 @@ public class Node {
 
     public void setContent(String content) {
         this.content = content;
+        //this.displayContent = content;
     }
 
     public void addAlternatives(String content){
@@ -122,7 +123,7 @@ public class Node {
 
         if(content.trim().toLowerCase().compareTo(anotherContent.trim().toLowerCase()) == 0 ||
                 this.alternativesContains(anotherContent) ) {
-            return 1.0 ;
+            return 1.0 + (this.type == NodeType.ADDED_METHOD_NAME ? 1:0 );
         }else if(!(content.contains(" ") && anotherContent.contains(" "))){
             if(Stemmer.stemSingleWord(content).compareTo(Stemmer.stemSingleWord(anotherContent)) == 0){
                 return 1.0;

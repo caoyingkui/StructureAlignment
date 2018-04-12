@@ -16,12 +16,11 @@ import cn.edu.pku.sei.structureAlignment.util.Stemmer;
 import edu.stanford.nlp.simple.Sentence;
 import org.eclipse.jdt.core.dom.*;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javafx.util.Pair;
 
@@ -40,6 +39,11 @@ public class Main {
     private static Result controlResult;
     private static Result result;
 
+    private static Map<CodeStructureTree , String> alignment = new HashMap<>();
+    private static Map<CodeStructureTree , Integer> alignmentNum = new HashMap<>();
+    private static Map<CodeStructureTree , Integer> addCommentCount = new HashMap<>();
+    private static Map<CodeStructureTree , StringBuilder> addComments = new HashMap<>();
+
     public static void main(String[] args) throws IOException {
 
         noControlResult = new Result();
@@ -47,7 +51,18 @@ public class Main {
         result = new Result();
 
 
-        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\192.txt"));
+
+
+
+
+        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\test.txt"));
+        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\168-2.txt"));
+
+        //addComment();
+        /*for(CodeStructureTree codeTree : alignment.keySet()){
+            boolean r = compare(codeTree , codeTree);
+            System.out.println(r);
+        }*/
 
         //match(new File("C:\\Users\\oliver\\Desktop\\test code snippets\\486.txt"));
 
@@ -67,6 +82,7 @@ public class Main {
                 System.out.flush();
             }
         }
+        addComment();
 
 
 
@@ -614,6 +630,8 @@ public class Main {
             List<Pair<Integer , Integer>> finalMatchScheme = match(graph ,comments );
 
             analysesResult(finalMatchScheme , annotations);
+
+            codeCommentAlignment(finalMatchScheme , graph , comments);
             //analysesResult(matchScheme , annotations);
 
         }catch(Exception e){
@@ -621,6 +639,70 @@ public class Main {
         }
 
         return 0;
+    }
+
+    static void codeCommentAlignment(List<Pair<Integer , Integer>>finalMatchScheme , CodeLineRelationGraph graph , List<String> comments){
+        Map<Integer , List<Integer>> comment2Codes = new HashMap<>();
+        for(Pair<Integer , Integer> pair : finalMatchScheme){
+            int codeNum = pair.getKey();
+            int commentNum = pair.getValue();
+
+            if(comment2Codes.containsKey(commentNum)){
+                comment2Codes.get(commentNum).add(codeNum);
+            }else{
+                List<Integer> codes = new ArrayList<>();
+                codes.add(codeNum);
+                comment2Codes.put(commentNum , codes);
+            }
+        }
+
+        for(Integer commentNum : comment2Codes.keySet()){
+            List<Integer> codes = comment2Codes.get(commentNum);
+            if(codes.size() == 1){
+                CodeStructureTree codeTree = graph.getCodeLineTrees().get(codes.get(0));
+                String comment = comments.get(commentNum);
+                TextStructureTree textTree = new TextStructureTree(0);
+                textTree.construct(new Sentence(comment));
+
+                List<Node> codeNodes = codeTree.getAllLeafNodes();
+                List<Node> textNodes = textTree.getAllLeafNodes();
+
+                // text-node    code-node
+                Map<Integer ,Integer> identicalPairs = new HashMap<>();
+
+                for(int i = 0 ; i < codeNodes.size() ; i ++){
+                    for(int j = 0 ; j < textNodes.size() ; j++){
+                        double sim = codeNodes.get(i).compare(textNodes.get(j));
+                        if(sim == 1.0){
+                            identicalPairs.put(j , i);
+                        }
+                    }
+                }
+
+                boolean signal = false;
+                if(identicalPairs.size() > 0)
+                    signal = true;
+                for(Integer textNodeNum : identicalPairs.keySet()){
+                    int codeNodeNum = identicalPairs.get(textNodeNum);
+                    textNodes.get(textNodeNum).setContent("#" + codeNodes.get(codeNodeNum).getId());
+                    textNodes.get(textNodeNum).setDisplayContent("#" + codeNodes.get(codeNodeNum).getId());
+
+                }
+                String alignmentComment = "";
+                if(signal) {
+                    for (Node node : textNodes) {
+                        alignmentComment += (node.getContent() + " ");
+                    }
+                }else{
+                    alignmentComment = textTree.getContent();
+                }
+
+                alignment.put(codeTree , alignmentComment);
+                alignmentNum.put(codeTree , alignmentNum.size());
+                addCommentCount.put(codeTree , 0);
+                addComments.put(codeTree , new StringBuilder(codeTree.getCode() + "\n" + alignmentComment + "\n\n--------------------"));
+            }
+        }
     }
 
     private static void outputSingleResult(List<Pair<Integer , Integer>> matchScheme , Map<Integer, List<Integer>> annotations){
@@ -685,9 +767,6 @@ public class Main {
         for(int comment : annotations.keySet()){
             List<Integer> annotation = annotations.get(comment);
             int size = annotation.size();
-            if(size == 2){
-                int breakPoint = 0;
-            }
 
             ResultItem item ;
             if(result.items.containsKey(size)){
@@ -737,9 +816,180 @@ public class Main {
                 item.noMatch ++;
             }
         }
+    }
+
+    static boolean compare(CodeStructureTree tree1 , CodeStructureTree tree2){
+        boolean result = true;
+        List<CodeStructureTree> children1 = tree1.getChildren();
+        List<CodeStructureTree> children2 = tree2.getChildren();
+        if(children1.size() != children2.size())
+            return false;
+        else if(children1.size() == 0){
+            if(tree1.root.getType() == NodeType.ADDED_METHOD_NAME){
+                if(tree2.root.getType() == NodeType.ADDED_METHOD_NAME &&
+                        tree1.getContent().compareTo(tree2.getContent()) == 0)
+                    return true;
+                else
+                    return false;
+            }else
+                return true;
+        }else{
+            if(tree1.root.getType() != tree2.root.getType()){
+                return false;
+            }
+
+            if(tree1.root.getType() == NodeType.CODE_SimpleType){
+                String type1 = children1.get(0).getCode();
+                String type2 = children2.get(0).getCode();
+                if(type1.compareTo(type2) != 0)
+                    return false;
+                else
+                    return true;
+            }
+
+            for(int i = 0 ; i < children1.size() ; i ++){
+                result = compare(children1.get(i) , children2.get(i));
+                if(!result)
+                    return false;
+            }
+
+            return true;
+        }
+    }
+
+    public static void addComment(){
+        List<String> files = findAllJavaFile(new File("D:\\test"));
+        boolean stop = false;
+
+        ASTParser parser = ASTParser.newParser(AST.JLS8);
+        for(String fileName : files){
+            File file = new File(fileName);
+            try{
+                FileInputStream in = new FileInputStream(file);
+                byte[] bytes = new byte[in.available()];
+                in.read(bytes);
+                parser.setSource(new String(bytes).toCharArray());
+                parser.setKind(ASTParser.K_COMPILATION_UNIT);
+
+                CompilationUnit unit = (CompilationUnit)parser.createAST(null);
+                if(unit != null ){
+                    List<AbstractTypeDeclaration> types = unit.types();
+
+                    for(AbstractTypeDeclaration type : types){
+                        if(type instanceof TypeDeclaration){
+                            MethodDeclaration[] methods = ((TypeDeclaration) type).getMethods();
+
+                            for(MethodDeclaration method : methods){
+                                CodeLineRelationGraph graph = new CodeLineRelationGraph();
+
+                                if(graph.getCodeLineTrees().size() == 0)
+                                    continue;
+
+                                graph.build(method.getBody());
+                                stop = addComment(graph.getCodeLineTrees() , file.getAbsolutePath());
+                                if(stop)
+                                    break;
+                            }
+                        }
+                    }
+
+                    if(stop)
+                        break;
+                }
 
 
+            }catch (Exception e){
 
+            }
+
+            if(stop)
+                break;
+        }
+
+        for(CodeStructureTree corpusTree : alignment.keySet()){
+            int treeNum = alignmentNum.get(corpusTree);
+            try {
+                BufferedWriter reader = new BufferedWriter(new FileWriter(new File("addCommentExample\\" + treeNum + ".txt")));
+                reader.write(addComments.get(corpusTree).toString());
+                reader.close();
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+
+
+    }
+
+    /**
+     *
+     * @param codeTrees
+     * @param filePath
+     * @return 当返回true的时候，表示已经为所有的数据，生成了额定数量的例子，则将停止继续遍历文件。
+    */
+    private static boolean addComment(List<CodeStructureTree> codeTrees , String filePath){
+
+
+        int count = 0 ; // 用于在遍历时，记录已经为count个例子，生成了足够的数据。
+
+        for(CodeStructureTree corpusCodeTree : alignment.keySet()){
+            int howMany = addCommentCount.get(corpusCodeTree);
+            if(howMany > 1) {
+                count++;
+                continue;
+            }
+
+            String comment = alignment.get(corpusCodeTree);
+            Pattern pattern = Pattern.compile("#([1-9][0-9]*) ");
+            Matcher matcher = pattern.matcher(comment);
+            List<Integer> replacements = new ArrayList<Integer>();
+            while(matcher.find()){
+                replacements.add(Integer.parseInt(matcher.group(1)));
+            }
+
+            for(CodeStructureTree repertoryCodeTree : codeTrees){
+
+                if(compare(corpusCodeTree , repertoryCodeTree)){
+                    String result = comment;
+                    for(Integer replacement : replacements){
+                        result = result.replace("#" + replacement , repertoryCodeTree.getNode(replacement).getContent());
+                    }
+
+                    System.out.println("******************************");
+                    System.out.println(repertoryCodeTree.getCode());
+                    System.out.println(result);
+                    System.out.println("--------------------");
+                    System.out.println(corpusCodeTree.getCode());
+                    System.out.println(comment);
+                    System.out.println("******************************");
+
+                    StringBuilder commentBuilder = addComments.get(corpusCodeTree);
+                    commentBuilder.append("\n").append("******************************");
+                    commentBuilder.append(repertoryCodeTree.getCode());
+                    commentBuilder.append(result).append("\n\n");
+
+                    addCommentCount.put(corpusCodeTree, addCommentCount.get(corpusCodeTree) + 1);
+                }
+            }
+        }
+
+        return count == alignment.size();
+
+    }
+
+    public static List<String> findAllJavaFile(File directory){
+        List<String> result = new ArrayList<>();
+
+        File[] files = directory.listFiles();
+
+        for(File file : files){
+            if(file.isDirectory()){
+                result.addAll(findAllJavaFile(file));
+            }else if(file.isFile() && file.getName().lastIndexOf(".java") == file.getName().length() - 5){
+                result.add(file.getAbsolutePath());
+            }
+        }
+
+        return result;
     }
 
 }

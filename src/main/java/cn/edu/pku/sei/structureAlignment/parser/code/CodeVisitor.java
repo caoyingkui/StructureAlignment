@@ -1787,7 +1787,7 @@ public class CodeVisitor extends ASTVisitor {
     public boolean visit(MethodInvocation node) {
         //region <grammar>
         /** original
-         *  [ Expression . ] [ < Type { , Type } > ] Identifier ( [ Expression { , Expression } ] )
+         *  [ Expression . ] [ < Type { , Type } > ] Identifier ( [ Expression { , Expression } ] ) ;
          */
         /** modify as
          *
@@ -1855,7 +1855,7 @@ public class CodeVisitor extends ASTVisitor {
 
         //region <construct the tree of the Identifier>
         SimpleName name = node.getName();
-        Node nameRoot = new Node(NodeType.CODE_SimpleName , name.toString() , id ++);
+        Node nameRoot = new Node(NodeType.ADDED_METHOD_NAME , name.toString() , id ++);
         CodeStructureTree nameTree = new CodeStructureTree(nameRoot , name.toString() , null);
         Map<String , String> methodInfo = getMostPossibleMethodInfo(node);
         if(methodInfo != null){
