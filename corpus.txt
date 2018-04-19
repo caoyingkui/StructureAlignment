@@ -136,7 +136,7 @@ writer.UpdateDocument(new Term("patient_id",document.Get("patient_id")),document
 StackOverflow URL: https://stackoverflow.com/questions/3376937
 
 comment sentences(s):
-a  mechanism  by  which  you  can  locate  the  document  you  want  to  update ( ``  patient_id  ''  in  this  example  -RRB-
+a  mechanism  by  which  you  can  locate  the  document  you  want  to  update ( ``  patient_id  ''  in  this  example  )
 
 code statement(s):
 UpdateDocument(new Term("patient_id",document.Get("patient_id")),document)
@@ -1070,7 +1070,7 @@ Page(page,itemsPerPage)
 StackOverflow URL: https://stackoverflow.com/questions/34976120
 
 comment sentences(s):
-only  one  value ( or  less  then  itemsPerPage ) GetResults ( -RRB-
+only  one  value ( or  less  then  itemsPerPage ) GetResults ( )
 
 code statement(s):
 query.Page(page,itemsPerPage).GetResults()
@@ -1209,7 +1209,7 @@ Page(page,itemsPerPage)
 StackOverflow URL: https://stackoverflow.com/questions/34976120
 
 comment sentences(s):
-only  one  value ( or  less  then  itemsPerPage ) GetResults ( -RRB-
+only  one  value ( or  less  then  itemsPerPage ) GetResults ( )
 
 code statement(s):
 query.Page(page,itemsPerPage).GetResults()
@@ -1770,7 +1770,7 @@ IndexReader reader=IndexReader.open(FSDirectory.open(indexDirectory));
 StackOverflow URL: https://stackoverflow.com/questions/15207701
 
 comment sentences(s):
-prepare  a  query  for  each  field ( using  the  same  search  keywords  -RRB-
+prepare  a  query  for  each  field ( using  the  same  search  keywords  )
 
 code statement(s):
 Query query=new WildcardQuery(new Term(field,"*alue1"));
@@ -2250,7 +2250,7 @@ GetSimilarity(string1,string2)
 StackOverflow URL: https://stackoverflow.com/questions/3348457
 
 comment sentences(s):
-I  added  the  -LSB-  Field ( Index.Tokenized  ,  Store  =  Store.Yes ) -RSB-  -  attribute  to  the  IsDeleted  property  ,  and  added  this  clause  to  any  query  inbound  :  I  knew  it  was  something  simple  :  -RRB-
+I  added  the  -LSB-  Field ( Index.Tokenized  ,  Store  =  Store.Yes ) -RSB-  -  attribute  to  the  IsDeleted  property  ,  and  added  this  clause  to  any  query  inbound  :  I  knew  it  was  something  simple  :  )
 
 code statement(s):
 q="(" + userQuery + ") AND IsDeleted:False"
@@ -2625,7 +2625,7 @@ new Field("contents",result,Field.Store.COMPRESS,Field.Index.ANALYZED,Field.Term
 StackOverflow URL: https://stackoverflow.com/questions/9844592
 
 comment sentences(s):
--LRB-  Analyzer  analyzer  ,  Query  query  ,  String  fieldName  ,  String  fieldContents  ,  int  fragmentNumber  ,  int  fragmentSize  -RRB-
+-LRB-  Analyzer  analyzer  ,  Query  query  ,  String  fieldName  ,  String  fieldContents  ,  int  fragmentNumber  ,  int  fragmentSize  )
 
 code statement(s):
 new Field("contents",result,Field.Store.COMPRESS,Field.Index.ANALYZED,Field.TermVector.WITH_POSITIONS_OFFSETS)
@@ -2901,7 +2901,7 @@ Lucene.Net.Util.Version version=Lucene.Net.Util.Version.LUCENE_30;
 StackOverflow URL: https://stackoverflow.com/questions/11977029
 
 comment sentences(s):
-a  Windows  Azure  Worker  Role  in  VS2010    Included  Lucene.NET.Store.Azure ( 1.0.5.1  -RRB-
+a  Windows  Azure  Worker  Role  in  VS2010    Included  Lucene.NET.Store.Azure ( 1.0.5.1  )
 
 code statement(s):
 Microsoft.WindowsAzure.CloudStorageAccount cloudAccount=Microsoft.WindowsAzure.CloudStorageAccount.FromConfigurationSetting("CloudStorageSetting");
@@ -2930,7 +2930,7 @@ new Field("normal","",Field.Store.YES,Field.Index.ANALYZED)
 StackOverflow URL: https://stackoverflow.com/questions/11890571
 
 comment sentences(s):
-Within  Lucene  ,  each  numeric  value  is  indexed  as  a  trie  structure  ,  where  each  term  is  logically  assigned  to  larger  and  larger  pre-defined  brackets ( which  are  simply  lower-precision  representations  of  the  value  -RRB-
+Within  Lucene  ,  each  numeric  value  is  indexed  as  a  trie  structure  ,  where  each  term  is  logically  assigned  to  larger  and  larger  pre-defined  brackets ( which  are  simply  lower-precision  representations  of  the  value  )
 
 code statement(s):
 SetValue("one")
@@ -3039,7 +3039,7 @@ new Field("normal","",Field.Store.YES,Field.Index.ANALYZED)
 StackOverflow URL: https://stackoverflow.com/questions/11890571
 
 comment sentences(s):
-value  and  therefore  also  work  with  term  enumeration  for  building  distinct  lists ( e.g.  facets  /  preselected  values  to  search  for  -RRB-
+value  and  therefore  also  work  with  term  enumeration  for  building  distinct  lists ( e.g.  facets  /  preselected  values  to  search  for  )
 
 code statement(s):
 new Field("normal","",Field.Store.YES,Field.Index.ANALYZED)
@@ -3295,7 +3295,7 @@ indexManager.getSerializer().toLuceneWorks((byte[])objectMessage.getObject())
 StackOverflow URL: https://stackoverflow.com/questions/14579031
 
 comment sentences(s):
-Each  index ( identified  by  name  -RRB-
+Each  index ( identified  by  name  )
 
 code statement(s):
 indexManager=factory.getAllIndexesManager().getIndexManager(indexName)
@@ -4034,7 +4034,7 @@ QueryBuilders.boolQuery.should(mltQuery.boost(50)).should(someOtherQueryBuilder)
 StackOverflow URL: https://stackoverflow.com/questions/31478192
 
 comment sentences(s):
-the  query  must  much  this  term ( like  AND  -RRB-
+the  query  must  much  this  term ( like  AND  )
 
 code statement(s):
 Query luceneQuery=b.bool().must(b.keyword().onField("fieldName").matching("term1").createQuery()).must(b.keyword().onField("fieldName").matching("term2").createQuery()).should(b.keyword().onField("fieldName").matching("term3").createQuery()).except(b.keyword().onField("fieldName").matching("term4").createQuery()).createQuery();
@@ -4044,7 +4044,7 @@ Query luceneQuery=b.bool().must(b.keyword().onField("fieldName").matching("term1
 StackOverflow URL: https://stackoverflow.com/questions/31478192
 
 comment sentences(s):
-must  much  this  term ( like  AND  -RRB-
+must  much  this  term ( like  AND  )
 
 code statement(s):
 b.bool().must(b.keyword().onField("fieldName").matching("term1").createQuery()).must(b.keyword().onField("fieldName").matching("term2").createQuery()).should(b.keyword().onField("fieldName").matching("term3").createQuery()).except(b.keyword().onField("fieldName").matching("term4").createQuery())
@@ -4164,7 +4164,7 @@ QueryBuilders.boolQuery.should(mltQuery.boost(50)).should(someOtherQueryBuilder)
 StackOverflow URL: https://stackoverflow.com/questions/31478192
 
 comment sentences(s):
-the  query  must  much  this  term ( like  AND  -RRB-
+the  query  must  much  this  term ( like  AND  )
 
 code statement(s):
 Query luceneQuery=b.bool().must(b.keyword().onField("fieldName").matching("term1").createQuery()).must(b.keyword().onField("fieldName").matching("term2").createQuery()).should(b.keyword().onField("fieldName").matching("term3").createQuery()).except(b.keyword().onField("fieldName").matching("term4").createQuery()).createQuery();
@@ -4174,7 +4174,7 @@ Query luceneQuery=b.bool().must(b.keyword().onField("fieldName").matching("term1
 StackOverflow URL: https://stackoverflow.com/questions/31478192
 
 comment sentences(s):
-must  much  this  term ( like  AND  -RRB-
+must  much  this  term ( like  AND  )
 
 code statement(s):
 b.bool().must(b.keyword().onField("fieldName").matching("term1").createQuery()).must(b.keyword().onField("fieldName").matching("term2").createQuery()).should(b.keyword().onField("fieldName").matching("term3").createQuery()).except(b.keyword().onField("fieldName").matching("term4").createQuery())
