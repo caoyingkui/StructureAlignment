@@ -39,7 +39,7 @@ Write(xmlEncoding.GetBytes(s),0,s.Length)
 StackOverflow URL: https://stackoverflow.com/questions/1433524
 
 comment sentences(s):
-each  query ( one  for  the  SearchKey  and  one  for  the  Type  -RRB-
+each  query ( one  for  the  SearchKey  and  one  for  the  Type  )
 
 code statement(s):
 query1=new QueryParser("SearchKey",standardLuceneAnalyzer).Parse("Kansas City*")
@@ -67,7 +67,7 @@ DeleteDocuments(new Term("patient_id",patientID))
 StackOverflow URL: https://stackoverflow.com/questions/488098
 
 comment sentences(s):
-accepts  either  an  instance  of  a  Term  object  or  Lucene  's  internal  id  of  the  document ( it  is  generally  not  recommended  to  use  the  internal  id  as  it  can  and  will  change  as  Lucene  merges  segments  -RRB-
+accepts  either  an  instance  of  a  Term  object  or  Lucene  's  internal  id  of  the  document ( it  is  generally  not  recommended  to  use  the  internal  id  as  it  can  and  will  change  as  Lucene  merges  segments  )
 
 code statement(s):
 new Term("patient_id",patientID)
