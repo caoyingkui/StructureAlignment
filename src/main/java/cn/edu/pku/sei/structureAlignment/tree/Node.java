@@ -4,11 +4,27 @@ import cn.edu.pku.sei.structureAlignment.parser.code.CodeVisitor;
 import cn.edu.pku.sei.structureAlignment.util.ClassNameList;
 import cn.edu.pku.sei.structureAlignment.util.Stemmer;
 import cn.edu.pku.sei.structureAlignment.util.StopWordList;
+import cn.edu.pku.sei.structureAlignment.util.WN;
+import edu.cmu.lti.lexical_db.ILexicalDatabase;
+import edu.cmu.lti.lexical_db.NictWordNet;
+import edu.cmu.lti.ws4j.impl.WuPalmer;
 import javafx.util.Pair;
+import net.didion.jwnl.JWNL;
+import net.didion.jwnl.data.IndexWord;
+import net.didion.jwnl.data.IndexWordSet;
+import net.didion.jwnl.data.POS;
+import net.didion.jwnl.dictionary.Dictionary;
 
+import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import edu.cmu.lti.ws4j.util.*;
+import org.python.core.PyFunction;
+import org.python.core.PyObject;
+import org.python.core.PyString;
+import org.python.util.PythonInterpreter;
 
 /**
  * Created by oliver on 2017/12/23.
@@ -111,6 +127,10 @@ public class Node {
         // 默认this指向的是一个code节点
         String content = this.getContent();
         String anotherContent = node.getContent();
+        if(content.compareTo("assertEquals") == 0 && anotherContent.compareTo("matches") == 0){
+            int i = 0;
+        }
+
 
         //remove the punctuation "
         if(this.type == NodeType.CODE_StringLiteral){
@@ -121,15 +141,36 @@ public class Node {
                 return 0;
         }
 
-        if(content.trim().toLowerCase().compareTo(anotherContent.trim().toLowerCase()) == 0 ||
-                this.alternativesContains(anotherContent) ) {
+        if(content.trim().toLowerCase().compareTo(anotherContent.trim().toLowerCase()) == 0){
             return 1.0 + (this.type == NodeType.ADDED_METHOD_NAME ? 1:0 );
+        }else if (this.alternativesContains(anotherContent) ){
+            return 1;
         }else if(!(content.contains(" ") && anotherContent.contains(" "))){
             if(Stemmer.stemSingleWord(content).compareTo(Stemmer.stemSingleWord(anotherContent)) == 0){
                 return 1.0;
             }
         }
 
+        String camelCasePattern = "([^\\p{L}\\d]+)|(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)|(?<=[\\p{L}&&[^\\p{Lu}]])(?=\\p{Lu})|(?<=\\p{Lu})(?=\\p{Lu}[\\p{L}&&[^\\p{Lu}]])";
+        String[] subs1 = content.split(camelCasePattern);
+        String[] subs2 = anotherContent.split(camelCasePattern);
+        double sim = 0.0;
+        try {
+            for (String sub1 : subs1) {
+                for(String sub2 : subs2){
+                    double temp = WN.getSimilarity(sub1.toLowerCase() , sub2.toLowerCase());
+                    if(temp > sim)
+                        sim = temp;
+                }
+
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+
+        if(sim >= 0.5){
+            return sim;
+        }
 
 
         Set<String> words1 = new HashSet<String>();
@@ -163,17 +204,29 @@ public class Node {
      *          0: if two nodes' are completely different
      */
     public double compare(Node node , Map<String , Integer> tokenOccurFrequency){
+
         String content = this.getContent();
         String anotherContent = node.getContent();
+        System.out.println("afads");
+
+        if(content.compareTo("Verify") == 0 && anotherContent.compareTo("assertEquals") == 0){
+            int a = 1;
+        }
+
 
         //remove the punctuation "
         if(this.type == NodeType.CODE_StringLiteral) content = content.length() > 2 ? content.substring(1 , content.length() - 1) : "";
 
         if(node.type == NodeType.CODE_StringLiteral) anotherContent = anotherContent.length() > 2 ? content.substring(1 , content.length() - 1) : "" ;
 
+        content = content.trim();
+        anotherContent = content.trim();
+
         if(content.trim().toLowerCase().compareTo(anotherContent.trim().toLowerCase()) == 0 || this.alternativesContains(anotherContent)) {
             return 2.0 / tokenOccurFrequency.getOrDefault(anotherContent , 1);
         }
+
+
 
         Set<String> words1 = new HashSet<String>();
         words1.addAll(Stemmer.stem(content + " " + this.getAdditionalInfo()));
@@ -224,13 +277,13 @@ public class Node {
     public boolean addMatchedNode(MatchedNode newNode , int thisTreeNumber){
         double newNodeMaxSimilarityWithOtherNode = newNode.matchedNode.maxSimilarity;
 
-        if(newNode.similarity >= this.maxSimilarity && newNode.similarity >= newNodeMaxSimilarityWithOtherNode ){
+        if(true || newNode.similarity >= this.maxSimilarity && newNode.similarity >= newNodeMaxSimilarityWithOtherNode ){
 
             // region <update for this node>
             if(this.matchedCodeNodeList == null)
                 matchedCodeNodeList = new ArrayList<>();
             if(newNode.similarity > this.maxSimilarity){
-                matchedCodeNodeList.clear();
+                //matchedCodeNodeList.clear();
                 maxSimilarity = newNode.similarity;
             }
             matchedCodeNodeList.add(newNode);
@@ -242,7 +295,7 @@ public class Node {
                 node.matchedCodeNodeList = new ArrayList<>();
             }
             if(newNode.similarity > node.maxSimilarity){
-                node.matchedCodeNodeList.clear();
+                //node.matchedCodeNodeList.clear();
                 node.maxSimilarity = newNode.similarity;
             }
             MatchedNode newPair = new MatchedNode(thisTreeNumber , this.id , this , newNode.similarity);
@@ -280,16 +333,16 @@ public class Node {
         for(Integer treeNum : mergingNodes.keySet()){
             Pair<Set<Integer> , Double> pair = mergingNodes.get(treeNum);
             Set<Integer> nodes = pair.getKey();
-            double mergedSimilarity = pair.getValue();
+            double mergedSimilarity = pair.getValue() + 2; // 1是奖励项
 
             Tree tree = targetTrees.get(treeNum);
             int mergedNodeNum = tree.findCommonParents(nodes);
             Node targetNode = tree.getNode(mergedNodeNum);
 
-            MatchedNode newPairForThisNode = new MatchedNode(treeNum , mergedNodeNum , targetNode , mergedSimilarity);
+            MatchedNode newPairForThisNode = new MatchedNode(treeNum , mergedNodeNum , targetNode , mergedSimilarity );
             matchedCodeNodeList.add(newPairForThisNode);
 
-            MatchedNode newPairForTargetNode = new MatchedNode(sourceTreeNum , this.getId() , this , mergedSimilarity);
+            MatchedNode newPairForTargetNode = new MatchedNode(sourceTreeNum , this.getId() , this , mergedSimilarity );
             targetNode.addMatchedNode(newPairForTargetNode);
 
         }
@@ -393,6 +446,45 @@ public class Node {
                 type == NodeType.TEXT_NNP ||
                 type == NodeType.TEXT_NNPS;
     }
+
+    public static void main(String[] args){
+        Properties props = new Properties();
+        props.put("python.home", "path to the Lib folder");
+        //props.put("python.console.encoding", "UTF-8");
+        props.put("python.security.respectJavaAccessibility", "false");
+        props.put("python.import.site", "false");
+        Properties preprops = System.getProperties();
+        PythonInterpreter.initialize(preprops, props, new String[0]);
+
+
+        PythonInterpreter interpreter = new PythonInterpreter();
+        interpreter.exec("import sys");
+        interpreter.exec("sys.path.append('F:\\Python35\\Lib')");
+        interpreter.exec("sys.path.append('F:\\Python35\\Lib\\site-packages')");
+        interpreter.execfile("C:\\Users\\oliver\\PycharmProjects\\wordSimilarityTest\\test.py");
+        PyFunction func = (PyFunction) interpreter.get("similarity_base_on_wordNet" , PyFunction.class);
+        PyObject obj = func.__call__(new PyString("one") , new PyString("two"));
+        System.out.println(obj.toString());
+
+
+        /*ILexicalDatabase db = new NictWordNet();
+        WS4JConfiguration.getInstance().setMFS(true);
+        double s = new WuPalmer(db).calcRelatednessOfWords("test", "measure");
+        System.out.println(s);
+        /*String[] arguments = {"python", "C:\\Users\\oliver\\PycharmProjects\\wordSimilarityTest\\test.py" , "assert" , "verify"};
+        try {
+            //Process process = Runtime.getRuntime().exec(arguments);
+            Process process = Runtime.getRuntime().exec("python C:\\Users\\oliver\\PycharmProjects\\wordSimilarityTest\\test.py assert verify");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line = reader.readLine();
+            System.out.println(process.waitFor() + " " + line);
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }*/
+    }
+
+
 }
 
 

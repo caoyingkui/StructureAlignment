@@ -214,8 +214,13 @@ public class Matrix <T extends Valuable>{
         // 从上到下，从左到右匹配
         for(int i = m1 ; i < m2 ; i ++){
             for(int j = n1 ; j < n2 ; j++){
-                if(max < this.getCell(i , j).getValue()){
-                    max = this.getCell(i , j ).getValue();
+                double point1 = (i * 1.0 - m1 + 1) / (m2 - m1);
+                double point2 = (j * 1.0 - n1 + 1) / (n2 - n1);
+
+                double temp = 0.1 * (1 - Math.abs(point1 - point2));
+                temp += this.getCell(i , j).getValue();
+                if(max < temp){
+                    max = temp;
                     max_m = i;
                     max_n = j;
                 }
@@ -382,5 +387,23 @@ public class Matrix <T extends Valuable>{
 
 
         return null;
+    }
+
+    public double similarity(Map<Pair<Integer , Integer> , Double> matchedNodes){
+        double result = 0 ;
+        Pair<Integer , Integer> max;
+        while((max = getMax(0.01)) != null){
+            int codeId = max.getKey();
+            int textId = max.getValue();
+            double sim = 4 * getCell(codeId , textId).getValue();
+            result += sim;
+            cleanRow(codeId);
+            cleanColumn( textId);
+
+            if(matchedNodes != null){
+                matchedNodes.put(new Pair<Integer , Integer>(codeId , textId) , sim);
+            }
+        }
+        return result;
     }
 }

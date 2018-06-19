@@ -4,6 +4,7 @@ import cn.edu.pku.sei.structureAlignment.tree.CodeStructureTree;
 import cn.edu.pku.sei.structureAlignment.tree.Node;
 import cn.edu.pku.sei.structureAlignment.tree.NodeType;
 import cn.edu.pku.sei.structureAlignment.tree.Tree;
+import cn.edu.pku.sei.structureAlignment.util.DigitsToWord;
 import javafx.util.Pair;
 import mySql.SqlConnector;
 import org.eclipse.jdt.core.dom.*;
@@ -2058,7 +2059,13 @@ public class CodeVisitor extends ASTVisitor {
 
         Node root = new Node(NodeType.CODE_NumberLiteral , node.toString() , id ++);
         // remove the characters l L ...
-        root.addAlternatives(node.getToken().replaceAll("[^0-9-+.]" , ""));
+
+        String temp = node.getToken().replaceAll("[^0-9-+.]" , "");
+        if(temp.contains("+") || temp.contains(".") || temp.contains("+"))
+            root.addAlternatives(temp);
+        else
+            root.addAlternatives(DigitsToWord.toEnglish(Integer.parseInt(temp)));
+
         tree = new CodeStructureTree(root , node.toString() , parent);
 
 

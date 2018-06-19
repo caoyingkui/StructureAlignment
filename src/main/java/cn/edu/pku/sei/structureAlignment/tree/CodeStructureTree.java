@@ -37,7 +37,7 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
         ASTParser parser = ASTParser.newParser(AST.JLS8);
         ///parser.setSource("XSSFCellStyle style = new XSSFCellStyle(new StylesTable());".toCharArray());
         parser.setSource((
-                "searchingBooks2004.add(searchingBooks, BooleanClause.Occur.MUST); "
+                "query.add(new Term[] { new Term(\"field\", \"quick\"), new Term(\"field\", \"fast\")});\n"
 
                 ).toCharArray());
         //parser.setSource("d = null;".toCharArray());

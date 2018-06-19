@@ -8,6 +8,7 @@ import cn.edu.pku.sei.structureAlignment.tree.*;
 import cn.edu.pku.sei.structureAlignment.util.DoubleValue;
 import cn.edu.pku.sei.structureAlignment.util.Matrix;
 import cn.edu.pku.sei.structureAlignment.util.Stemmer;
+import javafx.util.Pair;
 import org.eclipse.jdt.core.dom.*;
 
 import javax.swing.*;
@@ -18,6 +19,8 @@ import java.io.FileReader;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by oliver on 2018/1/14.
@@ -61,6 +64,8 @@ public class CodeLineRelationGraph extends JPanel{
         //endregion<setter>
     }
     private String code;
+    public Map<Integer ,Integer> statementLineIndexes = new HashMap<>();
+
 
     public Map<String , String> variableDictionary;
     private List<CodeLineNode> codeLineRelationNodes;
@@ -79,34 +84,18 @@ public class CodeLineRelationGraph extends JPanel{
 
     public static void main(String[] args){
         CodeLineRelationGraph graph = new CodeLineRelationGraph();
-        graph.build("Metadata metadata = new Metadata();\n" +
-                "metadata.set(Metadata.RESOURCE_NAME_KEY, f.getName()); // 4\n" +
-                "InputStream is = new FileInputStream(f); // 5\n" +
-                "Parser parser = new AutoDetectParser(); // 6\n" +
-                "ContentHandler handler = new BodyContentHandler(); // 7\n" +
-                "ParseContext context = new ParseContext(); // 8\n" +
-                "context.set(Parser.class, parser); // 8\n" +
-                "try {\n" +
-                "\tparser.parse(is, handler, metadata, new ParseContext()); // 9\n" +
-                "} finally {\n" +
-                "\tis.close();}\n" +
-                "Document doc = new Document();\n" +
-                "doc.add(new Field(\"contents\", handler.toString(), Field.Store.NO, Field.Index.ANALYZED)); // 10\n" +
-                "if (DEBUG) {\n" +
-                "\tSystem.out.println(\" all text: \" + handler.toString());}\n" +
-                "for(String name : metadata.names()) { //11\n" +
-                "\tString value = metadata.get(name);\n" +
-                "\tif (textualMetadataFields.contains(name)) {\n" +
-                "\t\tdoc.add(new Field(\"contents\", value, Field.Store.NO, Field.Index.ANALYZED));} // 12\n" +
-                "\tdoc.add(new Field(name, value, Field.Store.YES, Field.Index.NO)); //13\n" +
-                "\tif (DEBUG) {\n" +
-                "\t\tSystem.out.println(\" \" + name + \": \" + value);}}\n" +
-                "if (DEBUG) {\n" +
-                "\tSystem.out.println();}\n" +
-                "doc.add(new Field(\"filename\", f.getCanonicalPath(), //14\n" +
-                "Field.Store.YES, Field.Index.NOT_ANALYZED));\n" +
-                "return doc;");
+        graph.build(
+                "MultiPhraseQuery query = new MultiPhraseQuery();\n" +
+                        "query.add(new Term[] { new Term(\"field\", \"quick\"), new Term(\"field\", \"fast\") }); // 1\n" +
+                        "query.add(new Term(\"field\", \"fox\")); // 2\n" +
+                        "System.out.println(query);\n" +
+                        "TopDocs hits = searcher.search(query, 10);\n" +
+                        "assertEquals(\"fast fox match\", 1, hits.totalHits);\n" +
+                        "query.setSlop(1);\n" +
+                        "hits = searcher.search(query, 10);\n" +
+                        "assertEquals(\"both match\", 2, hits.totalHits);");
         graph.paint();
+        graph.getCodeLineTrees().get(2).print();
     }
 
     public CodeLineRelationGraph(){
@@ -161,6 +150,8 @@ public class CodeLineRelationGraph extends JPanel{
      *
      */
     private void build(List<ASTNode> statements){
+        mapStatementsToCodeLine(statements);
+
         try{
             CodeVisitor.initialize();
 
@@ -252,6 +243,38 @@ public class CodeLineRelationGraph extends JPanel{
         }catch (Exception e){
             System.out.println("error:" + e.getMessage());
             //e.printStackTrace();
+        }
+    }
+
+    private void mapStatementsToCodeLine(List<ASTNode> statements){
+        List<Pair<Integer ,Integer>> linesStart2End = new ArrayList<>();
+
+        int start = 0;
+        int end = 0;
+        int length = code.length();
+        Pattern pattern = Pattern.compile("\\n");
+        Matcher matcher = pattern.matcher(code);
+        while(matcher.find()){
+            end = matcher.start();
+            linesStart2End.add(new Pair<>(start , end));
+            start = end + 1;
+        }
+        if(start < length){
+            linesStart2End.add(new Pair<>(start , length - 1));
+        }
+
+        for(int i = 0 ; i < statements.size() ; i ++){
+            start = statements.get(i).getStartPosition();
+
+            for(int j = 0 ; j < linesStart2End.size() ; j ++){
+                Pair<Integer , Integer> line = linesStart2End.get(j);
+                int line_start = line.getKey();
+                int line_end = line.getValue();
+                if(start >= line_start && start <= line_end){
+                    statementLineIndexes.put(i , j);
+                    break;
+                }
+            }
         }
     }
 

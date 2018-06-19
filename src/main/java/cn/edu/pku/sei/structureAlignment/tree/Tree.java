@@ -125,7 +125,7 @@ public abstract class Tree<T extends Tree<T>>{
         int text_y = y + textHeight ;
 
         g.drawString(getDisplayContent() , text_x , text_y);
-        g.drawRect(text_x - 3, text_y - 12 , rootWidth + 4 , 14);
+        //g.drawRect(text_x - 3, text_y - 12 , rootWidth + 4 , 14);
 
 
 
@@ -370,6 +370,12 @@ public abstract class Tree<T extends Tree<T>>{
     }
 
     public int findCommonParents(Set<Integer> nodes){
+
+        if(nodes.size() == 1)
+        {
+            return ((Integer)(nodes.toArray()[0]));
+        }
+
         List< List<Integer>> paths = new ArrayList<List<Integer>>();
 
         for(int node : nodes){

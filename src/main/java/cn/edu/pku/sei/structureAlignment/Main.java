@@ -2,6 +2,7 @@ package cn.edu.pku.sei.structureAlignment;
 
 import cn.edu.pku.sei.structureAlignment.CodeLineRelation.CodeLineRelationGraph;
 import cn.edu.pku.sei.structureAlignment.feature.*;
+import cn.edu.pku.sei.structureAlignment.paralellCorpusExtractor.SOExtractor;
 import cn.edu.pku.sei.structureAlignment.parser.code.CodeVisitor;
 import cn.edu.pku.sei.structureAlignment.parser.code.StatementVisitor;
 import cn.edu.pku.sei.structureAlignment.parser.nlp.Dependency;
@@ -51,12 +52,9 @@ public class Main {
         result = new Result();
 
 
-
-
-
-
-        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\test.txt"));
-        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\168-2.txt"));
+        match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\59-1.txt"));
+        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\118.txt"));
+        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\191.txt"));
 
         //addComment();
         /*for(CodeStructureTree codeTree : alignment.keySet()){
@@ -66,11 +64,14 @@ public class Main {
 
         //match(new File("C:\\Users\\oliver\\Desktop\\test code snippets\\486.txt"));
 
-        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\contianning control sentence\\486.txt"));
+        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\contianning control sentence\\348.txt"));
+
+
 
         //File d = new File("C:\\Users\\oliver\\Desktop\\数据\\contianning control sentence");
-        File d = new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence");
 
+        File d = new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence");
+        //File d = new File("C:\\Users\\oliver\\Desktop\\数据\\cook book");
         //File d = new File("C:\\Users\\oliver\\Desktop\\数据\\stackoverflow");
         //File d = new File("C:\\Users\\oliver\\Desktop\\test code snippets");
 
@@ -82,7 +83,23 @@ public class Main {
                 System.out.flush();
             }
         }
-        addComment();
+
+        /*d = new File("C:\\Users\\oliver\\Desktop\\数据\\contianning control sentence");
+        //File d = new File("C:\\Users\\oliver\\Desktop\\数据\\cook book");
+        //File d = new File("C:\\Users\\oliver\\Desktop\\数据\\stackoverflow");
+        //File d = new File("C:\\Users\\oliver\\Desktop\\test code snippets");
+
+
+        files = d.listFiles();
+        if(files != null) {
+            for (File file : files) {
+                match(file);
+                System.out.flush();
+            }
+        }*/
+
+
+
 
 
 
@@ -91,8 +108,18 @@ public class Main {
         System.out.printf("total code lines:%d total comments:%d\n" , codeLineCount , commentCount);
         System.out.printf("total:%d right:%d wrong:%d precision:%.2f recall:%.2f\n\n\n", globalTotal , globalRight , globalWrong , precision , recall);
         System.out.printf("");
-
         result.print();
+
+        /*for(CodeStructureTree corpusTree : alignment.keySet()){
+            int treeNum = alignmentNum.get(corpusTree);
+
+            BufferedWriter writer = new BufferedWriter(new FileWriter(new File("addCommentExample\\" + treeNum + ".txt") ));
+            writer.write(corpusTree.getCode() + "\n");
+            writer.write(alignment.get(corpusTree)+ "\n\n");
+            writer.close();
+        }
+
+        addComment();*/
     }
 
     public static void compare(String codePath , String textPath){
@@ -415,14 +442,15 @@ public class Main {
             }
         }
 
-        Pair<Integer , Integer> max;
+        /*Pair<Integer , Integer> max;
         while((max = matrix.getMax(0.01)) != null){
             int codeId = max.getKey();
             int textId = max.getValue();
             result += (4 * matrix.getCell(codeId , textId).getValue());
             matrix.cleanRow(codeId);
             matrix.cleanColumn( textId);
-        }
+        }*/
+        result = matrix.similarity(null);
 
         CreateClassFeature feature = new CreateClassFeature();
         if(feature.getFeature(textTree))
@@ -462,25 +490,17 @@ public class Main {
 
         int codeTreeCount = codeTrees.size();
         int textTreeCount = textTrees.size();
-        Matrix<DoubleValue> matrix = new Matrix<>(codeTreeCount , textTreeCount , new DoubleValue(0));
 
+        Matrix<DoubleValue> matrix = new SOExtractor().match(codeGraph , comments);
+        /*Matrix<DoubleValue> matrix = new Matrix<>(codeTreeCount , textTreeCount , new DoubleValue(0));
         for(int i = 0 ; i < codeTreeCount ; i ++){
             CodeStructureTree codeTree = codeTrees.get(i);
             for(int j = 0 ; j < textTreeCount ; j ++){
                 TextStructureTree textTree = textTrees.get(j);
                 double sim = howWellAreTwoTreesAreSimilar(codeTree , textTree , tokenOccurFrequency);
-
-
-                /*List<Feature> features = featureList.get(j);
-                for(Feature feature : features){
-                    if(feature.match(codeTree)){
-                        sim += 4;
-                    }
-                }*/
                 matrix.setValue(i , j , sim);
-
             }
-        }
+        }*/
         matrix.print();
 
         List<Pair<Integer , Integer>> matchScheme ;
@@ -615,7 +635,7 @@ public class Main {
      */
     static double match(File file){
 
-        System.out.println(file.getAbsolutePath() + ":");
+        System.out.println(file.getName() + ":");
         try{
 
             List<Object> metaInfo = parseTestFile(file);
@@ -628,6 +648,7 @@ public class Main {
             graph.build(codeString);
 
             List<Pair<Integer , Integer>> finalMatchScheme = match(graph ,comments );
+
 
             analysesResult(finalMatchScheme , annotations);
 
@@ -673,7 +694,7 @@ public class Main {
                 for(int i = 0 ; i < codeNodes.size() ; i ++){
                     for(int j = 0 ; j < textNodes.size() ; j++){
                         double sim = codeNodes.get(i).compare(textNodes.get(j));
-                        if(sim == 1.0){
+                        if(sim > 0.8){
                             identicalPairs.put(j , i);
                         }
                     }
@@ -858,7 +879,8 @@ public class Main {
     }
 
     public static void addComment(){
-        List<String> files = findAllJavaFile(new File("D:\\test"));
+        List<String> files = findAllJavaFile(new File("D:\\test\\lucene5-master\\src\\main\\java\\com\\yida\\framework\\lucene5\\hightlight\\"));
+        //List<String> files = findAllJavaFile(new File("D:\\test"));
         boolean stop = false;
 
         ASTParser parser = ASTParser.newParser(AST.JLS8);
@@ -882,10 +904,11 @@ public class Main {
                             for(MethodDeclaration method : methods){
                                 CodeLineRelationGraph graph = new CodeLineRelationGraph();
 
+                                graph.build(method.getBody());
                                 if(graph.getCodeLineTrees().size() == 0)
                                     continue;
 
-                                graph.build(method.getBody());
+
                                 stop = addComment(graph.getCodeLineTrees() , file.getAbsolutePath());
                                 if(stop)
                                     break;
@@ -906,18 +929,6 @@ public class Main {
                 break;
         }
 
-        for(CodeStructureTree corpusTree : alignment.keySet()){
-            int treeNum = alignmentNum.get(corpusTree);
-            try {
-                BufferedWriter reader = new BufferedWriter(new FileWriter(new File("addCommentExample\\" + treeNum + ".txt")));
-                reader.write(addComments.get(corpusTree).toString());
-                reader.close();
-            }catch(Exception e){
-                e.printStackTrace();
-            }
-        }
-
-
     }
 
     /**
@@ -932,8 +943,10 @@ public class Main {
         int count = 0 ; // 用于在遍历时，记录已经为count个例子，生成了足够的数据。
 
         for(CodeStructureTree corpusCodeTree : alignment.keySet()){
+            int treeNum = alignmentNum.get(corpusCodeTree);
             int howMany = addCommentCount.get(corpusCodeTree);
-            if(howMany > 1) {
+
+            if(howMany > 5) {
                 count++;
                 continue;
             }
@@ -954,18 +967,19 @@ public class Main {
                         result = result.replace("#" + replacement , repertoryCodeTree.getNode(replacement).getContent());
                     }
 
-                    System.out.println("******************************");
-                    System.out.println(repertoryCodeTree.getCode());
-                    System.out.println(result);
-                    System.out.println("--------------------");
-                    System.out.println(corpusCodeTree.getCode());
-                    System.out.println(comment);
-                    System.out.println("******************************");
+                    try {
+                        BufferedWriter writer = new BufferedWriter(new FileWriter(new File("addCommentExample\\" + treeNum + ".txt"), true));
+                        writer.write("****************************\n");
+                        writer.write(filePath + "\n\n");
+                        writer.write(repertoryCodeTree.getCode() + "\n\n");
+                        writer.write(result + "\n");
+                        writer.write("****************************\n\n\n");
+                        writer.close();
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
 
-                    StringBuilder commentBuilder = addComments.get(corpusCodeTree);
-                    commentBuilder.append("\n").append("******************************");
-                    commentBuilder.append(repertoryCodeTree.getCode());
-                    commentBuilder.append(result).append("\n\n");
+                    System.out.println(filePath);
 
                     addCommentCount.put(corpusCodeTree, addCommentCount.get(corpusCodeTree) + 1);
                 }
