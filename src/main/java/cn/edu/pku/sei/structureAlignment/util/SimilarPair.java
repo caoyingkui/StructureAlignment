@@ -22,4 +22,14 @@ public class SimilarPair implements Valuable{
     public void setValue(double value) {
         this.value = value;
     }
+
+    @Override
+    public String getLogInfo() {
+        return null;
+    }
+
+    @Override
+    public void setLogInfo(String value) {
+
+    }
 }

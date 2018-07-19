@@ -194,4 +194,27 @@ public class Stemmer {
 
         return result;
     }
+
+    public static List<String> camelCase(String string){
+        string = string.trim();
+        String camelCasePattern = "([^\\p{L}\\d]+)|(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)|(?<=[\\p{L}&&[^\\p{Lu}]])(?=\\p{Lu})|(?<=\\p{Lu})(?=\\p{Lu}[\\p{L}&&[^\\p{Lu}]])";
+        String[] subs = string.split(camelCasePattern);
+
+        List<String> result = new ArrayList<>();
+        for(String sub : subs){
+            result.add(sub.toLowerCase());
+        }
+        return  result;
+    }
+
+    public static boolean equal(String word , String... wordSet){
+        String s1 = Stemmer.stemSingleWord(word).toLowerCase();
+        for(String word2 : wordSet){
+            String s2 = Stemmer.stemSingleWord(word2).toLowerCase();
+            if(s1.compareTo(s2) == 0)
+                return true;
+        }
+
+        return false;
+    }
 }

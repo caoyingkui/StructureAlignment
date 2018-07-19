@@ -68,6 +68,14 @@ public class Matrix <T extends Valuable>{
             return -1;
     }
 
+    public String getLogInfo(int i , int j){
+        return matrix.get(i).get(j).getLogInfo();
+    }
+
+    public void setLogInfo(int i , int j , String string){
+        matrix.get(i).get(j).setLogInfo(string);
+    }
+
     public void setCell(int i , int j , T cell){
         matrix.get(i).set(j , cell);
     }
@@ -77,20 +85,24 @@ public class Matrix <T extends Valuable>{
     }
 
     public void print(){
+        print(2);
+    }
+
+    public void print(int length){
         Formatter formatter = new Formatter();
-        formatter.format("%-3s" , " ");
+        formatter.format("%-" + (length + 2)+ "s" , " ");
 
         for(int j = 0 ; j < n ; j ++){
-            formatter.format("%-3s " , j + 1 + "");
+            formatter.format("%-" + (length + 2) + "s " , j + 1 + "");
         }
         formatter.format("\n");
 
         for(int i = 0 ; i < m ; i ++){
-            formatter.format("%-3s" , i + 1 + "");
+            formatter.format("%-" + (length + 2) + "s" , i + 1 + "");
             for(int j = 0 ; j < n ; j ++){
                 T cell = matrix.get(i).get(j);
                 if(cell != null)
-                    formatter.format("%.1f " , cell.getValue());
+                    formatter.format("%."+ length + "f " , cell.getValue());
                 else
                     formatter.format("      ");
 
@@ -180,7 +192,7 @@ public class Matrix <T extends Valuable>{
     public void cleanRow(int rowIndex){
         List<T> row = matrix.get(rowIndex);
         for(int i = 0 ; i < n ; i ++){
-            row.set(i , null);
+            row.get(i).setValue(0);
         }
         //print(0);
     }
@@ -188,18 +200,18 @@ public class Matrix <T extends Valuable>{
     public void cleanColumn(int columnIndex){
         for(int i = 0 ; i < m ; i ++){
             List<T> row = matrix.get(i);
-            row.set(columnIndex , null);
+            row.get(columnIndex).setValue(0);
         }
         //print(0);
     }
 
     public List<Pair<Integer , Integer>> findBestMatchScheme(){
-        int defaultBound = 2;
+        double defaultBound = 0.1;
         return findBestMatchScheme(0 , 0 , m , n , defaultBound);
         //return findBestMatchScheme(defaultBound);
     }
 
-    private List<Pair<Integer , Integer>> findBestMatchScheme(int m1 , int n1 , int m2 , int n2 , int bound){
+    private List<Pair<Integer , Integer>> findBestMatchScheme(int m1 , int n1 , int m2 , int n2 , double bound){
         if(m1 < 0 || n1 < 0 || m2 < 0 || n2 < 0) return null;
         if(m1 >= m || n1 >= n || m2 > m || n2 > n ) return null;
         if(m1 >= m2 || n1 >= n2) return null;
@@ -214,15 +226,22 @@ public class Matrix <T extends Valuable>{
         // 从上到下，从左到右匹配
         for(int i = m1 ; i < m2 ; i ++){
             for(int j = n1 ; j < n2 ; j++){
+                if(this.getValue(i , j) < bound)
+                    continue;
+
                 double point1 = (i * 1.0 - m1 + 1) / (m2 - m1);
                 double point2 = (j * 1.0 - n1 + 1) / (n2 - n1);
 
-                double temp = 0.1 * (1 - Math.abs(point1 - point2));
+                double temp = 0.001 * (1 - Math.abs(point1 - point2));
+
                 temp += this.getCell(i , j).getValue();
                 if(max < temp){
                     max = temp;
                     max_m = i;
                     max_n = j;
+                    if(max_m == 23 && max_n == 3){
+                        int iii;
+                    }
                 }
             }
         }
@@ -287,6 +306,7 @@ public class Matrix <T extends Valuable>{
             }else {
                 path[i][0] = new Pair<>(max_index, 0);
                 signals[i][0] = 4;
+                temp[i][0] = temp[max_index][0];
             }
         }
 
@@ -299,6 +319,7 @@ public class Matrix <T extends Valuable>{
             }else {
                 path[0][j] = new Pair<>(0, max_index);
                 signals[0][j] = 3;
+                temp[0][j] = temp[0][max_index];
             }
         }
 
@@ -316,13 +337,15 @@ public class Matrix <T extends Valuable>{
                 signal = 5;
                 max = 0;
 
-                if(temp[i][j] > max){
+                //temp中的值小于bound值已经被置为-1， 所以大于0的都是满足大于bound这个条件的。
+                if(temp[i][j] > 0){
                     max = temp[i][j] ;
                     signal = 0;
                 }
 
                 if(temp[i - 1][j - 1] > 0){
                     max += temp[i - 1][j - 1];
+                    temp[i][j] = max;
                     signal = signal == 0 ? 2 : 1;
                 }
 
@@ -345,11 +368,10 @@ public class Matrix <T extends Valuable>{
                     }
                 }
                 signals[i][j] = signal;
+                temp[i][j] = max;
                 if(signal == 3 || signal == 4){
                     path[i][j] = new Pair<>(m_index , n_index);
                 }
-
-                temp[i][j] = max;
             }
         }
 
@@ -395,7 +417,7 @@ public class Matrix <T extends Valuable>{
         while((max = getMax(0.01)) != null){
             int codeId = max.getKey();
             int textId = max.getValue();
-            double sim = 4 * getCell(codeId , textId).getValue();
+            double sim = getCell(codeId , textId).getValue();
             result += sim;
             cleanRow(codeId);
             cleanColumn( textId);

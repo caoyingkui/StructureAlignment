@@ -8,4 +8,6 @@ import java.io.Serializable;
 public interface Valuable extends Serializable{
     double getValue();
     void setValue(double value);
+    String getLogInfo();
+    void setLogInfo(String value);
 }
