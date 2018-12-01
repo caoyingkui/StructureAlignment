@@ -55,11 +55,11 @@ public class KeyWordFeature extends Feature {
                 String keyWord = typeKeyWordSet.get(type);
                 if(findNodeType(codeStructureTree , type )) {
                     if (keyWord.compareTo("iterate") == 0 )
-                        return 2;
+                        return 1;
                     else if (keyWord.compareTo( "if") == 0)
-                        return 2;
+                        return 1;
                     else
-                        return 2;
+                        return 1;
                 }
             }
         }

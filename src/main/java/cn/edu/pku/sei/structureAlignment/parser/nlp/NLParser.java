@@ -5,6 +5,9 @@ import cn.edu.pku.sei.structureAlignment.feature.Feature;
 import cn.edu.pku.sei.structureAlignment.feature.MethodInvocationFeature;
 import cn.edu.pku.sei.structureAlignment.tree.TextStructureTree;
 import cn.edu.pku.sei.structureAlignment.util.Stemmer;
+import edu.stanford.nlp.ling.HasWord;
+import edu.stanford.nlp.ling.SentenceUtils;
+import edu.stanford.nlp.process.DocumentPreprocessor;
 import mySql.SqlConnector;
 import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
 import edu.stanford.nlp.semgraph.SemanticGraphEdge;
@@ -16,6 +19,8 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 
 import java.io.File;
+import java.io.Reader;
+import java.io.StringReader;
 import java.sql.ResultSet;
 import java.util.*;
 
@@ -24,14 +29,14 @@ import java.util.*;
  */
 public class NLParser  {
     static LexicalizedParser parser = null;
-    String nlText;
-    TextStructureTree textStructureTree;
-    edu.stanford.nlp.trees.Tree nlTree;
+    private String nlText;
+    private TextStructureTree textStructureTree;
+    private edu.stanford.nlp.trees.Tree nlTree;
 
 
-    Map<String , String> word2class;
+    public Map<String , String> word2class;
 
-    List<Feature> features;
+    private List<Feature> features;
 
     static SqlConnector conn ;
     static GraphDatabaseService graphDb ;
@@ -56,6 +61,7 @@ public class NLParser  {
 
         String graphDBPath = bundle.getString("graphdb");
         graphDb = new GraphDatabaseFactory().newEmbeddedDatabase(new File(graphDBPath));
+
     }
 
     /**
@@ -73,10 +79,6 @@ public class NLParser  {
         word2class = getClassDictionary(nlText);
 
 
-    }
-
-    public Map<String , String> getWord2class(){
-        return word2class;
     }
 
     public static void main(String[] args){
@@ -154,17 +156,6 @@ public class NLParser  {
             return textStructureTree;
         }
     }
-
-    /**
-     * compare the similarity between the str1 and str2
-     * @param str1
-     * @param str2
-     * @return
-     */
-    static double compare(String str1, String str2){
-        return 0  ;
-    }
-
 
     private boolean contains(String[] set , String str){
         for(String s : set){
@@ -564,5 +555,20 @@ public class NLParser  {
 
         return possibleClasses;
     }
+
+    public static List<String> splitIntoSentences(String string){
+        if(string.trim().length() ==0 )
+            return null;
+
+        List<String> result = new ArrayList<>();
+        Reader reader = new StringReader(string);
+        DocumentPreprocessor dp = new DocumentPreprocessor(reader);
+        for(List<HasWord> sentence : dp){
+            result.add(SentenceUtils.listToString(sentence));
+        }
+
+        return result;
+    }
+
 
 }

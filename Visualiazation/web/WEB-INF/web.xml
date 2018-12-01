@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+         version="3.1">
+
+    <filter>
+        <filter-name>CORS</filter-name>
+        <filter-class>com.thetransactioncompany.cors.CORSFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>CORS</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    <servlet>
+        <description></description>
+        <display-name>ExampleChoose</display-name>
+        <servlet-name>ExampleChoose</servlet-name>
+        <servlet-class>cn.edu.pku.sei.structureAlignment.Visualization.Servlets.ExampleChooseServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ExampleChoose</servlet-name>
+        <url-pattern>/ExampleChoose</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <description></description>
+        <display-name>Goal</display-name>
+        <servlet-name>Goal</servlet-name>
+        <servlet-class>cn.edu.pku.sei.structureAlignment.Visualization.Servlets.GoalServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Goal</servlet-name>
+        <url-pattern>/Goal</url-pattern>
+    </servlet-mapping>
+
+
+    <servlet>
+        <description></description>
+        <display-name>Goals</display-name>
+        <servlet-name>Goals</servlet-name>
+        <servlet-class>cn.edu.pku.sei.structureAlignment.Visualization.Servlets.GoalsServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Goals</servlet-name>
+        <url-pattern>/Goals</url-pattern>
+    </servlet-mapping>
+
+
+    <servlet>
+        <description></description>
+        <display-name>Result</display-name>
+        <servlet-name>Result</servlet-name>
+        <servlet-class>cn.edu.pku.sei.structureAlignment.Visualization.Servlets.ResultServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Result</servlet-name>
+        <url-pattern>/Result</url-pattern>
+    </servlet-mapping>
+
+
+</web-app>

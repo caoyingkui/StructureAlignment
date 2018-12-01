@@ -35,7 +35,7 @@ public class Node {
     protected int id;
     protected NodeType type;
     protected String content;  // the original text of a node
-    protected List<String> alternatives;
+    public List<String> alternatives;
     protected String displayContent; //
     protected String additionalInfo; // the information we can be extracted by other ways.
 
@@ -62,7 +62,7 @@ public class Node {
     }
 
     public void addAlternatives(String content){
-        alternatives.add(content.trim().toLowerCase());
+        alternatives.add(content.toLowerCase());
     }
 
     public void setDisplayContent(String displayContent){
@@ -107,7 +107,7 @@ public class Node {
         alternatives = new ArrayList<>();
         String typeInfo = CodeVisitor.getVariableType(content);
         if(typeInfo.compareTo("") != 0) {
-            alternatives.add(typeInfo.toLowerCase());
+            alternatives.add(typeInfo);
         }
 
         this.additionalInfo = "";
@@ -115,26 +115,29 @@ public class Node {
     }
 
     /**
-     * @param node
+     * @param
      * @return 2:  if two nodes' are completely identical and the content are not a class name.
      *              I think this condition will be more reliable to predict two nodes are identical
      *          1: if two nodes' are completely identical and the content are a class name
      *          0.5: if two nodes' are partially identical
      *          0: if two nodes' are completely different
      */
-    public double  compare(Node node ){
+    public static double compare(Node codeNode, Node textNode, Map<String , Integer> codeTokenOccurFrequency, Map<String , Integer> textTokenOccurFrequency){
 
         // 默认this指向的是一个code节点
-        String content = this.getContent();
-        String anotherContent = node.getContent();
-        if(content.compareTo("assertEquals") == 0 && anotherContent.compareTo("matches") == 0){
-            int i = 0;
-        }
+        String content = codeNode.getContent();
+        String anotherContent = textNode.getContent();
 
 
+
+        int frequency = 1;
+        if(codeTokenOccurFrequency != null && textTokenOccurFrequency != null)
+            frequency = Math.max(codeTokenOccurFrequency.getOrDefault(content, 1),
+                textTokenOccurFrequency.getOrDefault(anotherContent, 1));
+        double result = 0;
         //remove the punctuation "
-        if(this.type == NodeType.CODE_StringLiteral){
-            content = content.length() > 2 ? content.substring(1 , content.length() - 1) : "";
+        if(codeNode.type == NodeType.CODE_StringLiteral){
+            //content = content.length() > 2 ? content.substring(1 , content.length() - 1) : "";
             Pattern pattern = Pattern.compile("[a-zA-Z0-9]");
             Matcher matcher = pattern.matcher(content);
             if(!matcher.find()) // 例如content的内容为 "."
@@ -142,57 +145,68 @@ public class Node {
         }
 
         if(content.trim().toLowerCase().compareTo(anotherContent.trim().toLowerCase()) == 0){
-            return 1.0 + (this.type == NodeType.ADDED_METHOD_NAME ? 1:0 );
-        }else if (this.alternativesContains(anotherContent) ){
-            return 1;
+            result =  1.0 + (codeNode.type == NodeType.ADDED_METHOD_NAME ? 1:0 );
+        }else if (codeNode.alternativesContains(anotherContent) ){
+            result = 1.0;
         }else if(!(content.contains(" ") && anotherContent.contains(" "))){
             if(Stemmer.stemSingleWord(content).compareTo(Stemmer.stemSingleWord(anotherContent)) == 0){
-                return 1.0;
+                result = 1.0;
             }
         }
 
-        String camelCasePattern = "([^\\p{L}\\d]+)|(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)|(?<=[\\p{L}&&[^\\p{Lu}]])(?=\\p{Lu})|(?<=\\p{Lu})(?=\\p{Lu}[\\p{L}&&[^\\p{Lu}]])";
-        String[] subs1 = content.split(camelCasePattern);
-        String[] subs2 = anotherContent.split(camelCasePattern);
-        double sim = 0.0;
-        try {
-            for (String sub1 : subs1) {
-                for(String sub2 : subs2){
-                    double temp = WN.getSimilarity(sub1.toLowerCase() , sub2.toLowerCase());
-                    if(temp > sim)
-                        sim = temp;
-                }
-
-            }
-        }catch(Exception e){
-            e.printStackTrace();
-        }
-
-        if(sim >= 0.5){
-            return sim;
-        }
-
-
-        Set<String> words1 = new HashSet<String>();
-        words1.addAll(Stemmer.stem(content + " " + this.getAdditionalInfo()));
-
-        Set<String> words2 = new HashSet<String>();
-        words2.addAll(Stemmer.stem(anotherContent + " " + node.getAdditionalInfo()));
-
-        for(String word1 : words1){
-            for(String word2 : words2 ){
-                if(word1.compareTo(word2) == 0){
-                    if(node.isNoun())
-                        return 0.75 ;
-                    else if(node.isVerb())
-                        return 0.5 ;
-                    else
-                        return 0.25;
+        if(result == 0) {
+            String camelCasePattern = "([^\\p{L}\\d]+)|(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)|(?<=[\\p{L}&&[^\\p{Lu}]])(?=\\p{Lu})|(?<=\\p{Lu})(?=\\p{Lu}[\\p{L}&&[^\\p{Lu}]])";
+            String[] subs1 = content.split(camelCasePattern);
+            String[] subs2 = anotherContent.split(camelCasePattern);
+            double sim = 0.0;
+            try {
+                for (String sub1 : subs1) {
+                    for (String sub2 : subs2) {
+                        if(sub1.length() > 2 && sub2.length() > 2) {
+                            if (sub1.startsWith(sub2) || sub2.startsWith(sub1)) {
+                                result = 0.5;
+                                break;
+                            }
+                        }
+                        double temp = WN.getSimilarity(sub1.toLowerCase(), sub2.toLowerCase());
+                        if (temp > sim)
+                            sim = temp;
+                    }
 
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            if (sim >= 0.5) {
+                return sim;
             }
         }
-        return 0;
+
+        if(result == 0) {
+            Set<String> words1 = new HashSet<String>();
+            words1.addAll(Stemmer.stem(content + " " + codeNode.getAdditionalInfo()));
+
+            Set<String> words2 = new HashSet<String>();
+            words2.addAll(Stemmer.stem(anotherContent + " " + textNode.getAdditionalInfo()));
+
+            for (String word1 : words1) {
+                for (String word2 : words2) {
+                    if (word1.compareTo(word2) == 0) {
+                        if(textNode.isNoun() || textNode.isVerb())
+                            return 1;
+                        /*if (textNode.isNoun())
+                            return 0.75;
+                        else if (textNode.isVerb())
+                            return 0.5;*/
+                        else
+                            return 0.25;
+
+                    }
+                }
+            }
+        }
+        return  result ; //result * 2 / frequency;
     }
 
     /**
@@ -249,14 +263,6 @@ public class Node {
         return alternatives.contains(content);
     }
 
-
-    public void addMatchedNode(MatchedNode newNode){
-        if(matchedCodeNodeList == null)
-            matchedCodeNodeList = new ArrayList<>();
-
-        matchedCodeNodeList.add(newNode);
-    }
-
     /**
      * Add new matched node of this node,
      * In this process, I need to guarantee 2 things:
@@ -269,43 +275,31 @@ public class Node {
      * 4, the newNode has been matched to another node with 0.6 similarity.
      * 5, the newNode has been matched to another node with 0.5 similarity.
      * 6, the newNode has been matched to another node with 0.4 similarity.
-     * if 1 or 4 happens, this function will node add this newNode
+     * if 1 or 4 happens, this function will not add this newNode
      * @param newNode
      * @return true, if succeed in adding.
      *          false , else
      */
-    public boolean addMatchedNode(MatchedNode newNode , int thisTreeNumber){
-        double newNodeMaxSimilarityWithOtherNode = newNode.matchedNode.maxSimilarity;
-
-        if(true || newNode.similarity >= this.maxSimilarity && newNode.similarity >= newNodeMaxSimilarityWithOtherNode ){
-
-            // region <update for this node>
-            if(this.matchedCodeNodeList == null)
-                matchedCodeNodeList = new ArrayList<>();
-            if(newNode.similarity > this.maxSimilarity){
-                //matchedCodeNodeList.clear();
-                maxSimilarity = newNode.similarity;
-            }
-            matchedCodeNodeList.add(newNode);
-            // endregion <update for this node>
-
-            // region <update for newNode>
-            Node node = newNode.matchedNode;
-            if(node.matchedCodeNodeList == null){
-                node.matchedCodeNodeList = new ArrayList<>();
-            }
-            if(newNode.similarity > node.maxSimilarity){
-                //node.matchedCodeNodeList.clear();
-                node.maxSimilarity = newNode.similarity;
-            }
-            MatchedNode newPair = new MatchedNode(thisTreeNumber , this.id , this , newNode.similarity);
-            node.matchedCodeNodeList.add(newPair);
-            // endregion <update for newNode>
-
-            return true;
-        }else{ // 1 or 4 happens
+    public boolean addMatchedNode(MatchedNode newNode){
+        double sim = newNode.similarity;
+        if(newNode.textNode == null){
             return false;
         }
+        try {
+            if (sim >= newNode.textNode.maxSimilarity &&
+                    sim >= newNode.codeNode.maxSimilarity) {
+                if (this.matchedCodeNodeList == null || this.maxSimilarity < sim)
+                    this.matchedCodeNodeList = new ArrayList<MatchedNode>();
+
+                this.maxSimilarity = sim;
+                this.matchedCodeNodeList.add(newNode);
+                return true;
+            } else
+                return false;
+        }catch (Exception e){
+            return false;
+        }
+
     }
 
     public List<MatchedNode> merge(List<List<MatchedNode>> childrenMatchedNodes , int sourceTreeNum , List<? extends Tree> targetTrees){
@@ -339,11 +333,9 @@ public class Node {
             int mergedNodeNum = tree.findCommonParents(nodes);
             Node targetNode = tree.getNode(mergedNodeNum);
 
-            MatchedNode newPairForThisNode = new MatchedNode(treeNum , mergedNodeNum , targetNode , mergedSimilarity );
-            matchedCodeNodeList.add(newPairForThisNode);
-
-            MatchedNode newPairForTargetNode = new MatchedNode(sourceTreeNum , this.getId() , this , mergedSimilarity );
-            targetNode.addMatchedNode(newPairForTargetNode);
+            MatchedNode newNode = new MatchedNode(treeNum, targetNode, sourceTreeNum , this, mergedSimilarity );
+            matchedCodeNodeList.add(newNode);
+            targetNode.addMatchedNode(newNode);
 
         }
         return matchedCodeNodeList.size() > 0 ? matchedCodeNodeList : null;
@@ -355,7 +347,7 @@ public class Node {
      * For example , assume childrenMatchedNodes is { {<1 , 5>, <3 , 4> , <1 , 6>} , {<3 , 8> , <4 , 5>}}
      * this means one subTree has matched to 5th node of 1st tree  , 4th node of  3rd tree' and  6th node of 1st tree , and another subTree has matched to 8th node of 3rd tree and 5th node of 4th tree.
      * there will be 3 special situation:
-     * 1, 4th tree ,there is only on match node , it can't not been merged
+     * 1, 4th tree ,there is only one match node , it can't not been merged
      * 2, 3rd tree , there are 2 nodes from 2 sub tree , it can be merged
      * 3, 1st tree , although there are 2 nodes, all are from one same subTree, this two nodes will not be merged, and these situation usually happen when match leaf nodes
      * @param childrenMatchedNodes
@@ -370,8 +362,8 @@ public class Node {
             Set<Integer> occurTemp = new HashSet<>();
 
             for(MatchedNode matchedNode : matchedNodes){
-                int matchedTreeID = matchedNode.matchedTreeID;
-                int matchedNodeID = matchedNode.matchedNodeID;
+                int matchedTreeID = matchedNode.codeTreeID;
+                int matchedNodeID = matchedNode.codeNode.getId();
                 double similarity = matchedNode.similarity;
 
                 occurTemp.add(matchedTreeID);

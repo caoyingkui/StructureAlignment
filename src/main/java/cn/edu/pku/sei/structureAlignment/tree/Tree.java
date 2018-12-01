@@ -1,6 +1,7 @@
 package cn.edu.pku.sei.structureAlignment.tree;
 
 import cn.edu.pku.sei.structureAlignment.Printer;
+import cn.edu.pku.sei.structureAlignment.parser.nlp.Dependency;
 import com.google.protobuf.MapEntry;
 import javafx.util.Pair;
 
@@ -24,6 +25,10 @@ public abstract class Tree<T extends Tree<T>>{
     protected int endIndex;     // record the ending coded number of a tree
 
     //region <setter>
+
+    //对于文本树来说，就是在进行自然语言解析的时候，产生的依赖关系信息
+    //对于代码树来说，特指是MethodInvocation这个节点，该类节点往往能够找到相关的javadoc信息，这样一来，就可以解析其中的依赖信息
+    public List<Dependency> dependencies;
 
 
     public void setChildren(List<T> children) {
@@ -223,7 +228,7 @@ public abstract class Tree<T extends Tree<T>>{
 
         for(Node node1 : nodes1){
             for(Node node2 : nodes2){
-                double similarity = node1.compare(node2);
+                double similarity = Node.compare(node1, node2, null, null);
                 result.put(new Pair<Integer , Integer>(node1.getId() , node2.getId()) , similarity);
             }
         }

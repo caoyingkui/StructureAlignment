@@ -4,16 +4,12 @@ import cn.edu.pku.sei.structureAlignment.CodeLineRelation.CodeLineRelationGraph;
 import cn.edu.pku.sei.structureAlignment.feature.*;
 import cn.edu.pku.sei.structureAlignment.paralellCorpusExtractor.SOExtractor;
 import cn.edu.pku.sei.structureAlignment.parser.code.CodeVisitor;
-import cn.edu.pku.sei.structureAlignment.parser.code.StatementVisitor;
 import cn.edu.pku.sei.structureAlignment.parser.nlp.Dependency;
 import cn.edu.pku.sei.structureAlignment.parser.nlp.NLParser;
 import cn.edu.pku.sei.structureAlignment.result.Result;
 import cn.edu.pku.sei.structureAlignment.result.ResultItem;
 import cn.edu.pku.sei.structureAlignment.tree.*;
-import cn.edu.pku.sei.structureAlignment.util.DoubleValue;
-import cn.edu.pku.sei.structureAlignment.util.Matrix;
-import cn.edu.pku.sei.structureAlignment.util.SimilarPair;
-import cn.edu.pku.sei.structureAlignment.util.Stemmer;
+import cn.edu.pku.sei.structureAlignment.util.*;
 import edu.stanford.nlp.simple.Sentence;
 import org.eclipse.jdt.core.dom.*;
 
@@ -51,10 +47,13 @@ public class Main {
         controlResult = new Result();
         result = new Result();
 
+        /*extract();*/
 
-        match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\59-1.txt"));
+
         //match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\118.txt"));
-        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\191.txt"));
+        //match(new File("C:\\Users\\oliver\\Desktop\\数据\\contianning control sentence\\108.txt"));
+        /*match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\199.txt"));
+        match(new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence\\191.txt"));
 
         //addComment();
         /*for(CodeStructureTree codeTree : alignment.keySet()){
@@ -68,9 +67,9 @@ public class Main {
 
 
 
-        //File d = new File("C:\\Users\\oliver\\Desktop\\数据\\contianning control sentence");
+        File d = new File(".\\数据\\contianning control sentence");
 
-        File d = new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence");
+        //File d = new File(".\\数据\\no control sentence");
         //File d = new File("C:\\Users\\oliver\\Desktop\\数据\\cook book");
         //File d = new File("C:\\Users\\oliver\\Desktop\\数据\\stackoverflow");
         //File d = new File("C:\\Users\\oliver\\Desktop\\test code snippets");
@@ -97,11 +96,6 @@ public class Main {
                 System.out.flush();
             }
         }*/
-
-
-
-
-
 
         double precision = (globalWrong + globalRight) == 0 ? 0 : (double) globalRight / (globalRight + globalWrong) ;
         double recall = globalTotal == 0 ? 1 : (double)globalRight / globalTotal;
@@ -382,7 +376,7 @@ public class Main {
             codeId = codeNode.getId();
             for(Node textNode : textLeafNodes){
                 textId = textNode.getId();
-                if(codeNode.compare(textNode) >= 0.5 && !textNodes.contains(textNode.getId())){
+                if(Node.compare(codeNode, textNode, null , null) >= 0.5 && !textNodes.contains(textNode.getId())){
                     textNodes.add(textId);
                     similarPairs.put(codeId , textId);
                     break;
@@ -437,7 +431,7 @@ public class Main {
             for(int j = 0 ; j < textLeafCount ; j ++){
 
                 Node textNode = textNodes.get(j);
-                double sim = codeNode.compare(textNode) * factor;
+                double sim = Node.compare(codeNode, textNode, null , null) * factor;
                 matrix.setValue(i , j , sim);
             }
         }
@@ -470,14 +464,20 @@ public class Main {
         return word1.contains(word2)||word2.contains(word1);
     }
 
-    public static List<Pair<Integer , Integer>> match(CodeLineRelationGraph codeGraph , List<String> comments){
-        String codeString = codeGraph.getCode();
+    public static List<Pair<Integer , Integer>> match(String codeString  , List<String> comments){
+
+        //region <old version>
+        /*
+        //region <parsing code>
+        CodeLineRelationGraph codeGraph = new CodeLineRelationGraph();
+        codeGraph.build(codeString);
         List<CodeStructureTree> codeTrees = codeGraph.getCodeLineTrees();
         Matrix<DoubleValue> sliceMatrix = codeGraph.slicesMatrix;
+        //endregion <parsing code>
+
+        //region <parsing comment>
         List<TextStructureTree> textTrees = new ArrayList<>();
         List<List<Feature>> featureList = new ArrayList<>();
-
-
         for(String comment : comments){
             TextStructureTree textTree = new TextStructureTree(0);
             textTree.construct(new Sentence(comment));
@@ -485,29 +485,36 @@ public class Main {
 
             //featureList.add(FeatureFactory.getFeatures(comment));
         }
-
-        Map<String , Integer> tokenOccurFrequency = codeGraph.tokenOccurFrequency;
+        //endregion <parsing comment>
 
         int codeTreeCount = codeTrees.size();
         int textTreeCount = textTrees.size();
 
-        Matrix<DoubleValue> matrix = new SOExtractor().match(codeGraph , comments);
-        /*Matrix<DoubleValue> matrix = new Matrix<>(codeTreeCount , textTreeCount , new DoubleValue(0));
+        Matrix<DoubleValue> matrix = new Matrix<>(codeTreeCount , textTreeCount , new DoubleValue(0));
         for(int i = 0 ; i < codeTreeCount ; i ++){
             CodeStructureTree codeTree = codeTrees.get(i);
             for(int j = 0 ; j < textTreeCount ; j ++){
                 TextStructureTree textTree = textTrees.get(j);
-                double sim = howWellAreTwoTreesAreSimilar(codeTree , textTree , tokenOccurFrequency);
+                double sim = howWellAreTwoTreesAreSimilar(codeTree , textTree , codeGraph.tokenOccurFrequency);
                 matrix.setValue(i , j , sim);
             }
-        }*/
+        }
         matrix.print();
 
-        List<Pair<Integer , Integer>> matchScheme ;
-        if(textTreeCount > 8)
-            matchScheme = matrix.findBestMatchScheme(2);
-        else
-            matchScheme = matrix.findBestMatchScheme();
+        List<Pair<Integer , Integer>> matchScheme = matrix.findBestMatchScheme(2);
+        //matchScheme = textTreeCount > 8 ? matrix.findBestMatchScheme(2) :  matrix.findBestMatchScheme();
+
+
+
+        List<Pair<Integer , Integer>> finalMatchScheme = updateMatchScheme(matchScheme ,sliceMatrix);
+
+
+        return finalMatchScheme;*/
+        //endregion <old version>
+        return new SOExtractor().match(codeString , comments);
+    }
+
+    public static List<Pair<Integer , Integer>> updateMatchScheme(List<Pair<Integer , Integer>> matchScheme , Matrix<DoubleValue> sliceMatrix){
         List<Pair<Integer , Integer>> finalMatchScheme = new ArrayList<>();
 
         if(matchScheme != null) {
@@ -520,12 +527,7 @@ public class Main {
             for (Pair<Integer, Integer> pair : matchScheme) {
                 int code = pair.getKey();
                 List<Integer> slice = new ArrayList<>();
-                Collections.sort(slice, new Comparator<Integer>() {
-                    @Override
-                    public int compare(Integer o1, Integer o2) {
-                        return o2 - o1;
-                    }
-                });
+                Collections.sort(slice, (o1 , o2) -> o1.compareTo(o2));
 
                 int temp = code - 1;
                 // temp + 1指向当前一行
@@ -560,12 +562,7 @@ public class Main {
         }
 
 
-        Collections.sort(finalMatchScheme, new Comparator<Pair<Integer, Integer>>() {
-            @Override
-            public int compare(Pair<Integer, Integer> o1, Pair<Integer, Integer> o2) {
-                return o1.getKey() - o2.getKey();
-            }
-        });
+        Collections.sort(finalMatchScheme , (pair1 , pair2) -> pair1.getKey().compareTo(pair2.getKey()) );
 
         return finalMatchScheme;
     }
@@ -640,20 +637,21 @@ public class Main {
 
             List<Object> metaInfo = parseTestFile(file);
 
+            //region <data processing>
             String codeString = (String)metaInfo.get(0);
             List<String> comments = (List<String>) metaInfo.get(1);
             Map<Integer, List<Integer>> annotations = (Map<Integer , List<Integer>>) metaInfo.get(2);
+            //endregion <data processing>
 
-            CodeLineRelationGraph graph = new CodeLineRelationGraph();
-            graph.build(codeString);
-
-            List<Pair<Integer , Integer>> finalMatchScheme = match(graph ,comments );
+            LSTM.currentFile = file.getName().replace(".txt", "");
 
 
+            List<Pair<Integer , Integer>> finalMatchScheme = match(codeString ,comments );
             analysesResult(finalMatchScheme , annotations);
 
-            codeCommentAlignment(finalMatchScheme , graph , comments);
-            //analysesResult(matchScheme , annotations);
+            //CodeLineRelationGraph codeGraph = new CodeLineRelationGraph();
+            //codeGraph.build(codeString);
+            //codeCommentAlignment(finalMatchScheme , codeGraph , comments);
 
         }catch(Exception e){
             e.printStackTrace();
@@ -662,6 +660,14 @@ public class Main {
         return 0;
     }
 
+
+    /**
+     * codeCommentAlignment函数是用于在生成对齐结果后，分析其中代码和文本的对齐的节点
+     * 把注释的对应的节点内容，替换成对应代码节点的编号
+     * @param finalMatchScheme
+     * @param graph
+     * @param comments
+     */
     static void codeCommentAlignment(List<Pair<Integer , Integer>>finalMatchScheme , CodeLineRelationGraph graph , List<String> comments){
         Map<Integer , List<Integer>> comment2Codes = new HashMap<>();
         for(Pair<Integer , Integer> pair : finalMatchScheme){
@@ -693,7 +699,7 @@ public class Main {
 
                 for(int i = 0 ; i < codeNodes.size() ; i ++){
                     for(int j = 0 ; j < textNodes.size() ; j++){
-                        double sim = codeNodes.get(i).compare(textNodes.get(j));
+                        double sim = Node.compare(codeNodes.get(i), textNodes.get(j), null , null);
                         if(sim > 0.8){
                             identicalPairs.put(j , i);
                         }
@@ -961,7 +967,7 @@ public class Main {
 
             for(CodeStructureTree repertoryCodeTree : codeTrees){
 
-                if(compare(corpusCodeTree , repertoryCodeTree)){
+                if( compare(corpusCodeTree , repertoryCodeTree)){
                     String result = comment;
                     for(Integer replacement : replacements){
                         result = result.replace("#" + replacement , repertoryCodeTree.getNode(replacement).getContent());
@@ -1004,6 +1010,56 @@ public class Main {
         }
 
         return result;
+    }
+
+    public static void extract(){
+        List<File> files = new ArrayList<>();
+
+        for(File f : new File("C:\\Users\\oliver\\Desktop\\数据\\contianning control sentence").listFiles())
+            files.add(f);
+
+        for(File f : new File("C:\\Users\\oliver\\Desktop\\数据\\no control sentence").listFiles())
+            files.add(f);
+
+        for(File f : files){
+            String name = f.getName();
+            name = name.replace(".txt", "");
+
+            List<Object> metaInfo = parseTestFile(f);
+
+            String codeString = (String)metaInfo.get(0);
+            List<String> comments = (List<String>) metaInfo.get(1);
+            Map<Integer, List<Integer>> annotations = (Map<Integer , List<Integer>>) metaInfo.get(2);
+
+            CodeLineRelationGraph graph = new CodeLineRelationGraph();
+            graph.build(codeString);
+
+            try {
+                BufferedWriter methWriter = new BufferedWriter(new FileWriter(new File("D:\\lstm data\\methname\\" + name)));
+                BufferedWriter apiseqWriter = new BufferedWriter(new FileWriter(new File("D:\\lstm data\\apiseq\\" + name)));
+                BufferedWriter tokensWriter = new BufferedWriter(new FileWriter(new File("D:\\lstm data\\tokens\\" + name)));
+                BufferedWriter descWriter = new BufferedWriter(new FileWriter(new File("D:\\lstm data\\desc\\" + name)));
+
+                for (CodeStructureTree tree : graph.getCodeLineTrees()) {
+                    Map<String, String> info = tree.generate();
+                    methWriter.write(info.get("methname") + "\n");
+                    apiseqWriter.write(info.get("apiseq") + "\n");
+                    tokensWriter.write(info.get("tokens") + "\n");
+                }
+
+                methWriter.close();
+                apiseqWriter.close();
+                tokensWriter.close();
+
+                for(String comment : comments)
+                    descWriter.write(comment + "\n");
+                descWriter.close();
+
+            }catch(Exception e){
+                ;
+            }
+
+        }
     }
 
 }

@@ -104,8 +104,6 @@ public class CodeLineRelationGraph extends JPanel{
         tokenOccurFrequency = new HashMap<>();
     }
 
-
-
     private static List<ASTNode> getStatements(String code){
         ASTParser parser = ASTParser.newParser(AST.JLS8);
         parser.setSource(code.toCharArray());
@@ -182,7 +180,7 @@ public class CodeLineRelationGraph extends JPanel{
                 variableCount = CodeVisitor.variableDictionary.size();
 
                 // one code line can declare one or 0 variable
-                assert(variableCount - temp < 2);
+                 assert(variableCount - temp < 2);
 
                 // one variable is declared in this code line , add the variable name into the dictionary
                 if(variableCount - temp == 1){
@@ -410,15 +408,6 @@ public class CodeLineRelationGraph extends JPanel{
         return result;
     }
 
-    RelationGraphTree buildTree(int id ){
-        RelationGraphTree result = new RelationGraphTree(id + "");
-        int childId = codeLineRelationNodes.get(id).child;
-        if(childId != -1){
-            RelationGraphTree child = buildTree(childId);
-            result.addChild(child);
-        }
-        return result;
-    }
 
     List<CodeStructureTree> getKeyCodeLine(){
         List<CodeStructureTree> result = new ArrayList<>();
@@ -431,26 +420,6 @@ public class CodeLineRelationGraph extends JPanel{
         }
 
         return result;
-    }
-
-
-    public double match(List<Feature> features){
-
-        /*
-        double size = features.size();
-        if(size == 0) return 0;
-
-
-        int count = 0 ;
-        for(Feature feature : features){
-            if(feature.match(this))
-                count ++;
-
-        }
-
-        return count / size;
-        */
-        return 0;
     }
 
     public double compare(String text){
@@ -512,6 +481,7 @@ public class CodeLineRelationGraph extends JPanel{
             }
         }
 
+        // region <如果第i行中包含了i-1行中定义的变量，那么matrix[i][i-1] = 1 , 表示当第i行对应某句注释时，i-1行如果没有匹配到其他注释，则也把i-1行与之匹配>
         for(int i = 0; i < statementsCount ; i ++){
             slicesMatrix.setValue(i , i , 1);
             int temp = i - 1;
@@ -533,6 +503,7 @@ public class CodeLineRelationGraph extends JPanel{
                 }
             }
         }
+        // endregion
 
         for(int i = 0 ; i < statementsCount ; i ++){
             ASTNode statement = statements.get(i);
@@ -646,4 +617,5 @@ public class CodeLineRelationGraph extends JPanel{
             }
         }
     }
+
 }

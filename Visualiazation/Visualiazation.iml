@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="web" name="Web">
+      <configuration>
+        <descriptors>
+          <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/web/WEB-INF/web.xml" />
+        </descriptors>
+        <webroots>
+          <root url="file://$MODULE_DIR$/web" relative="/" />
+        </webroots>
+        <sourceRoots />
+      </configuration>
+    </facet>
+  </component>
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
+    <output url="file://$MODULE_DIR$/target/classes" />
+    <output-test url="file://$MODULE_DIR$/target/test-classes" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$USER_HOME$/Downloads/stanford-corenlp-full-2017-06-09/stanford-corenlp-full-2017-06-09/stanford-corenlp-3.8.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$USER_HOME$/Downloads/mysql-connector-java-5.1.6.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$USER_HOME$/Downloads/sqlConnector.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$USER_HOME$/Downloads/stanford-corenlp-full-2017-06-09/stanford-corenlp-full-2017-06-09/stanford-corenlp-3.8.0-models" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file://$USER_HOME$/Downloads/stanford-corenlp-full-2017-06-09/stanford-corenlp-full-2017-06-09/stanford-corenlp-3.8.0-models" recursive="false" />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="stanford-corenlp-3.8.0-models" level="application" />
+    <orderEntry type="library" name="Maven: com.thetransactioncompany:cors-filter:2.6" level="project" />
+    <orderEntry type="library" name="Maven: com.thetransactioncompany:java-property-utils:1.9.1" level="project" />
+    <orderEntry type="library" name="Maven: org.json:json:20160810" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: javax.servlet:javax.servlet-api:3.0.1" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jdt:org.eclipse.jdt.core:3.10.0" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.core:org.eclipse.core.resources:3.7.100" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.core:org.eclipse.core.expressions:3.4.300" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.core:org.eclipse.core.runtime:3.7.0" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.osgi:org.eclipse.osgi:3.7.1" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.equinox:org.eclipse.equinox.common:3.6.0" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.core:org.eclipse.core.jobs:3.5.100" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.equinox:org.eclipse.equinox.registry:3.5.101" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.equinox:org.eclipse.equinox.preferences:3.4.1" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.core:org.eclipse.core.contenttype:3.4.100" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.equinox:org.eclipse.equinox.app:1.3.100" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.core:org.eclipse.core.filesystem:1.3.100" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.text:org.eclipse.text:3.5.101" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.core:org.eclipse.core.commands:3.6.0" level="project" />
+    <orderEntry type="library" name="Maven: edu.stanford.nlp:stanford-corenlp:3.8.0" level="project" />
+    <orderEntry type="library" name="Maven: com.apple:AppleJavaExtensions:1.4" level="project" />
+    <orderEntry type="library" name="Maven: de.jollyday:jollyday:0.4.9" level="project" />
+    <orderEntry type="library" name="Maven: javax.xml.bind:jaxb-api:2.2.7" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.commons:commons-lang3:3.3.1" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.lucene:lucene-queryparser:4.10.3" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.lucene:lucene-sandbox:4.10.3" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.lucene:lucene-analyzers-common:4.10.3" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.lucene:lucene-queries:4.10.3" level="project" />
+    <orderEntry type="library" name="Maven: org.apache.lucene:lucene-core:4.10.3" level="project" />
+    <orderEntry type="library" name="Maven: com.io7m.xom:xom:1.2.10" level="project" />
+    <orderEntry type="library" name="Maven: xml-apis:xml-apis:1.3.03" level="project" />
+    <orderEntry type="library" name="Maven: xerces:xercesImpl:2.8.0" level="project" />
+    <orderEntry type="library" name="Maven: xalan:xalan:2.7.0" level="project" />
+    <orderEntry type="library" name="Maven: joda-time:joda-time:2.9.4" level="project" />
+    <orderEntry type="library" name="Maven: com.googlecode.efficient-java-matrix-library:ejml:0.23" level="project" />
+    <orderEntry type="library" name="Maven: org.glassfish:javax.json:1.0.4" level="project" />
+    <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.12" level="project" />
+    <orderEntry type="library" name="Maven: com.google.protobuf:protobuf-java:3.2.0" level="project" />
+    <orderEntry type="module" module-name="StructureAlignment" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../lib/jawjaw-1.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/../lib/jawjaw-1.0.0.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../lib/ws4j-1.0.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/../lib/ws4j-1.0.1.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

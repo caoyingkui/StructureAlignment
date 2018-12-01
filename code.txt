@@ -1,24 +1,6 @@
-Document doc = reader.document(id);
-String[] authors = doc.getValues("author");
-BooleanQuery authorQuery = new BooleanQuery(); // #3
-for (int i = 0; i < authors.length; i++) { // #3
-	String author = authors[i]; // #3
-	authorQuery.add(new TermQuery(new Term("author", author)), BooleanClause.Occur.SHOULD); } // #3
-authorQuery.setBoost(2.0f);
-TermFreqVector vector = reader.getTermFreqVector(id, "subject"); // #4
-BooleanQuery subjectQuery = new BooleanQuery(); // #4
-for (int j = 0; j < vector.size(); j++) { // #4
-	TermQuery tq = new TermQuery( new Term("subject", vector.getTerms()[j])); // #4
-	subjectQuery.add(tq, BooleanClause.Occur.SHOULD); }// #4
-BooleanQuery likeThisQuery = new BooleanQuery(); // #5
-likeThisQuery.add(authorQuery, BooleanClause.Occur.SHOULD); // #5
-likeThisQuery.add(subjectQuery, BooleanClause.Occur.SHOULD); // #5
-likeThisQuery.add(new TermQuery( new Term("isbn", doc.get("isbn"))), BooleanClause.Occur.MUST_NOT); // #6
-TopDocs hits = searcher.search(likeThisQuery, 10);
-int size = max;
-if (max > hits.scoreDocs.length) 
-	size = hits.scoreDocs.length;
-Document[] docs = new Document[size];
-for (int i = 0; i < size; i++) {
-	docs[i] = reader.document(hits.scoreDocs[i].doc);}
-return docs;
+if (brokenLanguagesWithMiniKdc.contains(Locale.getDefault().getLanguage())) {
+    Locale.setDefault(Locale.US);}
+if (kdc != null)
+    kdc.start();
+Configuration.setConfiguration(jaasConfiguration);
+Krb5HttpClientBuilder.regenerateJaasConfiguration();

@@ -2,8 +2,10 @@ package cn.edu.pku.sei.structureAlignment.paralellCorpusExtractor;
 
 import cn.edu.pku.sei.structureAlignment.CodeLineRelation.CodeLineRelationGraph;
 import cn.edu.pku.sei.structureAlignment.Main;
+import cn.edu.pku.sei.structureAlignment.alignment.SimilarityMatrix;
 import cn.edu.pku.sei.structureAlignment.feature.CreateClassFeature;
 import cn.edu.pku.sei.structureAlignment.feature.KeyWordFeature;
+import cn.edu.pku.sei.structureAlignment.feature.MethodInvocationFeature;
 import cn.edu.pku.sei.structureAlignment.parser.nlp.Dependency;
 import cn.edu.pku.sei.structureAlignment.parser.nlp.NLParser;
 import cn.edu.pku.sei.structureAlignment.tree.*;
@@ -17,6 +19,7 @@ import org.eclipse.jdt.core.dom.Block;
 
 import javax.xml.soap.Text;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.sql.ResultSet;
 import java.util.*;
@@ -37,53 +40,45 @@ public class SOExtractor {
     private static int testID = 12;
     private static int parallelCount = 0;
     private static int postsCount = 0;
+    public SimilarityMatrix sm;
 
     public static void main(String[] args) {
+        SOExtractor extractor = new SOExtractor();
+
+        String code = "";
+        String line = "";
+        List<String> comments = new ArrayList<>();
+
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(new File("code.txt")));
+            while ((line = reader.readLine()) != null) {
+                code += line + "\n";
+            }
+            reader.close();
+
+            reader = new BufferedReader(new FileReader(new File("comments ")));
+            while ((line = reader.readLine()) != null) {
+                comments.add(line);
+            }
+            reader.close();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+
+        List<Pair<Integer, Integer>> result = extractor.match(code, comments);
+        for(Pair<Integer, Integer> pair: result){
+            System.out.println(pair.getKey() + " " + pair.getValue());
+        }
+
+
+        /*
         SOExtractor extractor = new SOExtractor();
         //extractor.selectPosts();
         extractor.parseSOPosts();
         System.out.println("parallel:" + parallelCount);
         System.out.println("posts:" + postsCount);
-        //extractor.extractParallelCorpus();
-
-        /*List<String> sentences = new ArrayList<>();
-        sentences.add(" I think you need to add each query to the BooleanQuery like below.");
-        extractor.match(sentences , null);*/
-
-        /*try {
-            BufferedReader reader = new BufferedReader(new FileReader("C:\\Users\\oliver\\Desktop\\数据\\stackoverflow\\379345.txt"));
-            String line = "";
-            String code = "";
-            while((line = reader.readLine()).trim().length() != 0){
-                code += (line + "\n");
-            }
-
-            CodeLineRelationGraph graph = new CodeLineRelationGraph();
-            graph.build(code);
-
-            CamelCaseDictionary dictionary = new CamelCaseDictionary(graph);
-            List<String> comments = new ArrayList<>();
-
-            while((line = reader.readLine()) != null){
-                comments.add(dictionary.mergeTokenByCamelCase(line));
-            }
-
-            List<TextStructureTree> textTrees = new ArrayList<>();
-            for(String comment : comments){
-                TextStructureTree textTree = new TextStructureTree(0);
-                textTree.construct(new Sentence(comment));
-                textTrees.add(textTree);
-
-            }
-            extractor.match(graph.getCodeLineTrees() , textTrees);
-            System.out.println("end.");
-        }catch (Exception e){
-             e.printStackTrace();
-        }*/
-
-
-
-        //extractor.outputResult(graph.getCodeLineTrees() , textTrees);
+        */
 
     }
 
@@ -275,7 +270,7 @@ public class SOExtractor {
                     String pair = "<p>" + nonLeafTree.getContent() + "</p>";
                     pair += "<pre><code>";
                     for(MatchedNode matchedNode : matchedCodeNodeList){
-                        pair +=  codeTrees.get(matchedNode.matchedTreeID).getTree(matchedNode.matchedNodeID).getCode() + "\n";
+                        pair +=  codeTrees.get(matchedNode.codeTreeID).getTree(matchedNode.codeNode.getId()).getCode() + "\n";
                     }
                     pair += "</code></pre>";
 
@@ -385,7 +380,7 @@ public class SOExtractor {
                     comments.add(commentString.substring(start,end));
                 }*/
 
-                List<Pair<Integer ,Integer>> matchScheme = Main.match(graph , comments);
+                List<Pair<Integer ,Integer>> matchScheme = Main.match(code , comments);
 
 
 
@@ -523,14 +518,12 @@ public class SOExtractor {
 
     }
 
-    public Matrix<DoubleValue>  match(List<CodeStructureTree> codeTrees , List<TextStructureTree> textTrees , Map<String , Integer> tokenOccurFrequency){
+    public Matrix<DoubleValue> match(List<CodeStructureTree> codeTrees , List<TextStructureTree> textTrees , Map<String , Integer> codeTokenOccurFrequency, Map<String, Integer> textTokenOccurFrequency){
 
-        tryToMatchLeafNode(codeTrees , textTrees);
-
+        tryToMatchLeafNode(codeTrees , textTrees, codeTokenOccurFrequency, textTokenOccurFrequency);
         //outputResult( textTrees , codeTrees);
 
         tryToMatchNonleafNode(codeTrees, textTrees);
-
 
         Matrix<DoubleValue> result = new Matrix<>(codeTrees.size() , textTrees.size() , new DoubleValue(0));
 
@@ -549,54 +542,141 @@ public class SOExtractor {
                         continue;*/
 
 
-                    double factor = tokenOccurFrequency.containsKey(node.matchedNode.getContent()) ?
-                            2.0 / tokenOccurFrequency.get(node.matchedNode.getContent() ): 2.0;
+                    //double factor = tokenOccurFrequency.containsKey(node.matchedNode.getContent()) ?
+                    //      2.0 / tokenOccurFrequency.get(node.matchedNode.getContent() ): 2.0;
 
-                    double sim = node.similarity;
-                    if(sim >= 1)
-                        sim *= factor;
+                    double sim = node.similarity /
+                            (node.codeNode.matchedCodeNodeList.size() + node.textNode.matchedCodeNodeList.size());
+                    //if(sim >= 1)
+                    //    sim *= factor;
 
 
 
-                    matrix.setValue(node.matchedNodeID , textNodeNum , sim);
+                    String log = "  " + node.codeNode.getContent() + " " + node.textNode.getContent() + " : " + node.similarity + "\n";
+                    matrix.setValue(node.codeNode.getId() , node.textNode.getId(), sim);
+                    matrix.setLogInfo(node.codeNode.getId() , node.textNode.getId(), log);
+
                 }
+
 
                 Map<Pair<Integer , Integer> , Double> matchedNodes = new HashMap<>();
                 double sim = matrix.similarity(matchedNodes);
-                /*if(sim  > 0){
-                    System.out.println(codeTreeNum + "  " + i + ":");
-                    CodeStructureTree codeTree = codeTrees.get(codeTreeNum);
+                String log = " " + ( codeTreeNum + 1 ) + " " + ( i + 1 ) + " : "+ sim + "\n";
+                if(sim > 0){
                     for(Pair<Integer , Integer> pair : matchedNodes.keySet()){
-                        System.out.println(codeTree.getNode(pair.getKey()).getContent() + "  " + textTree.getNode(pair.getValue()).getContent() + " : " + matchedNodes.get(pair));
+                        log += matrix.getLogInfo(pair.getKey(), pair.getValue());
                     }
-                }*/
+                }
 
                 CreateClassFeature feature = new CreateClassFeature();
-                if(feature.getFeature(textTree))
+                if(feature.getFeature(textTree)) {
                     sim += feature.match(codeTrees.get(codeTreeNum));
+                    log += "  CreateClassFeature\n";
+                }
 
                 KeyWordFeature keyWordFeature = new KeyWordFeature();
-                if(keyWordFeature.getFeature(textTree))
+                if(keyWordFeature.getFeature(textTree)) {
                     sim += keyWordFeature.match(codeTrees.get(codeTreeNum));
+                    log += "  KeyWordFeature\n";
+                }
+
+                MethodInvocationFeature methodInvocationFeature = new MethodInvocationFeature();
+                if(methodInvocationFeature.getFeature(textTree)) {
+                    sim += methodInvocationFeature.match(codeTrees.get(codeTreeNum));
+                    log += "  MethodInvocationFeature\n";
+                }
 
                 result.setValue(codeTreeNum , i , sim);
+                result.setLogInfo(codeTreeNum , i , log);
             }
         }
+
+
+        /*int m = result.getM(), n= result.getN();
+        for(int j = 0 ; j < n ; j ++){
+            double sum = 0;
+            for(int i = 0 ; i < m ;i ++){
+                sum += result.getValue(i , j);
+            }
+            if(sum == 0)
+                continue;
+            for(int i = 0 ; i < m ; i++) {
+                result.setValue(i, j, result.getValue(i, j) / sum);
+            }
+        }
+
+        for(int i = 0 ; i < m ; i ++){
+            double sum = 0;
+            for(int j = 0 ; j < n ; j++){
+                sum += result.getValue( i , j);
+            }
+            if(sum == 0)
+                continue;
+            for(int j = 0 ; j < n ; j++){
+                result.setValue(i , j , result.getValue(i , j) / sum);
+            }
+        }*/
+
 
         return result;
     }
 
-    public Matrix<DoubleValue> match(CodeLineRelationGraph codeGraph , List<String> sentences ){
+    public List<Pair<Integer , Integer>> match(String codeString , List<String> sentences ){
 
-        Map<String , Integer> tokenOccurFrequency = codeGraph.tokenOccurFrequency;
-        List<TextStructureTree> textTrees = new ArrayList<>();
+        // region <parsing code>
+        /*CodeLineRelationGraph codeGraph = new CodeLineRelationGraph();
+        codeGraph.build(codeString);
+        List<CodeStructureTree> codeTrees = codeGraph.getCodeLineTrees();
+        Matrix<DoubleValue> sliceMatrix = codeGraph.slicesMatrix;
+        Map<String , Integer> codeTokenOccurFrequency = codeGraph.tokenOccurFrequency;*/
+        // endregion <parsing code>
+
+        // region <parsing comment>
+        /*List<TextStructureTree> textTrees = new ArrayList<>();
+        Map<String , Integer> textTokenOccurFrequency = new HashMap<>();
         for(String sentence : sentences){
             TextStructureTree textTree = new TextStructureTree(0);
             textTree.construct(new Sentence(sentence));
             textTrees.add(textTree);
+
+            List<Node> nodes = textTree.getAllLeafNodes();
+            for(Node node : nodes){
+                String content = node.getContent();
+                textTokenOccurFrequency.put(content,
+                        textTokenOccurFrequency.containsValue(content) ? textTokenOccurFrequency.get(content) + 1 : 1);
+            }
+        }*/
+        //Matrix<DoubleValue> matrix =  match(codeGraph.getCodeLineTrees() , textTrees , codeTokenOccurFrequency, textTokenOccurFrequency);
+        // endregion <parsing comment>
+
+        sm = new SimilarityMatrix(codeString,sentences);
+
+
+
+        Matrix<DoubleValue> matrix = sm.getMatrix();
+        matrix.print(2);
+        /*for(int m = 0 ; m < matrix.getM() ; m++)
+            for(int n = 0 ; n < matrix.getN() ; n++){
+                if(matrix.getValue(m , n ) > 0 && matrix.getLogInfo(m , n) != null)
+                    System.out.print(matrix.getLogInfo(m , n ));
+            }*/
+        for(int n = 0; n < matrix.getN(); n++)
+            for(int m =0; m < matrix.getM(); m++){
+                if(matrix.getValue(m , n ) > 0 && matrix.getLogInfo(m , n) != null)
+                    System.out.print(matrix.getLogInfo(m , n ));
+
+            }
+
+        List<Pair<Integer , Integer>> matchScheme = matrix.findBestMatchScheme(0.1);//matrix.findBestMatchScheme();
+        List<Pair<Integer , Integer>> finalMatchScheme = new ArrayList<>();
+        if(matchScheme != null) {
+            finalMatchScheme = Main.updateMatchScheme(matchScheme ,sm.sliceMatrix);
         }
 
-        return match(codeGraph.getCodeLineTrees() , textTrees , tokenOccurFrequency);
+        //matchScheme = textTreeCount > 8 ? matrix.findBestMatchScheme(2) :  matrix.findBestMatchScheme();
+
+
+        return finalMatchScheme;
     }
 
     public Map<Integer , List<Pair<Integer , MatchedNode>>> getAlignmentResult(TextStructureTree textTree){
@@ -605,7 +685,7 @@ public class SOExtractor {
 
         if(matchedNodeList.size() > 0){
             for(MatchedNode node : matchedNodeList){
-                int codeTreeNum = node.matchedTreeID;
+                int codeTreeNum = node.codeTreeID;
                 if(result.containsKey(codeTreeNum)){
                     result.get(codeTreeNum).add(new Pair(textTree.root.getId() , node));
                 }else{
@@ -630,7 +710,7 @@ public class SOExtractor {
         return result;
     }
 
-    void tryToMatchLeafNode(List<CodeStructureTree> codeTrees , List<TextStructureTree> textTrees){
+    void tryToMatchLeafNode(List<CodeStructureTree> codeTrees , List<TextStructureTree> textTrees, Map<String, Integer> codeTokenOccurFrequency, Map<String, Integer> textTokenOccurFrequency){
         WN.extend(codeTrees , textTrees);
         List<List<Node>> codeTreeLeafNodes = new ArrayList<>();
         for(CodeStructureTree codeTree : codeTrees){
@@ -656,12 +736,14 @@ public class SOExtractor {
                     for(Node codeNode : codeLeafNodes){
                         if(codeNode.isPunctuation())
                             continue;
-                        double compareResult = codeNode.compare(textNode);
+                        double compareResult = Node.compare(codeNode, textNode, codeTokenOccurFrequency, textTokenOccurFrequency);
 
                         if(compareResult > 0 ){ //&& compareResult >= textNode.maxSimilarity){
-                            MatchedNode newNode = new MatchedNode(codeLine , codeNode.getId() , codeNode , compareResult);
+                            MatchedNode newNode = new MatchedNode(codeLine , codeNode , textLine , textNode, compareResult);
+
                             //addMatchedNode函数会同时更新 code的叶子节点和text的叶子节点，所以只需要textNode调用该函数就可以了
-                            textNode.addMatchedNode(newNode , textLine);
+                            textNode.addMatchedNode(newNode);
+                            codeNode.addMatchedNode(newNode);
                         }
                     }
                 }
@@ -678,8 +760,6 @@ public class SOExtractor {
             tryToMatchNonleafNode(codeTrees , tree , textTreeNum);
         }
 
-        //System.out.println("\n\n\n\nbefore propagation!");
-        //outputResult(textTrees , codeTrees);
 
         for(TextStructureTree textTree : textTrees){
             firstBackPropagationForPruning(textTree , new HashSet<>());
@@ -690,11 +770,6 @@ public class SOExtractor {
     List<MatchedNode> tryToMatchNonleafNode(List<CodeStructureTree> codeTrees , TextStructureTree textTree , int thisTreeNum){
 
         List<MatchedNode> result = new ArrayList<>();
-
-
-        if(testID == textTree.getId()){
-            int breakPoint = 0;
-        }
 
         List<TextStructureTree> children = textTree.getChildren();
 
@@ -707,7 +782,92 @@ public class SOExtractor {
 
             return result;
         }else{
-            List<List<MatchedNode>> matchedNodesFromChildren = new ArrayList<>();
+
+            int treeOccurTimes[] = new int[codeTrees.size()];
+            for(int i = 0; i < codeTrees.size() ; i ++)
+                treeOccurTimes[i] = 0;
+
+            Map<Integer, Set<MatchedNode>> nodesFromSameTree = new HashMap<>();
+
+            for(TextStructureTree child : children){
+                List<MatchedNode> matchedNodes = tryToMatchNonleafNode(codeTrees , child, thisTreeNum);
+
+                //在当前child子树中出现了那些树的节点。
+                Set<Integer> codeTreeNums = new HashSet<>();
+
+
+                for(MatchedNode matchedNode : matchedNodes){
+                    int codeTreeNum;
+                    codeTreeNum = matchedNode.codeTreeID;
+                    codeTreeNums.add(codeTreeNum);
+                    if(! nodesFromSameTree.containsKey(codeTreeNum)){
+                        Set<MatchedNode> nodeSet = new HashSet<>();
+                        nodeSet.add(matchedNode);
+                        nodesFromSameTree.put(codeTreeNum, nodeSet);
+                    }else{
+                        nodesFromSameTree.get(codeTreeNum).add(matchedNode);
+                    }
+                }
+
+                for(int codeTreeNum : codeTreeNums)
+                    treeOccurTimes[codeTreeNum] ++;
+            }
+
+            double maxSimilarity = -1;
+            List<Pair<Integer, Integer>> candidates = new ArrayList<>();
+            for(int codeTreeNum : nodesFromSameTree.keySet()){
+                if(treeOccurTimes[codeTreeNum] < 2)
+                    continue;
+
+                double mergeSimilarity = 0;
+                Set<MatchedNode> nodes = nodesFromSameTree.get(codeTreeNum);
+                Set<Integer> nodeIDs = new HashSet<>();
+                for(MatchedNode matchedNode : nodes){
+                    mergeSimilarity += matchedNode.similarity;
+                    nodeIDs.add(matchedNode.codeNode.getId());
+                }
+
+                if(mergeSimilarity < maxSimilarity)
+                    continue;
+                else{
+                    int mergeNode = codeTrees.get(codeTreeNum).findCommonParents(nodeIDs);
+                    if(mergeSimilarity == maxSimilarity){
+                        candidates.add(new Pair<>(codeTreeNum , mergeNode));
+                    }else{
+                        candidates.clear();
+                        candidates.add(new Pair<>(codeTreeNum , mergeNode));
+                        maxSimilarity = mergeSimilarity;
+                    }
+                }
+
+            }
+
+            if(candidates.size() > 0){
+                for(Pair<Integer, Integer> pair : candidates){
+                    if(textTree.root == null){
+                        int i = 0;
+                    }
+                    MatchedNode newNode = new MatchedNode(
+                            pair.getKey(),
+                            codeTrees.get(pair.getKey()).getNode(pair.getValue()),
+                            thisTreeNum,
+                            textTree.root,
+                            maxSimilarity
+                    );
+                    textTree.root.addMatchedNode(newNode);
+                    codeTrees.get(pair.getKey()).getNode(pair.getValue()).addMatchedNode(newNode);
+                    result.add(newNode);
+                }
+                return result;
+            }else{
+                for(int codeTreeNum : nodesFromSameTree.keySet()){
+                    result.addAll(nodesFromSameTree.get(codeTreeNum));
+                }
+                return result;
+            }
+
+
+            /*List<List<MatchedNode>> matchedNodesFromChildren = new ArrayList<>();
 
             for(TextStructureTree child : children){
                 List<MatchedNode> matchedNodes = tryToMatchNonleafNode(codeTrees , child , thisTreeNum);
@@ -728,12 +888,13 @@ public class SOExtractor {
                 }
 
                 return result.size() > 0 ? result : null;
-            }
+            }*/
         }
 
 
     }
 
+    /*
     List<MatchedNode> pushUp(TextStructureTree textTree){
         if(testID == textTree.getId()){
             int breakpoint = 2;
@@ -770,21 +931,16 @@ public class SOExtractor {
         }else{
             return textTree.root.matchedCodeNodeList;
         }
-    }
+    }*/
 
     void firstBackPropagationForPruning(TextStructureTree textTree ,Set<Integer> parentHasBeenMatchedToTheseTrees){
-
-        if(testID == textTree.getId()){
-            int breakpoint = 2;
-        }
-
         List<TextStructureTree> children = textTree.getChildren();
         if(children.size() > 0){
             for(TextStructureTree child : children){
                 if(textTree.root.matchedCodeNodeList.size() > 0) {
                     Set<Integer> treeSet = new HashSet<>();
                     for(MatchedNode matchedNode : textTree.root.matchedCodeNodeList){
-                        treeSet.add(matchedNode.matchedTreeID);
+                        treeSet.add(matchedNode.codeTreeID);
                     }
                     firstBackPropagationForPruning(child, treeSet);
                 }
@@ -796,7 +952,7 @@ public class SOExtractor {
                  Iterator<MatchedNode> iterator = textTree.root.matchedCodeNodeList.iterator();
                  while(iterator.hasNext()){
                      //去除了一个！
-                     if(parentHasBeenMatchedToTheseTrees.contains(iterator.next().matchedTreeID)){
+                     if(parentHasBeenMatchedToTheseTrees.contains(iterator.next().codeTreeID)){
                          iterator.remove();
                      }
                  }
@@ -806,6 +962,7 @@ public class SOExtractor {
         }
     }
 
+    /*
     void secondBackPropagationFor(TextStructureTree textTree , List<MatchedNode> parentHasBeenMatchedToTheseNodes){
         if(testID == textTree.getId()){
             int breakpoint = 2;
@@ -849,8 +1006,9 @@ public class SOExtractor {
         }else
             return false;
 
-    }
+    }*/
 
+    /*
     void outputResult(List<TextStructureTree> textTrees , List<CodeStructureTree> codeTrees){
 
         for(int i = 0 ; i < textTrees.size(); i ++ ){
@@ -871,4 +1029,6 @@ public class SOExtractor {
             }
         }
     }
+    */
+
 }

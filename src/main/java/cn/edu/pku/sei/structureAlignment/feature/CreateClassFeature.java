@@ -8,6 +8,7 @@ import cn.edu.pku.sei.structureAlignment.tree.NodeType;
 import cn.edu.pku.sei.structureAlignment.tree.TextStructureTree;
 import cn.edu.pku.sei.structureAlignment.tree.Tree;
 import cn.edu.pku.sei.structureAlignment.util.ClassNameList;
+import cn.edu.pku.sei.structureAlignment.util.Stemmer;
 
 import java.util.*;
 
@@ -39,9 +40,7 @@ public class CreateClassFeature extends Feature {
             for (Dependency dependency : dependencies) {
                 ApiDB.conn.setPreparedStatement("select name from api where name = ? and type = 'CLASS'");
                 String verb = dependency.getSource().toLowerCase();
-                if (verb.compareTo("create") == 0 ||
-                        verb.compareTo("get") == 0 ||
-                        verb.compareTo("instantiate") == 0) {
+                if (Stemmer.equal(verb,"create","get", "instantiate") ){
                     String object = dependency.getTarget();
 
                     ApiDB.conn.setString(1, object);
@@ -65,8 +64,7 @@ public class CreateClassFeature extends Feature {
         if(dependencies != null){
             for(Dependency dependency : dependencies){
                 String verb = dependency.getSource().toLowerCase();
-                if(verb.compareTo("create") == 0 ||
-                        verb.compareTo("get") == 0){
+                if(Stemmer.equal(verb , "create" , "get")){
                     String object = dependency.getTarget();
                     optionalClassSet.add(object);
                     result = true;
@@ -87,12 +85,12 @@ public class CreateClassFeature extends Feature {
 
         if(classSet.size() > 0){
             if(findVariableDeclarationStatement(codeStructureTree , classSet))
-                return 4;
+                return 1;
             else
                 return -4;
         }else if(optionalClassSet.size() > 0){
             if(findVariableDeclarationStatement(codeStructureTree , optionalClassSet))
-                return 4;
+                return 1;
             else
                 return 0;
         }

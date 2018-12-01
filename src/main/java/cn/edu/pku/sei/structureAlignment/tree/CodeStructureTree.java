@@ -1,16 +1,12 @@
 package cn.edu.pku.sei.structureAlignment.tree;
 
 
-import cn.edu.pku.sei.structureAlignment.database.ApiDB;
+import cn.edu.pku.sei.structureAlignment.parser.code.ClassJavadoc;
 import cn.edu.pku.sei.structureAlignment.parser.code.CodeVisitor;
-import edu.stanford.nlp.util.ArrayMap;
+import cn.edu.pku.sei.structureAlignment.util.Stemmer;
 import org.eclipse.jdt.core.dom.*;
 
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by oliver on 2017/12/23.
@@ -36,8 +32,9 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
     public static void main(String[] args ){
         ASTParser parser = ASTParser.newParser(AST.JLS8);
         ///parser.setSource("XSSFCellStyle style = new XSSFCellStyle(new StylesTable());".toCharArray());
+        parser.setEnvironment(new String[]{""}, new String[]{""}, new String[] { "UTF-8" }, true);
         parser.setSource((
-                "query.add(new Term[] { new Term(\"field\", \"quick\"), new Term(\"field\", \"fast\")});\n"
+                "indexWriter.AddDocument(document);"
 
                 ).toCharArray());
         //parser.setSource("d = null;".toCharArray());
@@ -138,33 +135,63 @@ public class CodeStructureTree extends Tree<CodeStructureTree>{
 
     public String getDisplayContent(){
         String result = "";
-        //result += root.getId() + ": ";
+        result += root.getId() + ": ";
         if(children.size() == 0) result += root.getDisplayContent();//result += root.getAdditionalInfo() + " " + root.getDisplayContent( ) ;
         else result += root.getType().toString().substring(5);
 
         return result;
     }
 
-    public void updateJavadocInfo(){
-        List<Node> leafNodes = this.getAllLeafNodes();
 
-        String sql = "select name , javadoc from " + ApiDB.tableName + " where type = 'CLASS' and name = ?" ;
-        ApiDB.conn.setPreparedStatement(sql);
-        for(Node leafNode : leafNodes){
-            ApiDB.conn.setString(1 , leafNode.getContent());
-            ResultSet rs = ApiDB.conn.executeQuery();
-            if(rs != null){
-                try {
-                    if (rs.next()) {
-                        String javadoc = rs.getString(2);
-                        leafNode.setAdditionalInfo(javadoc);
-                    }
-                }catch(Exception e){
-                    e.printStackTrace();
-                }
+    public Map<String, String> generate(){
+        Map<String, String> result = new HashMap<>();
+        String methname = "";
+        String apiseq = "";
+        String tokens = "";
+
+        List<Node> nodes = this.getAllLeafNodes();
+        for(Node node : nodes){
+            if(node.type == NodeType.ADDED_METHOD_NAME){
+                methname += (node.getContent() + " ");
+                apiseq += (node.getContent() + " ");
             }
 
+            for(String al : node.alternatives){
+                if(ClassJavadoc.contains(al))
+                    apiseq += (al + " ");
+            }
+
+            tokens +=( node.getContent() + " ");
         }
+
+        String temp = "";
+        for(String word : methname.trim().split(" ")){
+            if(word.length() == 0)
+                continue;
+            for(String token :Stemmer.camelCase(word)){
+                temp += (token.toLowerCase() + " ");
+            }
+        }
+        result.put("methname", temp.trim());
+
+        result.put("apiseq", apiseq);
+
+        Set<String> tokenSet = new HashSet<>();
+        for(String word: tokens.trim().split(" ")){
+            if(word.length() == 0) continue;
+
+            for(String token : Stemmer.camelCase(word)){
+                tokenSet.add(token.toLowerCase() );
+            }
+        }
+        result.put("tokens" , String.join(" " , tokenSet));
+
+        /*System.out.println("**************************************");
+        System.out.println(this.getCode());
+        System.out.println("methname: " + result.get("methname"));
+        System.out.println("apiseq: " + result.get("apiseq"));
+        System.out.println("tokens: " + result.get("tokens") + "\n");*/
+       return result;
     }
 
 

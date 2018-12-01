@@ -1,10 +1,14 @@
 package cn.edu.pku.sei.structureAlignment.parser.code;
 
+import cn.edu.pku.sei.structureAlignment.parser.nlp.Dependency;
+import cn.edu.pku.sei.structureAlignment.parser.nlp.NLParser;
 import cn.edu.pku.sei.structureAlignment.tree.CodeStructureTree;
 import cn.edu.pku.sei.structureAlignment.tree.Node;
 import cn.edu.pku.sei.structureAlignment.tree.NodeType;
 import cn.edu.pku.sei.structureAlignment.tree.Tree;
 import cn.edu.pku.sei.structureAlignment.util.DigitsToWord;
+import edu.stanford.nlp.semgraph.SemanticGraphEdge;
+import edu.stanford.nlp.simple.Sentence;
 import javafx.util.Pair;
 import mySql.SqlConnector;
 import org.eclipse.jdt.core.dom.*;
@@ -624,7 +628,6 @@ public class CodeVisitor extends ASTVisitor {
             children.add(dotTree);
         }
         //endregion <construct the tree of Expression>
-
 
         //region <construct the tree of new>
         Node newRoot = new Node(NodeType.ADDED_KEYWORD , "new" , id ++);
@@ -2303,7 +2306,57 @@ public class CodeVisitor extends ASTVisitor {
          * Name . SimpleName
          */
         // endregion <grammar>
+        //region <construct the tree of the root>
+        Node root = new Node(NodeType.CODE_QualifiedName , node.toString() , id ++);
+        tree = new CodeStructureTree(root , node.toString() , parent);
+        //endregion <construct the tree of the root>
 
+        String[] names = node.toString().split("\\.");
+
+        String firstName = names[0];
+        String qualifiedName = firstName;
+        Node firstNameRoot = new Node(NodeType.CODE_SimpleName, firstName, id ++);
+        if(variableDictionary.containsKey(firstName)) {
+            qualifiedName = variableDictionary.get(firstName);
+            firstNameRoot.setAdditionalInfo(variableDictionary.get(firstName));
+        }
+        CodeStructureTree firstNameTree = new CodeStructureTree(firstNameRoot, firstName, tree);
+        children.add(firstNameTree);
+        CodeStructureTree dotTree = buildPunctuationTree(".", NodeType.ADDED_CHAR_DOT, tree);
+        children.add(dotTree);
+
+
+
+
+        for(int i = 1; i < names.length - 1 ; i++){
+
+
+            Node nameRoot = new Node(NodeType.CODE_SimpleName, names[i] , id ++);
+            CodeStructureTree nameTree = new CodeStructureTree(nameRoot, names[i], tree);
+            children.add(nameTree);
+            dotTree = buildPunctuationTree(".", NodeType.ADDED_CHAR_DOT, tree);
+            children.add(dotTree);
+
+            qualifiedName += ("." + names[i]);
+        }
+
+
+        String lastName = names[names.length - 1];
+        Node lastNameRoot = new Node(NodeType.CODE_SimpleName, lastName, id++);
+
+        Map<String , String> features = new HashMap<>();
+        features.put("name" , lastName.toString());
+        features.put("qualifiedName" , qualifiedName);
+        Map<String , String> info = getMostPossibleAPIInfo(features);
+        lastNameRoot.setAdditionalInfo(info.getOrDefault("javadoc" , ""));
+
+        CodeStructureTree lastNameTree = new CodeStructureTree(lastNameRoot, lastName, tree);
+        children.add(lastNameTree);
+
+        tree.setChildren(children);
+
+
+        /*
         String[] names = node.toString().split("\\.");
 
         //region <construct the tree of the root>
@@ -2331,7 +2384,7 @@ public class CodeVisitor extends ASTVisitor {
                 info.getOrDefault("javadoc" , "") + " " +
                 String.join(" " , qualifiedNames )
         );
-        //endregion <add additional info>
+        //endregion <add additional info>*/
 
         return false;
     }
@@ -2435,8 +2488,15 @@ public class CodeVisitor extends ASTVisitor {
 
         //region <construct the tree of the root>
         Node root = new Node(NodeType.CODE_SimpleType , "" , id++);
+        root.setAdditionalInfo(ClassJavadoc.getJavadoc(node.toString()));
         tree = new CodeStructureTree(root , node.toString() , parent);
         children = new ArrayList<CodeStructureTree>();
+
+        Map<String, String> features = new HashMap<>();
+        features.put("name" , node.toString());
+        features.put("type" , "CLASS");
+
+
 
         //endregion <construct the tree of the root>
 
@@ -2566,7 +2626,9 @@ public class CodeVisitor extends ASTVisitor {
 
     @Override
     public boolean visit(StringLiteral node) {
-        Node root = new Node(NodeType.CODE_StringLiteral , node.toString(), id ++);
+        String literal = node.toString();
+        literal = literal.length() == 2 ? "" : literal.substring(1 , literal.length() - 1);
+        Node root = new Node(NodeType.CODE_StringLiteral , literal , id ++);
         root.setDisplayContent(node.toString()); // 显示的是带引号的，如"test" , 实际匹配的时候用的是不带引号的， 如test.
         String camelCasePattern = "([^\\p{L}\\d]+)|(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)|(?<=[\\p{L}&&[^\\p{Lu}]])(?=\\p{Lu})|(?<=\\p{Lu})(?=\\p{Lu}[\\p{L}&&[^\\p{Lu}]])";
         root.addAlternatives(
@@ -3383,54 +3445,85 @@ public class CodeVisitor extends ASTVisitor {
 
     private Map<String , String> getMostPossibleMethodInfo(MethodInvocation node){
         Map<String , String> result = null;
-        String qualifiedName = node.getExpression() == null ? "" : node.getExpression().toString();
 
-        int max = 0;
-
-        if(variableDictionary.containsKey(qualifiedName)) {
-            qualifiedName = variableDictionary.get(qualifiedName);
-            max ++;
+        String methodName = node.getName().toString();
+        String methodQualifiedName = node.getExpression() == null ? "" : node.getExpression().toString();
+        if(variableDictionary.containsKey(methodQualifiedName)) {
+            methodQualifiedName = variableDictionary.get(methodQualifiedName);
         }
-        String functionName = node.getName().toString();
-        List<ASTNode> arguments = node.arguments();
-        List<Pair<String , String>> argumentList = new ArrayList<>();
-        for(ASTNode argument : arguments){
+
+        List<ASTNode> methodArguments = node.arguments();
+        int argumentCount = methodArguments.size();
+        List<Pair<String , String>> methodArgumentList = new ArrayList<>();
+        String argumentTypes = "";
+        for(ASTNode argument : methodArguments){
             // <name , type>
             Pair<String , String> pair = new Pair<>(argument.toString() , getTypeName(argument));
-            argumentList.add(pair);
+            methodArgumentList.add(pair);
+            argumentTypes = pair.getValue() + " | ";
         }
+        if(argumentTypes.length() > 0)
+            // remove the ending ' | '
+            argumentTypes = argumentTypes.substring(0, argumentTypes.length() - 3);
 
-
-        int argumentCount = arguments.size();
-        max += argumentCount;
-
-        String sql = "select name , qualifiedName , returnType , argumentTypes , argumentNames , javadoc from api where  name = ? and argumentCount = ?";
-
-        conn.setPreparedStatement(sql);
-        conn.setString(1 , functionName);
-        conn.setInt(2 , arguments.size());
-        ResultSet rs = conn.executeQuery();
         try {
+            StringBuilder sql = new StringBuilder("select name , qualifiedName , returnType , argumentTypes , argumentNames , javadoc from api where ");
+            sql.append("name = '" + methodName + "' ");
+            sql.append("and qualifiedName = '" + methodQualifiedName + "' ");
+            sql.append("and argumentCount = " + argumentCount + " ");
+            sql.append("and argumentTypes = '" + argumentTypes + "'");
 
+            conn.setPreparedStatement(sql.toString());
+            ResultSet rs = conn.executeQuery();
+
+            int score = 0;
+            int max = 0;
             while (rs.next()) {
-                int temp = 0;
+                score = 0;
 
-                String[] argumentTypes = rs.getString(4).split(" \\| ");
-                String[] argumentNames = rs.getString(5).split(" \\| ");
-                for(int i = 0 ; i < argumentCount ; i ++){
-                    Pair pair = argumentList.get(i);
-                    String name = pair.getKey().toString();
-                    String type = pair.getValue().toString();
-                    if(name.compareTo(argumentNames[i]) == 0 || type.compareTo(argumentTypes[i]) == 0){
-                        temp ++;
+                String candidateQualifiedName = rs.getString("qualifiedName");
+                int index = candidateQualifiedName.lastIndexOf(".");
+                index = index == -1 ? 0 : index + 1;
+                candidateQualifiedName = candidateQualifiedName.substring(index);
+
+                String[] candidateArgumentTypes = rs.getString(4).split(" \\| ");
+                String[] candidateArgumentNames = rs.getString(5).split(" \\| ");
+
+                if(methodQualifiedName.length() > 0){
+                    if(methodQualifiedName.compareTo(candidateQualifiedName) == 0)
+                        score ++;
+                    else if(methodQualifiedName.contains(candidateQualifiedName) ||
+                            candidateQualifiedName.contains(methodQualifiedName))
+                        score += 0.1;
+                    else
+                        continue;
+                }
+
+                boolean signal = true;
+                for(int i = 0 ; i < argumentCount ; i++){
+                    Pair<String , String> argumentPair = methodArgumentList.get(i);
+                    String name = argumentPair.getKey();
+                    String type = argumentPair.getValue();
+
+                    if(type.length() > 0){
+                        index = type.lastIndexOf(".");
+                        if(index > 0) type = type.substring(index + 1);
+                        if(type.compareTo(candidateArgumentTypes[i]) == 0){
+                            score ++ ;
+                        }else if(type.contains(candidateArgumentTypes[i]) || candidateArgumentTypes[i].contains(type)){
+                            score += 0.1;
+                        }else{
+                            signal = false;
+                            break;
+                        }
+
                     }
                 }
+                if(!signal) continue;
 
-                if(rs.getString(2).contains(qualifiedName)){
-                    temp ++;
-                }
 
-                if(temp == max){
+                if(score > max){
+                    max = score;
                     if(result == null)
                         result = new HashMap<>();
                     result.put("name" , rs.getString(1));
@@ -3585,14 +3678,6 @@ public class CodeVisitor extends ASTVisitor {
                         System.out.print(feature + " = '" + features.get(feature) + "' ");
                     }
                     System.out.println();
-                }else{
-                    ;
-                    /*System.out.println("Warning from CodeVisitor.getMostPossibleAPIInfo:");
-                    System.out.print("  There is no result: ");
-                    for(String feature : features.keySet()){
-                        System.out.print(feature + " = '" + features.get(feature) + "' ");
-                    }
-                    System.out.println();*/
                 }
             }catch (Exception e){
                 e.printStackTrace();

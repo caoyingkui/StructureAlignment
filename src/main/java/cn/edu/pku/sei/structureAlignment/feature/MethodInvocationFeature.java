@@ -1,9 +1,12 @@
 package cn.edu.pku.sei.structureAlignment.feature;
 
 import cn.edu.pku.sei.structureAlignment.CodeLineRelation.CodeLineRelationGraph;
+import cn.edu.pku.sei.structureAlignment.alignment.NodeComparator;
+import cn.edu.pku.sei.structureAlignment.parser.code.ClassJavadoc;
 import cn.edu.pku.sei.structureAlignment.parser.nlp.Dependency;
 import cn.edu.pku.sei.structureAlignment.parser.nlp.NLParser;
 import cn.edu.pku.sei.structureAlignment.tree.CodeStructureTree;
+import cn.edu.pku.sei.structureAlignment.tree.Node;
 import cn.edu.pku.sei.structureAlignment.tree.NodeType;
 import cn.edu.pku.sei.structureAlignment.tree.TextStructureTree;
 import cn.edu.pku.sei.structureAlignment.util.Stemmer;
@@ -32,8 +35,8 @@ public class MethodInvocationFeature extends Feature {
         if(dependencies.size() > 0 ){
             result = true;
             for(Dependency dependency : dependencies){
-                String verb = dependency.getSource().toLowerCase();
-                String object = dependency.getTarget().toLowerCase();
+                String verb = Stemmer.stemSingleWord(dependency.getSource().toLowerCase());
+                String object = Stemmer.stemSingleWord(dependency.getTarget().toLowerCase());
 
                 if(verbObjectGroup.containsKey(verb)){
                     verbObjectGroup.get(verb).add(object);
@@ -54,19 +57,64 @@ public class MethodInvocationFeature extends Feature {
 
     @Override
     public double match(CodeStructureTree codeStructureTree) {
-        return 4 * findMethodInvocation(codeStructureTree);
+        return findMethodInvocation(codeStructureTree);
     }
 
     private double findMethodInvocation(CodeStructureTree codeTree){
         double result = 0 ;
-        List<CodeStructureTree> children = codeTree.getChildren();
+        final double completely = 4;
+        final double partial = 1;
+        List<Node> leafNodes = codeTree.getAllLeafNodes();
+
+        for(Node node : leafNodes){
+            NodeType type = node.getType();
+            if(type == NodeType.ADDED_METHOD_NAME){
+                String methodName = node.getContent();
+                List<String> subNames = Stemmer.camelCase(methodName);
+                for(String verb : verbObjectGroup.keySet()){
+                    if(subNames.contains(verb)) {
+                        Set<String> objects = verbObjectGroup.get(verb);
+                        if(methodNameContainsObject(subNames, objects)){
+                            return completely; // 直接返回
+                        }
+
+                        if(containObject(leafNodes , objects))
+                            result = partial; //保留一下值，以防万一有返回值为completely的情况。
+                    }
+                }
+            }/*else if(type == NodeType.CODE_SimpleName){
+                String className = node.getContent();
+
+                if(!ClassJavadoc.contains(className)){
+                    className = "";
+                    for(String alternative : node.alternatives){
+                        if(ClassJavadoc.contains(alternative)) {
+                            className = alternative;
+                            break;
+                        }
+                    }
+                }
+                if(className.length() == 0)
+                    continue;
+
+                for(String verb : verbObjectGroup.keySet()){
+                    if(ClassJavadoc.javadocContains(className , verb , verbObjectGroup.get(verb))){
+                        return completely;
+                    }
+                }
+            }*/
+        }
+        return result;
+
+
+        /*List<CodeStructureTree> children = codeTree.getChildren();
         if(children.size() == 0)
             return 0;
         else{
             if(codeTree.root.getType() == NodeType.CODE_MethodInvocation){
                 for(String verb : verbObjectGroup.keySet()){
                     double findVerbResult = findVerb(codeTree , verb);
-                    if(findVerbResult >= 0)
+                    if(findVerbResult > 0)
                         result += findVerbResult * findObjects(codeTree , verbObjectGroup.get(verb));
                 }
                 return result;
@@ -76,7 +124,29 @@ public class MethodInvocationFeature extends Feature {
                 }
                 return result;
             }
+        }*/
+    }
+
+    boolean methodNameContainsObject(List<String> subs , Set<String> objects){
+        for(String sub : subs){
+            for(String object : objects) {
+                if (sub.compareTo(object) == 0)
+                    return true;
+                else if (NodeComparator.isAbbreviation(sub, object))
+                    return true;
+            }
         }
+        return false;
+    }
+
+    boolean containObject(List<Node> codeNodes, Set<String> objects){
+        for(Node node : codeNodes){
+            for(String object : objects){
+                if(NodeComparator.contentEqual(node , object))
+                    return true;
+            }
+        }
+        return false;
     }
 
     private double findVerb(CodeStructureTree codeTree , String verb ){
@@ -106,7 +176,7 @@ public class MethodInvocationFeature extends Feature {
         List<CodeStructureTree> children = codeTree.getChildren();
         if(children.size() == 0){
             String content = codeTree.getContent().toLowerCase();
-            if(objects.contains(content)){
+            if(objects.contains(Stemmer.stemSingleWord(content))){
                 objects.remove(content);
                 return 1;
             }else{
@@ -114,7 +184,7 @@ public class MethodInvocationFeature extends Feature {
             }
         }else{
             for(CodeStructureTree child : children){
-                result += findObjects(codeTree , objects);
+                result += findObjects(child , objects);
             }
             return result;
         }

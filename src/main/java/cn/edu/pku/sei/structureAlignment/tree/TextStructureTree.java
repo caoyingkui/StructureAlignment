@@ -16,7 +16,7 @@ import java.util.Map;
  */
 public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tree<TextStructureTree>{
     private static int id;
-    public List<Dependency> dependencies;
+
 
 
     public static void main(String[] args){
@@ -30,7 +30,7 @@ public class TextStructureTree extends cn.edu.pku.sei.structureAlignment.tree.Tr
         edu.stanford.nlp.trees.Tree tree = parser.getNLTree();
         tree.pennPrint();
         TextStructureTree structTree = new TextStructureTree(0);
-        structTree.construct(new Sentence("Any of these terms may be in first position to match\n"));
+        structTree.construct(new Sentence(" Add document to Lucene index."));
 
         structTree.print();
         /*JFrame frame = new JFrame();
