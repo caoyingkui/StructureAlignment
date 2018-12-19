@@ -46,7 +46,7 @@ public class Main {
         noControlResult = new Result();
         controlResult = new Result();
         result = new Result();
-
+        match(new File("code.txt"));
         /*extract();*/
 
 
@@ -67,7 +67,7 @@ public class Main {
 
 
 
-        File d = new File(".\\数据\\contianning control sentence");
+        //File d = new File(".\\数据\\contianning control sentence");
 
         //File d = new File(".\\数据\\no control sentence");
         //File d = new File("C:\\Users\\oliver\\Desktop\\数据\\cook book");
@@ -75,13 +75,14 @@ public class Main {
         //File d = new File("C:\\Users\\oliver\\Desktop\\test code snippets");
 
 
+        /*
         File[] files = d.listFiles();
         if(files != null) {
             for (File file : files) {
                 match(file);
                 System.out.flush();
             }
-        }
+        }*/
 
         /*d = new File("C:\\Users\\oliver\\Desktop\\数据\\contianning control sentence");
         //File d = new File("C:\\Users\\oliver\\Desktop\\数据\\cook book");
@@ -643,7 +644,7 @@ public class Main {
             Map<Integer, List<Integer>> annotations = (Map<Integer , List<Integer>>) metaInfo.get(2);
             //endregion <data processing>
 
-            LSTM.currentFile = file.getName().replace(".txt", "");
+            //LSTM.currentFile = file.getName().replace(".txt", "");
 
 
             List<Pair<Integer , Integer>> finalMatchScheme = match(codeString ,comments );
