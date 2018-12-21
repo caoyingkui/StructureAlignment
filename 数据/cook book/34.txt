@@ -1,0 +1,11 @@
+Directory directory = getDirectory();
+IndexReader indexReader = DirectoryReader.open(directory);
+IndexSearcher indexSearcher = new IndexSearcher(indexReader);
+
+The first line assumes we can gain access to a Directory object by calling  getDirectory() .
+Then, we obtain an  IndexReader by calling  DirectoryReader.open(directory) . 
+The open method in  DirectoryReader is a static method that opens an index to read, which is analogous to  IndexWriter opening a directory to write. 
+With an IndexReader initialized, we can instantiate an  IndexSearcher with the reader.
+
+0 1
+END

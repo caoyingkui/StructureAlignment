@@ -1,0 +1,21 @@
+Query orig = super.getFieldQuery(field, queryText, slop); // #1
+if (!(orig instanceof PhraseQuery)) { // #2
+	return orig; }// #2
+PhraseQuery pq = (PhraseQuery) orig;
+Term[] terms = pq.getTerms(); // #3
+SpanTermQuery[] clauses = new SpanTermQuery[terms.length];
+for (int i = 0; i < terms.length; i++) {
+	clauses[i] = new SpanTermQuery(terms[i]); }
+SpanNearQuery query = new SpanNearQuery(clauses, slop, true); // #4
+return query;
+
+We delegate to  QueryParser ’s implementation for analysis and determination of query type.
+Here we override  PhraseQuery and return anything else right away.
+We pull all terms from the original  PhraseQuery .
+Finally, we create a  SpanNearQuery with all the terms from the original  PhraseQuery.
+
+1 1
+2|3 2
+5 3
+9 4
+END

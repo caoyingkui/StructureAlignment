@@ -1,0 +1,19 @@
+Document document = new Document();
+document.add(new StringField("telephone_number", "04735264927", Field.Store.YES));
+document.add(new StringField("area_code", "0484",Field.Store.YES));
+indexWriter.addDocument(document);
+indexWriter.commit();
+
+In this example, we created a  StringField named telephone number to store the telephone number of a user.
+The  04735264927 value will be indexed as a single token. 
+So, a query seeking an exact match of the telephone number will work fine in this case. 
+Also, note the Field.Store.Yes option. We can control whether the field value should be stored or not.
+If you do not want to store the field you can use  Field.Store.No . 
+You can still sort by this field, but this value may not be included in the search results in this case.
+The creation of a StringField is straightforward. 
+We just need to specify the field type as StringField at the time of adding documents to the index. 
+The options to store the field or not is also applicable in the case of a StringField.
+
+1 1
+END
+

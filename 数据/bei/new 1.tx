@@ -1,0 +1,13 @@
+TermQuery searchingBooks =new TermQuery(new Term("subject","search")); //#1
+Query books2004 = NumericRangeQuery.newIntRange("pubmonth", 200401, 200412, true, true); //#2
+BooleanQuery searchingBooks2004 = new BooleanQuery(); //#3
+searchingBooks2004.add(searchingBooks, BooleanClause.Occur.MUST); //#3
+searchingBooks2004.add(books2004, BooleanClause.Occur.MUST); //#3
+IndexSearcher searcher = new IndexSearcher(TestUtil.getBookIndexDirectory());
+TopDocs matches = searcher.search(searchingBooks2004, 10);
+assertTrue(TestUtil.hitsIncludeTitle(searcher, matches,"Lucene in Action"));
+searcher.close();
+
+This query finds all books containing the subject  "search" .
+This query find all books published in 2004.
+Here we combine the two queries into a single boolean query with both clauses required (the second argument is  BooleanClause.Occur.MUST )

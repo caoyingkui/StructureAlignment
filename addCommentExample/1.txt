@@ -1,0 +1,4 @@
+snq=new SpanNearQuery(quick_brown_dog,5,true);
+
+With a slop of #11 #12 the #7 has a match . 
+

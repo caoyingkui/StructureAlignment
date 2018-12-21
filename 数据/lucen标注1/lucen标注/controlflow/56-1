@@ -1,0 +1,23 @@
+directory = new RAMDirectory();
+IndexWriter writer = getWriter(); //2
+for (int i = 0; i < ids.length; i++) { //3
+	Document doc = new Document();
+	doc.add(new Field("id", ids[i],Field.Store.YES,Field.Index.NOT_ANALYZED));
+	doc.add(new Field("country", unindexed[i],Field.Store.YES,Field.Index.NO));
+	doc.add(new Field("contents", unstored[i],Field.Store.NO,Field.Index.ANALYZED));
+	doc.add(new Field("city", text[i],Field.Store.YES,Field.Index.ANALYZED));
+	writer.addDocument(doc);}
+writer.close();
+
+Run before every test
+Create IndexWriter
+Add documents
+Create new searcher
+Build simple single-term query
+Get number of hits
+Verify writer document count
+Verify searcher document count
+
+2 2
+3|4|5|6|7|8|9 3
+END

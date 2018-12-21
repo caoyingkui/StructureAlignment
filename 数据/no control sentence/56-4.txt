@@ -1,0 +1,10 @@
+IndexWriter writer = getWriter(); // 1 found by program ,added by me
+assertEquals(ids.length, writer.numDocs()); //2
+writer.close();
+
+Create IndexWriter.
+Verify writer document count.
+
+1 1
+2 2
+END

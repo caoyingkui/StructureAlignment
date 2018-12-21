@@ -1,0 +1,34 @@
+directory = new RAMDirectory();
+IndexWriter writer =new IndexWriter(directory, new WhitespaceAnalyzer(),IndexWriter.MaxFieldLength.UNLIMITED);
+Calendar cal = Calendar.getInstance();
+cal.set(2009, 1, 1, 0, 0); // A
+for (int i = 0; i < MAX; i++) {
+	Document doc = new Document();
+	doc.add(new Field("key", "" + (i + 1),Field.Store.YES, Field.Index.NOT_ANALYZED));
+	doc.add(new Field("owner", (i < MAX / 2) ? "bob" : "sue",Field.Store.YES, Field.Index.NOT_ANALYZED));
+	doc.add(new Field("date", DateTools.timeToString(cal.getTimeInMillis(),DateTools.Resolution.DAY),Field.Store.YES, Field.Index.NOT_ANALYZED));
+	writer.addDocument(doc);
+	cal.add(Calendar.DATE, 1);}
+writer.close();
+searcher = new IndexSearcher(directory);
+BooleanQuery bq = new BooleanQuery(); // B
+bq.add(new TermQuery(new Term("owner", "bob")), BooleanClause.Occur.SHOULD); // B
+bq.add(new TermQuery(new Term("owner", "sue")), BooleanClause.Occur.SHOULD); // B
+query = bq;
+cal.set(2099, 1, 1, 0, 0); // 2099 January 01
+dateFilter = TermRangeFilter.Less("date", DateTools.timeToString( cal.getTimeInMillis(), DateTools.Resolution.DAY));// C
+bobFilter = new CachingWrapperFilter( new QueryWrapperFilter( new TermQuery(new Term("owner", "bob")))); // D
+sueFilter = new CachingWrapperFilter( new QueryWrapperFilter( new TermQuery(new Term("owner", "sue")))); // E
+
+2009 January 01.
+BooleanQuery that matches all documents.
+Date filter also matches all documents.
+Matches only Bob's documents.
+Matches only Sue's documents.
+
+4 1
+14|15|16 2
+19 3
+20 4
+21 5
+END

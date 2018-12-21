@@ -1,0 +1,34 @@
+File topicsFile = new File("src/lia/benchmark/topics.txt");
+File qrelsFile = new File("src/lia/benchmark/qrels.txt");
+Directory dir = FSDirectory.open(new File("indexes/MeetLucene"));
+Searcher searcher = new IndexSearcher(dir, true);
+String docNameField = "filename";
+PrintWriter logger = new PrintWriter(System.out, true);
+TrecTopicsReader qReader = new TrecTopicsReader(); //#1
+QualityQuery qqs[] = qReader.readQueries( new BufferedReader(new FileReader(topicsFile))); //#1
+Judge judge = new TrecJudge(new BufferedReader( new FileReader(qrelsFile))); //#2
+judge.validateData(qqs, logger); //#3
+QualityQueryParser qqParser = new SimpleQQParser("title", "contents"); //#4
+QualityBenchmark qrun = new QualityBenchmark(qqs, qqParser, searcher, docNameField);
+SubmissionReport submitLog = null;
+QualityStats stats[] = qrun.execute(judge, submitLog, logger);//#5
+QualityStats avg = QualityStats.average(stats); //#6
+avg.log("SUMMARY",2,logger, " ");
+dir.close();
+
+Read TREC topics as QualityQuery[].
+Create Judge from TREC Qrel file.
+Verify query and Judge match.
+Create parser to translate queries into Lucene queries.
+Run benchmark.
+Print precision and recall measures.
+
+7|8 1
+9 2
+10 3
+11 4
+14 5
+15 6
+END
+
+

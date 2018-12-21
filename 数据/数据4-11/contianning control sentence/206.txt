@@ -1,0 +1,42 @@
+Spans spans = query.getSpans(reader);
+System.out.println(query + ":");
+int numSpans = 0;
+TopDocs hits = searcher.search(query, 10);
+float[] scores = new float[2];
+for (int i = 0; i < hits.scoreDocs.length; i++) {
+	scores[hits.scoreDocs[i].doc] = hits.scoreDocs[i].score;}
+while (spans.next()) { // A
+	numSpans++;
+	int id = spans.doc();
+	Document doc = reader.document(id); // B
+	TokenStream stream = analyzer.tokenStream("contents", new StringReader(doc.get("f"))); // C
+	TermAttribute term = (TermAttribute) stream.addAttribute(TermAttribute.class);
+	StringBuffer buffer = new StringBuffer();
+	buffer.append(" ");
+	int i = 0;
+	while(stream.incrementToken()) { // D
+		if (i == spans.start()) { // E
+			buffer.append("<"); } // E
+		buffer.append(term.term()); // E
+		if (i + 1 == spans.end()) { // E
+			buffer.append(">"); } // E
+		buffer.append(" "); // E
+		i++;}
+	buffer.append("(" + scores[id] + ") ");
+	System.out.println(buffer);}
+if (numSpans == 0) {
+	System.out.println(" No spans");}
+System.out.println();}
+
+Step through each span.
+Retrieve document.
+Re-analyze text.
+Step through all tokens.
+Print < and > around span.
+
+8 1
+11 2
+12 3
+17 4
+18|19|20|21|22|23 5
+END

@@ -1,0 +1,15 @@
+int slop;
+IndexSearcher searcher;
+PhraseQuery query = new PhraseQuery(); // 1
+query.setSlop(slop); 
+for (int i=0; i < phrase.length; i++) {  // 2
+	query.add(new Term("field", phrase[i])); } // 2
+TopDocs matches = searcher.search(query, 10);
+return matches.totalHits > 0;
+
+Create initial PhraseQuery.
+Add sequential phrase terms.
+
+3 1
+5|6 2
+END

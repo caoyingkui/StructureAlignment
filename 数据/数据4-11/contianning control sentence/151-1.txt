@@ -1,0 +1,14 @@
+System.out.println("Analyzing \"" + text + "\"");
+for (int i = 0; i < analyzers.length; i++) {
+	Analyzer analyzer = analyzers[i];
+	String name = analyzer.getClass().getName();
+	name = name.substring(name.lastIndexOf(".") + 1);
+	System.out.println(" " + name + ":");
+	System.out.print(" ");
+	AnalyzerUtils.displayTokens(analyzer, text); // 1
+	System.out.println("\n");}
+
+Real work done in here.
+
+8 1
+END

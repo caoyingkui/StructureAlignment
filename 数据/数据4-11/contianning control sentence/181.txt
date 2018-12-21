@@ -1,0 +1,34 @@
+StringBuffer buffer = new StringBuffer();
+TokenStream stream = analyzer.tokenStream("contents",new StringReader(string));
+TermAttribute term = (TermAttribute)stream.addAttribute(TermAttribute.class);
+while(stream.incrementToken()) { //C
+	buffer.append("[");
+	String x = term.term();
+	System.out.println("term=" + x);
+	for(int i=0;i<x.length();i++) {
+		System.out.println(" ch " + i + "=" + (int) (x.charAt(i)));}
+	buffer.append(term.term());
+	buffer.append("] ");}
+String output = buffer.toString();
+Frame f = new Frame();
+String name = analyzer.getClass().getName();
+f.setTitle(name.substring(name.lastIndexOf('.') + 1)+ " : " + string);
+f.setResizable(false);
+Font font = new Font(null, Font.PLAIN, 36);
+int width = getWidth(f.getFontMetrics(font), output);
+f.setSize((width < 250) ? 250 : width + 50, 75);
+Label label = new Label(buffer.toString()); //D
+label.setSize(width, 75);
+label.setAlignment(Label.CENTER);
+label.setFont(font);
+f.add(label);
+f.setVisible(true);
+
+Chinese text to be analyzed.
+Analyzers from contrib.
+Retrieve tokens from analysis using AnalyzerUtils.
+AWT Label displays analysis.
+
+4 3
+20 4
+END

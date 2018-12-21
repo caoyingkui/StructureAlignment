@@ -1,0 +1,16 @@
+try {
+	String url = urls[docID]; // #D
+	String title = titles[docID]; // #D
+	documents.put(url, title); // #D
+	System.out.println(title + ":" + scorer.score()); // #E
+} catch (IOException e) {}
+
+We can accept docIDs out of sorted order
+Hold onto the Scorer
+Load FieldCache values for url and title
+Retrieve and store url and title for the current docID
+Compute the score and print it
+
+2|3|4 4
+5 5
+END

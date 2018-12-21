@@ -1,0 +1,6 @@
+docs.add(new ScoreDoc(doc+docBase, scorer.score()));// #A
+
+Add this docBase to make the docID absolute
+
+1 1
+END

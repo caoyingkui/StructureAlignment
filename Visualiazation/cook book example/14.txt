@@ -1,0 +1,43 @@
+GOAL:
+Reusing field and document objects per thread
+
+DESCRIPTION:
+Performance has always been a part of the main focus of Lucene's development team.
+Because they are adamant about achieving high efficiency and performance, we have
+all benefitted from this. To ensure that users can properly leverage Lucene's speed and
+efficiency, there are best practices that we should adhere to so that we don't introduce
+unnecessary inefficiency. One of the best practices is to reuse both the Document and field
+objects. This minimizes the object creation cost during any massive data import operations.
+It will also reduce the chance of triggering garbage collection.
+******
+There are a couple things to keep in mind when reusing Document object: we need to make
+sure that we clear out all the fields before putting in the new values; for the field, we can just
+simply overwrite the value.
+
+CODE:
+Analyzer analyzer = new StandardAnalyzer();
+Directory directory = new RAMDirectory();
+IndexWriterConfig config = new IndexWriterConfig(Version.LATEST, analyzer);
+IndexWriter indexWriter = new IndexWriter(directory, config);
+Document doc = new Document();
+StringField stringField = new StringField("name", "", Field.Store.YES);
+String[] names = {"John", "Mary", "Peter"};
+for (String name : names) {
+	stringField.setStringValue(name);
+	doc.removeField("name");
+	doc.add(stringField);
+	indexWriter.addDocument(doc);
+}
+indexWriter.commit();
+IndexReader reader = DirectoryReader.open(directory);
+for (int i = 0; i < 3; i++) {
+	doc = reader.document(i);
+	System.out.println("DocId: " + i + ", name: " +
+	doc.getField("name").stringValue());
+}
+
+COMMENT:
+Note that both Document and StringField are only declared once and they are reused within the For loop. 
+Inside the loop, the "name" Field is removed before being added.
+This is done so that we don't inherit the Field values from the previous iteration.
+The output of the code should be as follows:

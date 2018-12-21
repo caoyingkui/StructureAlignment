@@ -1,0 +1,15 @@
+System.out.println("Analyzing \"" + text + "\"");
+for (int i = 0; i < analyzers.length; i++) {
+	Analyzer analyzer = analyzers[i];
+	String name = analyzer.getClass().getName();
+	name = name.substring(name.lastIndexOf(".") + 1);
+	System.out.println(" " + name + ":");
+	System.out.print(" ");
+	AnalyzerUtils.displayTokens(analyzer, text); // B
+	System.out.println("\n");}
+
+Analyze command-line strings, if specified
+Real work done in here
+
+8 2
+END

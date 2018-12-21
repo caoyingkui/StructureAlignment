@@ -1,0 +1,27 @@
+TokenStream stream = analyzer.tokenStream("contents", new StringReader(text)); // #A
+TermAttribute term = (TermAttribute) stream.addAttribute(TermAttribute.class); // #B
+PositionIncrementAttribute posIncr = (PositionIncrementAttribute)stream.addAttribute(PositionIncrementAttribute.class); // #B
+OffsetAttribute offset = (OffsetAttribute) stream.addAttribute(OffsetAttribute.class); // #B
+TypeAttribute type = (TypeAttribute)stream.addAttribute(TypeAttribute.class); // #B
+int position = 0;
+while(stream.incrementToken()) { // #C
+	int increment = posIncr.getPositionIncrement(); // #D
+	if (increment > 0) { // #D
+		position = position + increment; // #D
+		System.out.println(); // #D
+		System.out.print(position + ": "); }// #D
+	System.out.print("[" + term.term() + ":" + offset.startOffset() + "->" + offset.endOffset() + ":" + type.type() + "] "); }// #E
+System.out.println();
+
+Perform analysis.
+Obtain attributes of interest.
+Iterate through all tokens.
+Compute position and print.
+Print all token details.
+
+1 1
+2|3|4|5 2
+7 3
+8|9|10|11|12 4
+13 5
+END

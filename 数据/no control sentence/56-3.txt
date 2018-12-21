@@ -1,0 +1,15 @@
+IndexSearcher searcher = new IndexSearcher(directory); //1
+Term t = new Term(fieldName, searchString); //2 added by me
+Query query = new TermQuery(t); //2
+int hitCount = TestUtil.hitCount(searcher, query); //3
+searcher.close();
+return hitCount;
+
+Create new searcher.
+Build simple single-term query.
+Get number of hits.
+
+1 1
+2|3 2
+4 3
+END

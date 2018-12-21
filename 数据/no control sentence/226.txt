@@ -1,0 +1,9 @@
+MultiSearcher searcher = new MultiSearcher(searchers);
+TermRangeQuery query = new TermRangeQuery("animal","h", "t", true, true);// #1
+TopDocs hits = searcher.search(query, 10);
+assertEquals("tarantula not included", 12, hits.totalHits);
+
+This query spans documents in both indexes.
+
+2 1
+END

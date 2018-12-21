@@ -1,0 +1,11 @@
+String[] strings = examples;
+if (args.length > 0) { // A
+	strings = args;} //A
+for (int i = 0; i < strings.length; i++) {
+	analyze(strings[i]);}
+
+Analyze command-line strings, if specified
+Real work done in here
+
+2|3 1
+END

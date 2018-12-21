@@ -1,0 +1,28 @@
+RAMDirectory directory = new RAMDirectory();
+Analyzer analyzer = new MetaphoneReplacementAnalyzer();
+IndexWriter writer = new IndexWriter(directory, analyzer, true,IndexWriter.MaxFieldLength.UNLIMITED);
+Document doc = new Document();  // 1
+doc.add(new Field("contents", "cool cat",Field.Store.YES,Field.Index.ANALYZED)); // 1
+writer.addDocument(doc);
+writer.close();
+IndexSearcher searcher = new IndexSearcher(directory);
+Query query = new QueryParser(Version.LUCENE_CURRENT, "contents", analyzer).parse("kool kat"); // 2
+TopScoreDocCollector collector = TopScoreDocCollector.create(1, true);
+searcher.search(query, collector);
+assertEquals(1, collector.getTotalHits()); // 3
+int docID = collector.topDocs().scoreDocs[0].doc;
+doc = searcher.doc(docID);
+assertEquals("cool cat", doc.get("contents")); // 4
+searcher.close();
+
+
+Original document
+User typed in hip query
+Hip query matches!
+Original value still available
+
+4|5 1
+9 2
+12 3
+15 4
+END

@@ -1,0 +1,1 @@
+IndexWriter  numDocs deleteDocuments optimize commit maxDoc numDocs

@@ -1,0 +1,17 @@
+super(in);
+synonymStack = new Stack(); //#1
+termAttr = (TermAttribute) addAttribute(TermAttribute.class);
+save = in.cloneAttributes();
+this.engine = engine;
+
+Synonym buffer
+Pop buffered synonyms
+Read next token
+Push synonyms of current token onto stack
+Return current token
+Retrieve synonyms
+Push synonyms onto stack
+Set position increment to zero
+
+2 7
+END

@@ -1,0 +1,4 @@
+TermQuery searchingBooks=new TermQuery(new Term("subject","search"));
+
+This query finds all books containing the #16 `` #18 '' . 
+

@@ -1,0 +1,23 @@
+BooleanQuery a1AndT1 = new BooleanQuery();
+a1AndT1.add(new TermQuery(new Term("Author", "a1")), BooleanClause.Occur.MUST);
+a1AndT1.add(new TermQuery(new Term("title", "t1")), BooleanClause.Occur.MUST);
+BooleanQuery a2AndT2 = new BooleanQuery();
+a2AndT2.add(new TermQuery(new Term("Author", "a2")), BooleanClause.Occur.MUST);
+a2AndT2.add(new TermQuery(new Term("title", "t2")), BooleanClause.Occur.MUST);
+BooleanQuery a3AndT3 = new BooleanQuery();
+a3AndT3.add(new TermQuery(new Term("Author", "a3")), BooleanClause.Occur.MUST);
+a3AndT3.add(new TermQuery(new Term("title", "t3")), BooleanClause.Occur.MUST);
+BooleanQuery query = new BooleanQuery();
+query.add(a1AndT1, BooleanClause.Occur.SHOULD);
+query.add(a2AndT2, BooleanClause.Occur.SHOULD);
+query.add(a3AndT3, BooleanClause.Occur.SHOULD);
+System.out.println(query); 
+
+Create a BooleanQuery for (Author:a1 and title:t1).
+Create a BooleanQuery for (Author:a2 and title:t2).
+Create a BooleanQuery for (Author:a3 and title:t3).
+Create a BooleanQuery that combines the OR-clauses.
+As you can see, the resulting Lucene query is .
+(+Author:a1 +title:t1) (+Author:a2 +title:t2) (+Author:a3 +title:t3).
+which behaves the same as something like.
+(Author:a1 and title:t1) OR (Author:a2 and title:t2) OR (Author:a3 and title:t3).

@@ -1,0 +1,21 @@
+Document doc = new Document();
+doc.add(new Field("contents", new FileReader(f))); //7
+doc.add(new Field("filename", f.getName(), Field.Store.YES, Field.Index.NOT_ANALYZED));//8
+doc.add(new Field("fullpath", f.getCanonicalPath(), Field.Store.YES, Field.Index.NOT_ANALYZED));//9
+return doc;
+
+Create index in this directory
+Index *.txt files from this directory
+Create Lucene IndexWriter
+Close IndexWriter
+Return number of documents indexed
+Index .txt files only, using FileFilter
+Index file content
+Index file name
+Index file full path
+Add document to Lucene index
+
+2 13
+3 14
+4 15
+END

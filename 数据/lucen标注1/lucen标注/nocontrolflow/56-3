@@ -1,0 +1,20 @@
+IndexSearcher searcher = new IndexSearcher(directory); //4
+Term t = new Term(fieldName, searchString);
+Query query = new TermQuery(t); //5
+int hitCount = TestUtil.hitCount(searcher, query); //6
+searcher.close();
+return hitCount;
+
+Run before every test
+Create IndexWriter
+Add documents
+Create new searcher
+Build simple single-term query
+Get number of hits
+Verify writer document count
+Verify searcher document count
+
+1 4
+3 5
+4 6
+END

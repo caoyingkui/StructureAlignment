@@ -1,0 +1,13 @@
+Query query = new QueryParser(Version.LUCENE_CURRENT,"content",synonymAnalyzer).parse("\"fox jumps\""); // A
+assertEquals(1, TestUtil.hitCount(searcher, query)); // A
+System.out.println("With SynonymAnalyzer, \"fox jumps\" parses to " + query.toString("content"));
+query = new QueryParser(Version.LUCENE_CURRENT, "content", new StandardAnalyzer(Version.LUCENE_CURRENT)).parse("\"fox jumps\""); // B
+assertEquals(1, TestUtil.hitCount(searcher, query)); // B
+System.out.println("With StandardAnalyzer, \"fox jumps\" parses to " + query.toString("content"));
+
+SynonymAnalyzer finds the document
+StandardAnalyzer also finds document
+
+1|2 1
+4|5 2
+END

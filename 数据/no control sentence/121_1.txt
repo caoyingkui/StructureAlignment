@@ -1,0 +1,13 @@
+IndexSearcher searcher;
+RAMDirectory directory = new RAMDirectory();
+IndexWriter writer = new IndexWriter(directory,new WhitespaceAnalyzer(),IndexWriter.MaxFieldLength.UNLIMITED);
+Document doc = new Document(); // 1
+doc.add(new Field("field", "the quick brown fox jumped over the lazy dog", Field.Store.YES, Field.Index.ANALYZED));  // 1
+writer.addDocument(doc);
+writer.close();
+searcher = new IndexSearcher(directory);
+
+Add a single test document.
+
+6 1
+END

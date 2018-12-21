@@ -1,0 +1,7 @@
+Directory dir = FSDirectory.Open(new System.IO.FileInfo(indexDir));
+IndexWriter writer = new IndexWriter( FSDirectory.Open(INDEX_DIR), new StandardAnalyzer(Version.LUCENE_CURRENT), true, IndexWriter.MaxFieldLength.LIMITED); // 1
+
+Create IndexWriter.
+
+2 1
+END

@@ -1,0 +1,23 @@
+Sort sort = new Sort(new SortField("location",new DistanceComparatorSource(10, 10)));
+TopFieldDocs docs = searcher.search(query, null, 3, sort); // #1
+assertEquals(4, docs.totalHits); // #2
+assertEquals(3, docs.scoreDocs.length); // #3
+FieldDoc fieldDoc = (FieldDoc) docs.scoreDocs[0]; // #4
+assertEquals("(10,10) -> (9,6) = sqrt(17)",new Float(Math.sqrt(17)),fieldDoc.fields[0]); // #5
+Document document = searcher.doc(fieldDoc.doc); // #6
+assertEquals("Los Betos", document.get("name"));
+
+This lower-level  API requires that we specify the maximum number of hits returned
+The total number of hits is still provided because all hits need to be determined to find the threebest ones.
+The total number of documents (up to the maximum specified) are returned.
+docs.scoreDocs(0) returns a  ScoreDoc and must be cast to  FieldDoc to get sorting values.
+The value of the first (and only, in this example)  SortField computation is available in the first fields slot
+Getting the actual Document requires another call
+
+2 1
+3 2
+4 3
+5 4
+6 5
+7 6
+END

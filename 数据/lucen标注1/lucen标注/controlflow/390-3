@@ -1,0 +1,29 @@
+startReopen();
+try {
+	final IndexSearcher searcher = get();
+	try {
+		IndexReader newReader = currentSearcher.getIndexReader().reopen(); //I
+		if (newReader != currentSearcher.getIndexReader()) { //I
+			IndexSearcher newSearcher = new IndexSearcher(newReader); //I	
+			if (writer == null) { //I
+				warm(newSearcher);} //I
+				swapSearcher(newSearcher);} }//I
+	finally {
+		release(searcher);}
+} finally {doneReopen();}
+
+Current IndexSearcher
+Create initial searcher by reading Directory
+Create initial searcher from IndexWriter's reader
+Install ourself as the MergedSegmentWarmer
+Implement in subclass to warm new searcher
+Pauses until no other thread is reopening
+Finish reopen and notify other threads
+Reopen searcher if there are changes
+Check index version and reopen, warm, swap if needed
+Returns current searcher; must be matched with a call to release
+Release searcher returned from get()
+Swaps currentSearcher to new searcher
+
+3|4|5|6|7|8 9
+END

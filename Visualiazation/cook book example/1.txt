@@ -1,0 +1,21 @@
+GOAL:
+Obtaining an IndexWriter
+
+DESCRIPTION:
+The IndexWriter class provides functionality to create and manage index. The class can
+be found in Lucene-core. It handles basic operations where you can add, delete, and update
+documents. It also handles more complex use cases that we will cover during the course of
+this book.
+
+CODE:
+Analyzer analyzer = new WhitespaceAnalyzer();
+Directory directory = new RAMDirectory();
+IndexWriterConfig config = new IndexWriterConfig(Version.LATEST, analyzer);
+IndexWriter indexWriter = new IndexWriter(directory, config);
+
+COMMENT:
+First, we instantiate a  WhitespaceAnalyzer to parse input text, and tokenize text into word tokens. 
+Then, we create an in-memory Directory by instantiating  RAMDirectory . 
+We configure  IndexWriterConfig with the  WhitespaceAnalyzer we just created.
+finally, we pass both Directory and  IndexWriterConfig to create an IndexWriter.
+The IndexWriter is now ready to update the index.

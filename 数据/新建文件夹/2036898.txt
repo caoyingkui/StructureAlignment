@@ -1,0 +1,13 @@
+IndexReader reader = IndexReader.Open("<lucene dir>");
+Searcher searcher = new IndexSearcher(reader);
+BooleanQuery booleanQuery = new BooleanQuery();
+Query query1 = new TermQuery(new Term("filename", "<text>"));
+Query query2 = new TermQuery(new Term("filetext", "<text>"));
+booleanQuery.add(query1, BooleanClause.Occur.SHOULD);
+booleanQuery.add(query2, BooleanClause.Occur.SHOULD);
+Hits hits = searcher.Search(booleanQuery);
+
+The first way is to construct a query manually, this is what QueryParser is doing internally. 
+This is the most powerful way to do it, and means that you don't have to parse the user input if you want to prevent access to some of the more exotic features of QueryParser:
+Use BooleanClause.Occur.MUST instead of BooleanClause.Occur.SHOULD
+for AND queries

@@ -1,0 +1,23 @@
+String[] isbns = new String[] {"0854402624"}; // Steiner // #1
+SpecialsAccessor accessor = new TestSpecialsAccessor(isbns);
+Filter filter = new SpecialsFilter(accessor);
+WildcardQuery educationBooks = new WildcardQuery(new Term("category", "*education*")); // #2
+FilteredQuery edBooksOnSpecial = new FilteredQuery(educationBooks, filter); // #2
+TermQuery logoBooks = new TermQuery(new Term("subject", "logo")); //3
+BooleanQuery logoOrEdBooks = new BooleanQuery(); // #4
+logoOrEdBooks.add(logoBooks, BooleanClause.Occur.SHOULD); // #4
+logoOrEdBooks.add(edBooksOnSpecial, BooleanClause.Occur.SHOULD); // #4
+TopDocs hits = searcher.search(logoOrEdBooks, 10);
+System.out.println(logoOrEdBooks.toString());
+assertEquals("Papert and Steiner", 2, hits.totalHits);
+
+This is the  ISBN number for Rudolf Steiner’s A Modern Art of Education.
+We construct a query for education books on special, which only includes Steiner’s book in this example.
+We construct a query for all books with logo in the subject, which only includes Mindstorms in our sample data.
+The two queries are combined in an OR fashion.
+
+1 1
+4|5 2
+6 3
+7|8|9 4
+END

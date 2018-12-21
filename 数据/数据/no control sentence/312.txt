@@ -1,0 +1,35 @@
+String searchText = "highlighting"; // #1
+QueryParser parser = new QueryParser(Version.LUCENE_CURRENT, "f", new StandardAnalyzer(Version.LUCENE_CURRENT));// #1
+Query query = parser.parse(searchText); // #1
+SimpleHTMLFormatter formatter = new SimpleHTMLFormatter("<span class=\"highlight\">", "</span>"); // #2
+TokenStream tokens = new StandardAnalyzer(Version.LUCENE_CURRENT) .tokenStream("f", new StringReader(text)); // #3
+QueryScorer scorer = new QueryScorer(query, "f"); // #4
+Highlighter highlighter = new Highlighter(formatter, scorer); // #5
+highlighter.setTextFragmenter( new SimpleSpanFragmenter(scorer)); // #6
+String result = highlighter.getBestFragments(tokens, text, 3, "..."); // #7
+FileWriter writer = new FileWriter(filename); // #8
+writer.write("<html>"); // #8
+writer.write("<style>\n" + ".highlight {\n" + " background: yellow;\n" + "}\n" + "</style>"); // #8
+writer.write("<body>"); // #8
+writer.write(result); // #8
+writer.write("</body></html>"); // #8
+writer.close();
+
+Create the query
+We customize the surrounding tags for each highlighted term.
+Here we tokenize the original text, using  StandardAnalyzer 
+Create  CachingTokenFilter required by  SpanScorer
+Create highlighter
+Use SimpleSpanFragmenter to fragment
+Highlight best 3 fragments
+Write highlighted HTML
+
+1|2|3 1
+4 2
+5 3
+6 4 
+7 5
+8 6
+9 7
+10|11|12|13|14|15 8
+END

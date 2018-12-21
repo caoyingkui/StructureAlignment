@@ -1,0 +1,9 @@
+StringReader testReader = new StringReader("C.F.A. C.F.A word");
+StandardAnalyzer analyzer = new StandardAnalyzer();
+TokenStream tokenStream = analyzer.tokenStream("title", testReader);
+System.out.println(tokenStream.next());
+System.out.println(tokenStream.next());
+System.out.println(tokenStream.next());
+
+The StandardAnalyzer specifically handles acronyms, and converts C.F.A. (for example) to cfa.
+This means you should be able to do the search, as long as you make sure you use the same analyzer for the indexing and for the query parsing.

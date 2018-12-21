@@ -1,0 +1,26 @@
+String fieldName = DOMUtils.getAttributeWithInheritanceOrFail(element, "fieldName"); // A
+String timeUnit = DOMUtils.getAttribute(element, "timeUnit", "days"); // A
+Integer calUnit = timeUnits.get(timeUnit); // A
+if (calUnit == null) { // A
+	throw new ParserException("Illegal time unit:" +timeUnit+" - must be days, months or years"); } // A
+int agoStart = DOMUtils.getAttribute(element, "from",0); // A
+int agoEnd = DOMUtils.getAttribute(element, "to", 0); // A
+if (agoStart < agoEnd) {
+	int oldAgoStart = agoStart;
+	agoStart = agoEnd;
+	agoEnd = oldAgoStart;}
+SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd"); // B
+Calendar start = Calendar.getInstance(); // B
+start.add(calUnit, agoStart*-1); // B
+Calendar end = Calendar.getInstance(); // B
+end.add(calUnit, agoEnd*-1); // B
+return NumericRangeFilter.newIntRange( fieldName, Integer.valueOf(sdf.format(start.getTime())), Integer.valueOf(sdf.format(end.getTime())), true, true); // C
+
+Extract field, time unit, from and to.
+Parse date/times.
+Create NumericRangeFilter.
+
+1|2|3|4|5|6|7 1
+12|13|14|15|16 2
+17 3
+END

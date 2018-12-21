@@ -1,0 +1,17 @@
+TermQuery query = new TermQuery( new Term("keywords", "info")); //#1
+assertEquals("Both documents match", 2, TestUtil.hitCount(searcher, query)); //#2
+Filter jakeFilter = new QueryWrapperFilter( new TermQuery(new Term("owner", "jake"))); //#3
+TopDocs hits = searcher.search(query, jakeFilter, 10);
+assertEquals(1, hits.totalHits); //#4
+assertEquals("elwood is safe", "jake's sensitive info", searcher.doc(hits.scoreDocs[0].doc).get("keywords")); 
+
+This is a general  TermQuery for info.
+All documents containing info are returned.
+Here, the filter constrains document searches to only documents owned by “jake”.
+Only Jake’s document is returned, using the same info  TermQuery.
+
+1 1
+2 2
+3 3 
+5|6 4
+END

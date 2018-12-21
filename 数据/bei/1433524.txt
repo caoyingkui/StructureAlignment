@@ -1,0 +1,9 @@
+var standardLuceneAnalyzer = new StandardAnalyzer();
+var query1 = new QueryParser("SearchKey", standardLuceneAnalyzer).Parse("Kansas City*");
+var query2 = new QueryParser("Type", standardLuceneAnalyzer).Parse("Airport");
+BooleanQuery filterQuery = new BooleanQuery();
+filterQuery.Add(query1, BooleanClause.Occur.MUST);
+filterQuery.Add(query1, BooleanClause.Occur.MUST);
+TopDocs results = searcher.Search(filterQuery);
+
+Looking at your code I think you need to add each query (one for the SearchKey and one for the Type) to the BooleanQuery like below.

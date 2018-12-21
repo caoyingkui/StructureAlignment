@@ -1,0 +1,13 @@
+String expression = "pubmonth:[05/01/1988 TO 10/01/1988]";
+QueryParser parser = new NumericDateRangeQueryParser(Version.LUCENE_CURRENT,"subject", analyzer);
+parser.setDateResolution("pubmonth", DateTools.Resolution.MONTH);
+parser.setLocale(Locale.US);
+Query query = parser.parse(expression);
+System.out.println(expression + " parsed to " + query);
+TopDocs matches = searcher.search(query, 10);
+assertTrue(matches.totalHits > 0);
+
+Tell QueryParser we indexed field "modified" with resolution MONTH:
+
+3 1
+END

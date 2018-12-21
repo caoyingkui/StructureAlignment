@@ -1,0 +1,70 @@
+GOAL:
+Delving into field norms
+
+DESCRIPTION:
+A norm is part of the calculation of a score that's used to measure relevancy. When we search,
+a score is calculated for each matching result. This score will then be used to sort the end
+results. The score is what we refer to as a relevancy score.
+******
+Norms are calculated per indexed Field. This is a product of index time calculation (based on
+TFIDFSimilarity) and  lengthNorm (a calculated factor that favors a shorter document). The
+higher value can help boost the relevancy of a document, which means that the document will
+rank higher in search results.
+******
+To further influence the search results relevancy, Lucene allows for two types of boosting:
+index time boost and query time boost. Index time boost is set per indexed field. It can be
+used to promote documents based on certain field values. Query time boost can be set per
+query clause so that all the documents matched by it are multiplied by the boost. It's useful if
+a certain filter takes precedence over everything else.
+******
+Norms are stored compressed in a highly lossy, single-byte format. This is mainly done to
+minimize storage and conserve memory consumption. Also, it's not meant for comparing
+minute details, but for big differences between documents, where relevancy differences
+are more obvious.
+******
+For certain fields, such as the single-valued field, norms may not provide any added benefits.
+In such a case, you an omit the norms by customizing a fieldType. Unless memory
+consumption is an issue, normally, you can leave it alone.
+
+CODE:
+Analyzer analyzer = new StandardAnalyzer();
+Directory directory = new RAMDirectory();
+IndexWriterConfig config = new IndexWriterConfig(Version.LATEST, analyzer);
+IndexWriter indexWriter = new IndexWriter(directory, config);
+Document doc = new Document();
+TextField textField = new TextField("name", "", Field.Store.YES);
+float boost = 1f;
+String[] names = {"John R Smith", "Mary Smith", "PeterSmith"};
+for (String name : names) {
+boost *= 1.1;
+	textField.setStringValue(name);
+	textField.setBoost(boost);
+	doc.removeField("name");
+	doc.add(textField);
+	indexWriter.addDocument(doc);
+}
+indexWriter.commit();
+IndexReader indexReader = DirectoryReader.open(directory);
+IndexSearcher indexSearcher = new IndexSearcher(indexReader);
+Query query = new TermQuery(new Term("name", "smith"));
+TopDocs topDocs = indexSearcher.search(query, 100);
+System.out.println("Searching 'smith'");
+for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
+	doc = indexReader.document(scoreDoc.doc);
+	System.out.println(doc.getField("name").stringValue());
+}
+
+COMMENT:
+In this example, we are adding three documents with the name Field being indexed as TextField. 
+We set a boost on the Field by 1.1 on each iteration, so Peter Smith will have the highest boost, then Mary Smith, and finally John R Smith. 
+Then, we do a search on smith and print out the results.
+If you run this code as-is, you will see the following results: Searching 'smith', Peter Smith, Mary Smith, John R Smith.
+This is as expected because the results are sorted based on the boost values, where  Peter Smith has the highest boost. 
+Try comment out  textField.setBoost(boost); and run this again. 
+The results should look like the following: Searching 'smith' , Mary Smith , Peter Smith , John R Smith.
+Note that the order has changed. 
+This order is not random: it's based on a default norms calculation where the length of the field is considered. 
+In this scenario, because all three documents are matching the term  smith , the major factor in the relevancy score calculation is left to length.
+
+
+

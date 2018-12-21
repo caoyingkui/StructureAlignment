@@ -1,0 +1,11 @@
+MultiSearcher searcher = new MultiSearcher(searchers);
+TermRangeQuery query = new TermRangeQuery("animal","h", "t", true, true);// #3
+TopDocs hits = searcher.search(query, 10);
+assertEquals("tarantula not included", 12, hits.totalHits);
+
+This code uses two indexes
+The first half of the alphabet is indexed to one index, and the other half is indexed to the other index
+This query spans documents in both indexes.
+
+2 3
+END

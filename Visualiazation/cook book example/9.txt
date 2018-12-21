@@ -1,0 +1,38 @@
+GOAL:
+Obtaining an IndexWriter
+
+DESCRIPTION:
+We have seen how an IndexWriter is obtained just by simply initialized with an Analyzer and
+IndexWriterConfig . The default initialization behavior usually works well for the majority of
+the time. However, there may be situations where you need finer control during the initialization
+sequence. For example, when the default behavior creates a new index if an existing index
+doesn't exist already. This may not be ideal in a production environment where an index should
+always exist. Generating a new index will automatically hide the issue that an index is missing.
+Perhaps there was a glitch in the backup routine where it accidentally removed the index, or
+there was a data corruption issue that somehow wiped out the index directory. In any case, it
+would be beneficial if we are aware of the indexing status and alerted when issues are detected.
+Lucene does provide options to control how an index is opened. We will talk about each
+option in detail in this section and show you how it is done.
+
+CODE:
+FSDirectory directory = FSDirectory.open(new File(indexPath));
+Analyzer analyzer = new StandardAnalyzer();
+IndexWriterConfig config = new IndexWriterConfig(Version.LATEST, analyzer);
+config.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+config.setRAMBufferSizeMB(64);
+config.setMaxBufferedDocs(4000);
+IndexWriter indexWriter = new IndexWriter(directory, config);
+
+COMMENT:
+In this code snippet, we first initialize a directory object with an  indexPath (assuming it is already defined, pointing at an index directory)  
+set up an  Analyzer and  IndexWriterConfig . 
+Then, we set the  OpenMode on  IndexWriterConfig before we pass it onto an  IndexWriter . 
+The  setOpenMode method is where you can set the desired  OpenMode.
+In addition to  OpenMode ,  IndexWriterConfig has many other tuneable options. 
+A notable option is  setRAMBufferSizeMB(double) . 
+This option allows you to tune the amount of RAM to use for buffering changes before being flushed to the directory. 
+The buffer is default to 16 MB. In our example, we set it to 64 MB. 
+Another useful tuning option is setMaxBufferedDocs(int) ; 
+it lets you set the minimum number of documents required before the buffered documents are flushed as a new segment. 
+The default value is 1000, but we set it to 4000 in our sample code. 
+When both options are set, the buffer is flushed when whichever condition comes first

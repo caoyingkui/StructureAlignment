@@ -1,0 +1,22 @@
+String indexDir = System.getProperty("index.dir");
+Directory directory = FSDirectory.open(new File(indexDir));
+IndexReader reader = IndexReader.open(directory);
+int numDocs = reader.maxDoc();
+BooksLikeThis blt = new BooksLikeThis(reader);
+for (int i = 0; i < numDocs; i++) { // #1
+	System.out.println();
+	Document doc = reader.document(i);
+	System.out.println(doc.get("title"));
+	Document[] docs = blt.docsLike(i, 10); // #2
+	if (docs.length == 0) {  // 2 added by me
+		System.out.println(" None like this");} // 2 added by me
+	for (int j = 0; j < docs.length; j++) {
+		Document likeThisDoc = docs[j];
+		System.out.println(" -> " + likeThisDoc.get("title")); }}
+
+As an example, we iterate over every book document in the index and find books like each one.
+Here we look up books that are like this one.
+
+6 1
+10|11|12 2
+END

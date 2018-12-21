@@ -1,0 +1,19 @@
+IndexSearcher searcher = new IndexSearcher(TestUtil.getBookIndexDirectory());
+Query q = new MatchAllDocsQuery();
+int numAllBooks = TestUtil.hitCount(searcher, q);
+TopScoreDocCollector topDocs = TopScoreDocCollector.create(10, false);
+Collector collector = new TimeLimitingCollector(topDocs, 1000); // 1
+try {
+	searcher.search(q, collector); 
+	assertEquals(numAllBooks, topDocs.getTotalHits()); // 2
+} catch (TimeExceededException tee) { // 3
+	System.out.println("Too much time taken."); }// 3 
+
+Wrap any existing Collector.
+If no timeout, we should have all hits.
+Timeout hit.
+
+5 1
+8 2
+9|10 3
+END

@@ -1,0 +1,24 @@
+TokenStream stream = synonymAnalyzer.tokenStream("contents",new StringReader("jumps")); // #A
+TermAttribute term = (TermAttribute) stream.addAttribute(TermAttribute.class);
+PositionIncrementAttribute posIncr = (PositionIncrementAttribute)stream.addAttribute(PositionIncrementAttribute.class);
+int i = 0;
+String[] expected = new String[]{"jumps", "hops", "leaps"}; // #B
+while(stream.incrementToken()) {
+	assertEquals(expected[i], term.term());
+	int expectedPos; // #C
+	if (i == 0) { // #C
+		expectedPos = 1; }// #C
+	else { // #C
+		expectedPos = 0; }// #C
+	assertEquals(expectedPos, posIncr.getPositionIncrement()); // #C
+	i++; }
+assertEquals(3, i);
+
+Analyze with SynonymAnalyzer
+Check for correct synonyms
+Ensure synonyms are in the same position as the original
+
+1 1
+5 2
+8|9|10|11|12|13 3
+END

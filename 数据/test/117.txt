@@ -1,0 +1,15 @@
+Term term = new Term("category", "/technology/computers/programming"); //#1
+PrefixQuery query = new PrefixQuery(term); //#1
+TopDocs matches = searcher.search(query, 10); //#1
+int programmingAndBelow = matches.totalHits;
+matches = searcher.search(new TermQuery(term), 10); //#2
+int justProgramming = matches.totalHits;
+assertTrue(programmingAndBelow > justProgramming);
+searcher.close();
+
+Search for programming books, including subcategories.
+Search for programming books, without subcategories.
+
+1|2|3 1
+5 2
+END

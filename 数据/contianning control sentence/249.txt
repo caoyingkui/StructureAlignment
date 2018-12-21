@@ -1,0 +1,13 @@
+try {
+	String url = urls[docID]; // #1
+	String title = titles[docID]; // #1
+	documents.put(url, title); // #1
+	System.out.println(title + ":" + scorer.score()); // #2
+} catch (IOException e) {}
+
+Retrieve and store url and title for the current docID.
+Compute the score and print it.
+
+2|3|4 1
+5 2
+END

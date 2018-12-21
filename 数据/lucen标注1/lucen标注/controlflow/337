@@ -1,0 +1,21 @@
+ArrayList synList = new ArrayList();
+AllDocCollector collector = new AllDocCollector(); // #A
+searcher.search(new TermQuery(new Term("word", word)), collector);
+List<ScoreDoc> hits = collector.getHits();
+Iterator<ScoreDoc> it = hits.iterator();
+while(it.hasNext()) { // #B
+	ScoreDoc hit = it.next();
+	Document doc = searcher.doc(hit.doc);
+	String[] values = doc.getValues("syn");
+	for (int j = 0; j < values.length; j++) { // #C
+		synList.add(values[j]);}}
+return (String[]) synList.toArray(new String[0]);
+
+Collect every matching document
+Iterate over matching documents
+Record synonyms
+
+2 1
+6 2
+10 3
+END

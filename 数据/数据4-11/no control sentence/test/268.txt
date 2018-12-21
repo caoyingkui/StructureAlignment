@@ -1,0 +1,27 @@
+addDoc("Hurricane warning","Bulletin: A hurricane warning was issued at 6 AM for the outer great banks");
+addDoc("Warning label maker", "The warning label maker is a delightful toy for your precocious seven year old's warning needs");
+addDoc("Tornado warning", "Bulletin: There is a tornado warning for Worcester county until 6 PM today");
+IndexReader r = writer.getReader();
+writer.close();
+IndexSearcher searcher = new IndexSearcher(r);
+searcher.setSimilarity(new BoostingSimilarity());
+Term warning = new Term("contents", "warning");
+Query query1 = new TermQuery(warning);
+System.out.println("\nTermQuery results:");
+TopDocs hits = searcher.search(query1, 10);
+TestUtil.dumpHits(searcher, hits);
+assertEquals("Warning label maker",searcher.doc(hits.scoreDocs[0].doc).get("title")); // #1
+Query query2 = new PayloadTermQuery(warning,new AveragePayloadFunction());
+System.out.println("\nPayloadTermQuery results:");
+hits = searcher.search(query2, 10);
+TestUtil.dumpHits(searcher, hits);
+assertEquals("Warning label maker",searcher.doc(hits.scoreDocs[2].doc).get("title")); // #2
+r.close();
+searcher.close();
+
+Warning label maker is top hit, before boosting
+Warning label maker is last hit, after boosting
+
+13 1
+18 2
+END

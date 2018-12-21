@@ -1,0 +1,9 @@
+TermQuery toolQuery = new TermQuery(new Term("Tool", "Nail"));
+TermQuery nailLengthQuery = new TermQuery(new Term("NailLength", "3 inches"));
+BooleanQuery filterQuery = new BooleanQuery();
+filterQuery.add(toolQuery, BooleanClause.Occur.MUST);
+filterQuery.add(nailLengthQuery, BooleanClause.Occur.MUST);
+Filter f = new QueryFilter(filterQuery);
+
+Remember, QueryFilter accepts any query (not just TermQuery). 
+Therefore, you can create a BooleanQuery of the criteria you wish to filter on.

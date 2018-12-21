@@ -1,0 +1,25 @@
+String METAPHONE = "METAPHONE";
+Metaphone metaphoner = new Metaphone(); //#A
+TermAttribute termAttr;
+TypeAttribute typeAttr;
+if (!input.incrementToken()) //#B
+	return false; //#C
+String encoded = metaphoner.encode(termAttr.term()); //#D
+termAttr.setTermBuffer(encoded); //#E
+typeAttr.setType(METAPHONE); //#F
+return true;
+
+org.apache.commons.codec.language.Metaphone
+Advance to next token
+When false, end has been reached
+Convert term text to Metaphone encoding
+Overwrite term text with encoded text
+Set token type
+
+2 1
+5 2
+6 3
+7 4
+8 5
+9 6
+END

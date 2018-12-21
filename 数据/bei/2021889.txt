@@ -1,0 +1,16 @@
+Query top = new BooleanQuery();
+Term bazTerm = new Term("Field", "BAZ");
+Term extraTerm = new Term("Field", "EXTRA");
+top.add(new TermQuery(bazTerm), BooleanClause.Occur.SHOULD);
+top.add(new TermQuery(extraTerm), BooleanClause.Occur.SHOULD);
+SpanNearQuery spanQuery = new SpanNearQuery( new SpanQuery[] { new SpanTermQuery(bazTerm), new SpanTermQuery(extraTerm) },  100, true);
+spanQuery.setBoost(5f);
+top.add(spanQuery, BooleanClause.Occur.SHOULD);
+
+Construct the terms since they will be used more than once
+Add each term as "should" since we want a partial match
+Construct the SpanNearQuery, with slop 100 - a document will get a boost only
+if BAZ and EXTRA occur within 100 places of each other.  The final parameter means
+that BAZ must occur before EXTRA.
+Give it a boost of 5 since it is more important that the words are together
+Add it as "should" since we want a match even when we don't have proximity

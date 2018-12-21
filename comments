@@ -1,0 +1,5 @@
+SimpleQueryParser lacks support for the `field:` operator for creating queries which operate on fields other than the default field.
+Seems like one can either get the parsed query to operate on a single field, or on ALL defined fields (+ weights).
+No support for specifying `field:value` in the query.
+It probably wasn't forgotten, but rather left out for simplicity, but since we are using this QP implementation more and more (mostly through Elasticsearch) we thought it would be useful to have it in.
+Seems like this is not too hard to pull off and I'll be happy to contribute a patch for it.

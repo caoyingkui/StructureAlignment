@@ -1,0 +1,4 @@
+Query books2004=NumericRangeQuery.newIntRange("pubmonth",200401,200412,true,true);
+
+This #4 find all books published in 2004 #8 
+

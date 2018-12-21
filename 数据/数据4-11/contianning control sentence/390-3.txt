@@ -1,0 +1,19 @@
+startReopen();
+try {
+	final IndexSearcher searcher = get(); // 1 added by me 
+	try { // 1 added by me
+		IndexReader newReader = currentSearcher.getIndexReader().reopen(); //1
+		if (newReader != currentSearcher.getIndexReader()) { //1
+			IndexSearcher newSearcher = new IndexSearcher(newReader); //1	
+			if (writer == null) { //1
+				warm(newSearcher);} //1
+				swapSearcher(newSearcher);} }//1
+	finally {
+		release(searcher);}
+} finally {
+	doneReopen();}
+
+Check index version and reopen, warm, swap if needed.
+
+5|6|7|8|9|10 1
+END

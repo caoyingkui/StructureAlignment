@@ -1,0 +1,15 @@
+Directory dir = FSDirectory.Open(new System.IO.FileInfo(indexDir));
+IndexWriter writer = new IndexWriter( FSDirectory.Open(INDEX_DIR), new StandardAnalyzer(Version.LUCENE_CURRENT), true, IndexWriter.MaxFieldLength.LIMITED); // C
+
+Create Lucene index in this directory
+Index *.txt from this directory
+Create IndexWriter
+Close IndexWriter
+Return number of documents indexed
+Index file content
+Index file name
+Index full file path
+Add document to index
+
+2 3
+END

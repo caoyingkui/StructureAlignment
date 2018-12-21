@@ -1,0 +1,38 @@
+String indexDir = System.getProperty("index.dir");
+FSDirectory directory = FSDirectory.open(new File(indexDir));
+IndexReader reader = IndexReader.open(directory);
+IndexSearcher searcher = new IndexSearcher(reader);
+int numDocs = reader.maxDoc();
+MoreLikeThis mlt = new MoreLikeThis(reader); // 1
+mlt.setFieldNames(new String[] {"title", "author"});
+mlt.setMinTermFreq(1); // 2
+mlt.setMinDocFreq(1);
+for (int docID = 0; docID < numDocs; docID++) { // 3
+	System.out.println();
+	Document doc = reader.document(docID);
+	System.out.println(doc.get("title"));
+	Query query = mlt.like(docID); // 4
+	System.out.println(" query=" + query);
+	TopDocs similarDocs = searcher.search(query, 10);
+	if (similarDocs.totalHits == 0)
+		System.out.println(" None like this");
+	for(int i=0;i<similarDocs.scoreDocs.length;i++) {
+		if (similarDocs.scoreDocs[i].doc != docID) { // 5
+			doc = reader.document(similarDocs.scoreDocs[i].doc);
+			System.out.println(" -> " + doc.getField("title").stringValue());}}}
+searcher.close();
+reader.close();
+directory.close();
+
+Instantiate a MoreLikeThis.
+Lower default minimums.
+Iterate through all docs in the index.
+Build query to find similar documents.
+Don't show the same document.
+
+6 1
+8 2
+10 3
+14 4
+20 5
+END

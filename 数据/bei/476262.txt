@@ -1,0 +1,15 @@
+IndexWriter writer = new IndexWriter("MyIndexFolder", new StandardAnalyzer());
+var doc = new Document();
+var idField = new Field("id", "MyItemId", Field.Store.YES, Field.Index.NOT_ANALYZED);
+doc.Add(idField);
+writer.AddDocument(doc);
+writer.Commit();
+Term idTerm = new Term("id", "MyItemId");
+writer.DeleteDocuments(idTerm);
+writer.Commit();
+
+It's not necessary to open an IndexReader if you're already using an IndexWriter or to access IndexSearcher.Reader. 
+You can use IndexWriter.DeleteDocuments(Term), but the tricky part is making sure you've stored your id field correctly in the first place. 
+Be sure and use Field.Index.NOTANALYZED as the index setting on your id field when storing the document. 
+This indexes the field without tokenizing it, which is very important, and none of the other Field.Index values will work when used this way
+Now you can easily delete or update the document using the same writer

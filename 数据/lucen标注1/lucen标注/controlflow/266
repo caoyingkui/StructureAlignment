@@ -1,0 +1,15 @@
+if (input.incrementToken()) {
+	if (isBulletin && termAtt.term().equals("warning")) { // #A
+		payloadAttr.setPayload(boostPayload); }// #A
+	else {
+		payloadAttr.setPayload(null); }// #B
+	return true;} 
+else 
+	return false;
+
+If document is a bulletin, and term is warning,record payload boost
+Clear payload to get no boost
+
+2|3 1
+4 2
+END

@@ -1,0 +1,21 @@
+List<Document> documents = new ArraList<Document>();
+Query query = parser.parse(searchTerm);
+TopDocs hits = searcher.search(query, maxNumberOfResults);
+int end = Math.min(hits.totalHits, size);
+for (int i = from; i < end; i++) {
+	int docId = hits.scoreDocs[i].doc;
+	Document doc = searcher.doc(docId);
+	documents.add(doc);}
+return documents;
+
+When we perform search in Lucene, actual results are not preloaded immediately. 
+In TopDocs,we only get back an array of ranked pointers. 
+It's called ranked pointers because they are not actual documents, but a list of references (DocId). 
+By default, results are scored by the scoring mechanism. 
+We will see more about scoring in detail in Introduction section Chapter 7, Flexible Scoring. 
+For paging, we can calculate position offset, apply pagination ourselves, and leverage something like what we showed in the sample code to return results by page. 
+Developers at Lucene actually recommend re-executing a search on every page, instead of storing the initial search results . 
+The reasoning is that people are usually only interested in top results and they are confident in Lucene's performance.
+
+1 1
+END

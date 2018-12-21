@@ -1,0 +1,12 @@
+QueryParser parser = new QueryParser("Content", analyzer);
+Query query = parser.parse("Lucene");
+
+Assuming an analyzer is already declared and available as a variable, we pass it into QueryParser to initialize the parser. 
+The second parameter is the name of the field where we will perform a search. 
+In this case, we are searching a field called Content. 
+Then, we call parse(String) to interpret the search string Lucene into Query object. 
+Note that, at this point, we only return a Query object. 
+We have not actually executed a search yet.
+
+1 1
+END

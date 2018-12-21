@@ -1,0 +1,77 @@
+GOAL:
+Using PerFieldAnalyzerWrapper
+
+DESCRIPTION:
+Imagine you are building a search engine for a retailer website where you need to index
+fields such as product title, description, sku, category, rating, reviews, and so on. Using a
+general-purpose analyzer for all these fields may not be the best approach. It would work to
+some degree but you will soon learn that there are cases where a general-purpose analyzer
+may return undesired results.
+******
+For example, say you have a sku "AB-978" and are using StandardAnalyzer for all fields. The
+analyzer would break up "AB-978" into two, [ab] [978]. This will have an adverse effect in
+search accuracy because differences in sku between closely related products may vary very
+little. We may have another product with sku "AB-978-1". In StandardAnalyzer, both strings
+would produce these two tokens [ab] [978]. When a user searches for the term "AB-978", both
+products would be treated with equal weight in the search results. So, there is a possibility
+that product "AB-978-1" may rank higher than "AB-978" in the search results.
+******
+You may be wondering if it's possible to use different analysis processes between fields so
+we can apply one method on one field and apply another one for a different field. The answer
+is yes and Lucene provides a per-field analyzer wrapper class to let us achieve that. The
+PerFieldAnalyzerWrapper constructor accepts two arguments, a default analyzer and a
+Map of field to analyzer mapping. During the analysis process, if a field is found in the Map,
+the associated Analyzer will be used. Otherwise, the process will use the default analyzer.
+
+CODE:
+Map<String,Analyzer> analyzerPerField = new HashMap<String,Analyzer>();
+analyzerPerField.put("myfield", new WhitespaceAnalyzer());
+PerFieldAnalyzerWrapper defanalyzer = new PerFieldAnalyzerWrapper(new StandardAnalyzer(), analyzerPerField);
+TokenStream ts = null;
+OffsetAttribute offsetAtt = null;
+CharTermAttribute charAtt = null;
+try {
+	ts = defanalyzer.tokenStream("myfield", new StringReader("lucene.apache.org AB-978"));
+	offsetAtt = ts.addAttribute(OffsetAttribute.class);
+	charAtt = ts.addAttribute(CharTermAttribute.class);
+	ts.reset();
+	System.out.println("== Processing field 'myfield' using WhitespaceAnalyzer (per field) ==");
+	while (ts.incrementToken()) {
+		System.out.println(charAtt.toString());
+		System.out.println("token start offset: " +
+		offsetAtt.startOffset());
+		System.out.println(" token end offset: " +
+		offsetAtt.endOffset());
+	}
+	ts.end();
+	ts = defanalyzer.tokenStream("content", new StringReader("lucene.apache.org AB-978"));
+	offsetAtt = ts.addAttribute(OffsetAttribute.class);
+	charAtt = ts.addAttribute(CharTermAttribute.class);
+	ts.reset();
+	System.out.println("== Processing field 'content' using StandardAnalyzer ==");
+	while (ts.incrementToken()) {
+		System.out.println(charAtt.toString());
+		System.out.println("token start offset: " +
+		offsetAtt.startOffset());
+		System.out.println(" token end offset: " +
+		offsetAtt.endOffset());
+	}
+	ts.end();
+}
+catch (IOException e) {
+	e.printStackTrace();
+}
+finally {
+	ts.close();
+}
+
+COMMENT:
+First, we initialize a  PerFieldAnalyzerWrapper class with a single field mapping for  myfield that maps to a  WhitespaceAnalyzer . 
+The default analyzer is set to StandardAnalyzer . 
+Then we go through the usual steps in setting attribute objects for acquiring attributes for  OffsetAttribute and  CharTermAttribute . 
+We run through the same routine twice, once where we process text in the matching field  myfield and a second time where we process text in the non-matching field  content . 
+Note that the input string(lucene.apache.org AB-978) for both routines is identical.
+When you execute this code, the first routine will output two tokens, [lucene.apache.org] and [AB-978], because  WhitespaceAnalyzer was applied. 
+The  PerFieldAnalyzerWrapper class found a match in its mapping for the field  myfield . 
+In the second routine, three tokens will output instead, [lucene.apache.org] [ab] [978]. 
+The field content was not found, so the default analyzer  StandardAnalyzer was applied.

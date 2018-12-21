@@ -1,0 +1,22 @@
+assertEquals(1, getHitCount("city", "Amsterdam"));
+IndexWriter writer = getWriter();
+Document doc = new Document(); //A
+doc.add(new Field("id", "1",Field.Store.YES,Field.Index.NOT_ANALYZED)); //A
+doc.add(new Field("country", "Netherlands",Field.Store.YES,Field.Index.NO)); //A
+doc.add(new Field("contents","Amsterdam has lots of bridges",Field.Store.NO,Field.Index.ANALYZED)); //A
+doc.add(new Field("city", "Haag",Field.Store.YES,Field.Index.ANALYZED)); //A
+writer.updateDocument(new Term("id", "1"), doc); //B
+writer.close();
+assertEquals(0, getHitCount("city", "Amsterdam"));//C
+assertEquals(1, getHitCount("city", "Haag")); //D
+
+Create new document with "Haag" in city field.
+Replace original document with new version.
+Verify old document is gone.
+Verify new document is indexed.
+
+3|4|5|6|7 1
+8 2
+10 3
+11 4
+END

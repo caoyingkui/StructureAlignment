@@ -1,0 +1,27 @@
+String[] animals = { "aardvark", "beaver", "coati","dog", "elephant", "frog","gila monster","horse", "iguana", "javelina", "kangaroo","lemur", "moose", "nematode", "orca","python", "quokka", "rat", "scorpion","tarantula", "uromastyx", "vicuna","walrus", "xiphias", "yak", "zebra"};
+Analyzer analyzer = new WhitespaceAnalyzer();
+Directory aTOmDirectory = new RAMDirectory(); // #1
+Directory nTOzDirectory = new RAMDirectory(); // #1
+IndexWriter aTOmWriter = new IndexWriter(aTOmDirectory,analyzer,IndexWriter.MaxFieldLength.UNLIMITED);
+IndexWriter nTOzWriter = new IndexWriter(nTOzDirectory,analyzer,IndexWriter.MaxFieldLength.UNLIMITED);
+for (int i=animals.length - 1; i >= 0; i--) {
+	Document doc = new Document();
+	String animal = animals[i];
+	doc.add(new Field("animal", animal, Field.Store.YES, Field.Index.NOT_ANALYZED));
+	if (animal.compareToIgnoreCase("n") < 0) {
+		aTOmWriter.addDocument(doc); } //#2
+	else {
+		nTOzWriter.addDocument(doc); }}// #2
+aTOmWriter.close();
+nTOzWriter.close();
+searchers = new IndexSearcher[2];
+searchers[0] = new IndexSearcher(aTOmDirectory);
+searchers[1] = new IndexSearcher(nTOzDirectory);
+
+Two indexes.
+Indexing halves of the alphabet.
+Query spans both indexes.
+
+3|4 1
+11|12|13|14 2
+END

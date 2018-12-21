@@ -1,0 +1,66 @@
+pq.setSlop(5);
+
+A slop of 5 is needed for a  PhraseQuery to match.
+
+A slop of #7 is needed for a #2 to match . 
+
+****************************
+D:\test\lucene5-master\src\main\java\com\yida\framework\lucene5\hightlight\FastVectorHighlighterTest.java
+
+pq.setSlop(5);
+
+
+A slop of 5 is needed for a pq to match . 
+****************************
+
+
+****************************
+D:\test\lucene5-master\src\main\java\com\yida\framework\lucene5\hightlight\FastVectorHighlighterTest.java
+
+query.setSlop(3);
+
+
+A slop of 3 is needed for a query to match . 
+****************************
+
+
+****************************
+D:\test\lucene5-master\src\main\java\com\yida\framework\lucene5\hightlight\FastVectorHighlighterTest.java
+
+query.setSlop(30);
+
+
+A slop of 30 is needed for a query to match . 
+****************************
+
+
+****************************
+D:\test\lucene5-master\src\main\java\com\yida\framework\lucene5\hightlight\FastVectorHighlighterTest.java
+
+pq.setSlop(5);
+
+
+A slop of 5 is needed for a pq to match . 
+****************************
+
+
+****************************
+D:\test\lucene5-master\src\main\java\com\yida\framework\lucene5\hightlight\SimpleHightlightTest.java
+
+q.setSlop(3);
+
+
+A slop of 3 is needed for a q to match . 
+****************************
+
+
+****************************
+D:\test\lucene5-master\src\main\java\com\yida\framework\lucene5\hightlight\SimpleHightlightTest.java
+
+q.setSlop(3);
+
+
+A slop of 3 is needed for a q to match . 
+****************************
+
+

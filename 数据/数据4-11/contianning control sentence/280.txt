@@ -1,0 +1,54 @@
+Metadata metadata = new Metadata();
+metadata.set(Metadata.RESOURCE_NAME_KEY, f.getName()); // 4
+InputStream is = new FileInputStream(f); // 5
+Parser parser = new AutoDetectParser(); // 6
+ContentHandler handler = new BodyContentHandler(); // 7
+ParseContext context = new ParseContext(); // 8
+context.set(Parser.class, parser); // 8
+try {
+	parser.parse(is, handler, metadata, new ParseContext()); // 9
+} finally {
+	is.close();}
+Document doc = new Document();
+doc.add(new Field("contents", handler.toString(), Field.Store.NO, Field.Index.ANALYZED)); // 10
+if (DEBUG) {
+	System.out.println(" all text: " + handler.toString());}
+for(String name : metadata.names()) { //11
+	String value = metadata.get(name);
+	if (textualMetadataFields.contains(name)) {
+		doc.add(new Field("contents", value, Field.Store.NO, Field.Index.ANALYZED));} // 12
+	doc.add(new Field(name, value, Field.Store.YES, Field.Index.NO)); //13
+	if (DEBUG) {
+		System.out.println(" " + name + ": " + value);}}
+if (DEBUG) {
+	System.out.println();}
+doc.add(new Field("filename", f.getCanonicalPath(), Field.Store.YES, Field.Index.NOT_ANALYZED)); // 14
+return doc;
+
+Change to true to see all text.
+Which metadata fields are textual.
+List all mime types handled by Tika.
+Create Metadata for the file.
+Open the file.
+Automatically determines file type.
+Extracts metadata and body text.
+Setup ParseContext.
+Does all the work!
+Index body content.
+Index metadata fields.
+Append to contents field.
+Separately store metadata fields.
+Index file path.
+
+2 4
+3 5
+4 6
+5 7
+6|7 8
+9 9
+13 10
+16 11
+19 12
+20 13
+25 14
+END

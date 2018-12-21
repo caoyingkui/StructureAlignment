@@ -1,0 +1,35 @@
+Document doc = reader.document(id);
+String[] authors = doc.getValues("author");
+BooleanQuery authorQuery = new BooleanQuery(); // #1
+for (int i = 0; i < authors.length; i++) { // #1
+	String author = authors[i]; // #1
+	authorQuery.add(new TermQuery(new Term("author", author)), BooleanClause.Occur.SHOULD); } // #1
+authorQuery.setBoost(2.0f);
+TermFreqVector vector = reader.getTermFreqVector(id, "subject"); // #2
+BooleanQuery subjectQuery = new BooleanQuery(); // #2
+for (int j = 0; j < vector.size(); j++) { // #2
+	TermQuery tq = new TermQuery( new Term("subject", vector.getTerms()[j])); // #2
+	subjectQuery.add(tq, BooleanClause.Occur.SHOULD); }// #2
+BooleanQuery likeThisQuery = new BooleanQuery(); // #3
+likeThisQuery.add(authorQuery, BooleanClause.Occur.SHOULD); // #3
+likeThisQuery.add(subjectQuery, BooleanClause.Occur.SHOULD); // #3
+likeThisQuery.add(new TermQuery( new Term("isbn", doc.get("isbn"))), BooleanClause.Occur.MUST_NOT); // #4
+TopDocs hits = searcher.search(likeThisQuery, 10);
+int size = max;
+if (max > hits.scoreDocs.length) 
+	size = hits.scoreDocs.length;
+Document[] docs = new Document[size];
+for (int i = 0; i < size; i++) {
+	docs[i] = reader.document(hits.scoreDocs[i].doc);}
+return docs;
+
+Books by the same author are considered alike and are boosted so they will likely appear before books by other authors.
+Using the terms from the  subject term vectors, we add each to a boolean query.
+We combine the author and subject queries into a final boolean query.
+We exclude the current book, which would surely be the best match given the other criteria, from consideration.
+
+3|4|5|6 1
+8|9|10|11|12 2
+13|14|15 3
+16 4
+END

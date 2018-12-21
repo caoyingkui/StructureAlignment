@@ -1,0 +1,22 @@
+GOAL:
+Creating queries with the Lucene QueryParser
+
+
+DESCRIPTION:
+Internally, Lucene processes Query objects to execute a search. QueryParser is an interpreter
+that parses a query string into Query objects. It provides the utility to convert textual input
+into objects. The key method in QueryParser is parse (String). If you want more control over
+how a search is performed, you can create Query objects directly without using QueryParser,
+but this would be a much more complicated process. The query string syntax Lucene uses
+has a few rules
+
+CODE:
+QueryParser parser = new QueryParser("Content", analyzer);
+Query query = parser.parse("Lucene");
+
+COMMENT:
+Assuming an analyzer is already declared and available as a variable, we pass it into QueryParser to initialize the parser. 
+The second parameter is the name of the field where we will perform a search. 
+In this case, we are searching a field called Content. 
+Then, we call parse(String) to interpret the search string Lucene into Query object. 
+Note that, at this point, we only return a Query object. We have not actually executed a search yet.

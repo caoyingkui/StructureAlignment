@@ -1,0 +1,13 @@
+TermQuery tq = new TermQuery(new Term("content", "hops")); //#1
+assertEquals(1, TestUtil.hitCount(searcher, tq));
+PhraseQuery pq = new PhraseQuery(); //#2
+pq.add(new Term("content", "fox")); //#2
+pq.add(new Term("content", "hops")); //#2
+assertEquals(1, TestUtil.hitCount(searcher, pq));
+
+A search for the word hops matches the document
+A search for the phrase “fox hops” also matches.
+
+1 1
+2|3|4 2
+END

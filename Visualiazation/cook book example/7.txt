@@ -1,0 +1,20 @@
+GOAL:
+Obtaining a TokenStream
+
+DESCRIPTION:
+TokenStream is an intermediate data format between components within the analysis
+process. TokenStream acts as both an input and output format in all filters. For tokenizer,
+it consumes text from a reader and outputs result as TokenStream. Let's explore TokenStream
+in detail in this section.
+
+CODE:
+Reader reader = new StringReader("Text to be passed");
+Analyzer analyzer = new SimpleAnalyzer();
+TokenStream tokenStream = analyzer.tokenStream("myField", reader);
+
+COMMENT:
+An analyzer processes incoming text via a Reader input. 
+Internally, the Reader is passed on to Tokenizer, which turns the text into a TokenStream after it's been processed. 
+From here on, TokenStream is passed around between filters in every step. 
+TokenStream is essentially an enumeration of tokens that you can iterate through. 
+TokenStream extends from AttributeSource and it provides an interface to return token attributes and value.

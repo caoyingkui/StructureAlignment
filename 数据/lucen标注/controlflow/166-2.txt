@@ -1,0 +1,22 @@
+if (synonymStack.size() > 0) { //#2
+State syn = (State) synonymStack.pop(); //#2
+restoreState(syn); //#2
+return true;}
+if (!input.incrementToken()) //#3
+return false;
+addAliasesToStack(); //#4
+return true; //#5
+
+Synonym buffer
+Pop buffered synonyms
+Read next token
+Push synonyms of current token onto stack
+Return current token
+Retrieve synonyms
+Push synonyms onto stack
+Set position increment to zero
+
+1|2|3 11
+7 13
+8 14
+END

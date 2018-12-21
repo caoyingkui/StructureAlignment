@@ -1,0 +1,15 @@
+IndexWriter writer = getWriter();
+assertEquals(ids.length, writer.numDocs()); //7
+writer.close();
+
+Run before every test
+Create IndexWriter
+Add documents
+Create new searcher
+Build simple single-term query
+Get number of hits
+Verify writer document count
+Verify searcher document count
+
+2 7
+END

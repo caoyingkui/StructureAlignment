@@ -1,0 +1,16 @@
+MultiPhraseQuery query = new MultiPhraseQuery();
+query.add(new Term[] { new Term("field", "quick"), new Term("field", "fast") }); // 1
+query.add(new Term("field", "fox")); // 2
+System.out.println(query);
+TopDocs hits = searcher.search(query, 10);
+assertEquals("fast fox match", 1, hits.totalHits);
+query.setSlop(1);
+hits = searcher.search(query, 10);
+assertEquals("both match", 2, hits.totalHits);
+
+Any of these terms may be in first position to match.
+Only one in second position.
+
+2 1
+3 2
+END

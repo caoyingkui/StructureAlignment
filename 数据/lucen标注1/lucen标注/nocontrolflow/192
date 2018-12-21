@@ -1,0 +1,21 @@
+Query allBooks = new MatchAllDocsQuery();
+QueryParser parser = new QueryParser(Version.LUCENE_CURRENT,"contents", new StandardAnalyzer(Version.LUCENE_CURRENT)); // #1
+BooleanQuery query = new BooleanQuery(); // #1
+query.add(allBooks, BooleanClause.Occur.SHOULD); // #1
+query.add(parser.parse("java OR action"), BooleanClause.Occur.SHOULD); // #1
+Directory directory = TestUtil.getBookIndexDirectory(); // #2
+SortingExample example = new SortingExample(directory); // #2
+example.displayResults(query, Sort.RELEVANCE);
+example.displayResults(query, Sort.INDEXORDER);
+example.displayResults(query, new Sort(new SortField("category",SortField.STRING)));
+example.displayResults(query, new Sort(new SortField("pubmonth", SortField.INT,true)));
+example.displayResults(query,new Sort(new SortField[]{new SortField("category", SortField.STRING),SortField.FIELD_SCORE,new SortField("pubmonth", SortField.INT, true)}));
+example.displayResults(query, new Sort(new SortField[] {SortField.FIELD_SCORE, newSortField("category", SortField.STRING)}));
+directory.close();
+
+Create test query
+Create example runner
+
+2|3|4|5 1
+6|7 2
+END

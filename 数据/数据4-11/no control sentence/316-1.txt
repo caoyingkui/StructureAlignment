@@ -1,0 +1,28 @@
+QueryParser parser = new QueryParser(Version.LUCENE_CURRENT,F, analyzer);
+Query query = parser.parse(QUERY);
+FastVectorHighlighter highlighter = getHighlighter(); // 1
+FieldQuery fieldQuery = highlighter.getFieldQuery(query); // 2
+IndexSearcher searcher = new IndexSearcher(dir);
+TopDocs docs = searcher.search(query, 10);
+FileWriter writer = new FileWriter(filename);
+writer.write("<html>");
+writer.write("<body>");
+writer.write("<p>QUERY : " + QUERY + "</p>");
+for(ScoreDoc scoreDoc : docs.scoreDocs) {
+	String snippet = highlighter.getBestFragment( fieldQuery, searcher.getIndexReader(), scoreDoc.doc, F, 100 ); // 3
+	if (snippet != null) { // 4
+		writer.write(scoreDoc.doc + " : " + snippet + "<br/>");  }} //4
+writer.write("</body></html>");
+writer.close();
+searcher.close();
+
+Get FastVectorHighlighter.
+Create FieldQuery.
+Highlight top fragment.
+Write highlighted fragments.
+
+3 1
+4 2
+12 3
+13|14 4
+END

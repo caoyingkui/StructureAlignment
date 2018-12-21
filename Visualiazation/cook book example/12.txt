@@ -1,0 +1,59 @@
+GOAL:
+Creating a DocValue Field
+
+DESCRIPTION:
+Similar to a stored field, DocValue is a part of a document. It's also created at indexing time,
+and contains value that are specific to a document. The major difference between the two
+concerns their underlying storage structure. The field's storage is row-oriented, whereas
+DocValue's storage is column-oriented. In retrieval, all field values are returned at once per
+document, so that loading the relevant information about a document is very fast. However,
+if you need to scan a field for any other purpose it will be a slow process, as you will have to
+iterate through all the documents and load each document's fields per iteration. The DocValue
+is stored by column in DocId to value mapping, and loading the values for a specific DocValue
+for all documents at once can be done quickly, as Lucene only has to scan through one
+column rather than iterating through each document to load a field. In summary, the field and
+DocValue both contain information about a document, but they serve a different purpose in
+practical usage.
+
+CODE:
+Analyzer analyzer = new StandardAnalyzer();
+Directory directory = new RAMDirectory();
+IndexWriterConfig config = new IndexWriterConfig(Version.LATEST, analyzer);
+IndexWriter indexWriter = new IndexWriter(directory, config);
+Document document = new Document();
+document.add(new SortedDocValuesField("sorted_string", new BytesRef("hello")));
+indexWriter.addDocument(document);
+document = new Document();
+document.add(new SortedDocValuesField("sorted_string", new BytesRef("world")));
+indexWriter.addDocument(document);
+indexWriter.commit();
+indexWriter.close();
+IndexReader reader = DirectoryReader.open(directory);
+document = reader.document(0);
+System.out.println("doc 0: " + document.toString());
+document = reader.document(1);
+System.out.println("doc 1: " + document.toString());
+for (AtomicReaderContext context : reader.leaves()) {
+	AtomicReader atomicReader = context.reader();
+	SortedDocValues sortedDocValues =
+	DocValues.getSorted(atomicReader, "sorted_string");
+	System.out.println("Value count: " + sortedDocValues.getValueCount());
+	System.out.println("doc 0 sorted_string: " + sortedDocValues.get(0).utf8ToString());
+	System.out.println("doc 1 sorted_string: " + sortedDocValues.get(1).utf8ToString());
+}
+reader.close();
+
+COMMENT:
+The initial setup is very familiar. 
+We obtain an IndexWriter by setting up an Analyzer object StandardAnalyzer and a Directory object  RAMDirectory . 
+Then, we add two documents with a single DocValues called  SortedDocValues and no field. 
+Note that we add a SortedDocValues by using  SortedDocValuesField , which is similar to adding a regular field. 
+For  SortedDocValuesField , a String value needs to be converted to a bytes array by using  BytesRef . 
+After DocValues are added, we commit the changes and close the IndexWriter . 
+We then open it with an  IndexReader : a Reader that reads index data. 
+Note that there are two print statements, which show that we have two documents in the index.
+Because the DocValues reader can only leverage  AtomicReader , we need to iterate through all  AtomicReader in  IndexReader , in order to examine all the segments. 
+An  AtomicReader can only read one index segment, hence, the iteration. 
+With  AtomicReader , we can extract DocValues from  SortedDocValues by calling  getSorted(AtomicReader, String) . 
+The next line shows that you can get a count of values in DocValues. 
+The following two lines show that you can obtain DocValue by DocId

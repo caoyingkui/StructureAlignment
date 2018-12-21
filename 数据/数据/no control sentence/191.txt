@@ -1,0 +1,17 @@
+IndexSearcher searcher = new IndexSearcher(directory);
+searcher.setDefaultFieldSortScoring(true, false); 
+TopDocs results = searcher.search(query, null, 10, sort); 
+System.out.println("\nResults for: " + query.toString() + " sorted by " + sort);
+System.out.println(StringUtils.rightPad("Title", 30) + StringUtils.rightPad("pubmonth", 10) + StringUtils.center("id", 4) +StringUtils.center("score", 15));
+PrintStream out = new PrintStream(System.out, true, "UTF-8"); 
+
+Tell IndexSearcher we want scores for each hit
+Search method that accepts Collector
+We use the useful  toString method of the  Sort class to describe itself
+Ensure unicode output is handled properly
+
+2 1 
+3 2
+4 3
+6 4
+END

@@ -1,0 +1,16 @@
+IndexReader reader = IndexReader.open(directory);
+assertEquals(ids.length, reader.maxDoc()); //8
+assertEquals(ids.length, reader.numDocs()); //8
+reader.close();
+
+Run before every test
+Create IndexWriter
+Add documents
+Create new searcher
+Build simple single-term query
+Get number of hits
+Verify writer document count
+Verify searcher document count
+
+2|3 13
+END

@@ -1,0 +1,22 @@
+if (args.length != 1) {
+	System.err.println("Usage: FastVectorHighlighterSample <filename>");
+	System.exit(-1);}
+makeIndex(); // #C
+searchIndex(args[0]); // #D
+
+Sample documents
+Sample query string
+Create index
+Run search and print results
+Store.YES and TermVector.WITH_POSITIONS_OFFSETS
+Get FastVectorHighlighter
+Create FieldQuery
+Highlight top fragment
+Write highlighted fragments
+Create SimpleFragListBuilder
+Create ScoreOrderFragmentsBuilder with multi colored tags
+Create FastVectorHighlighter
+
+4 3
+5 4
+END

@@ -1,0 +1,14 @@
+Document doc = new Document();
+doc.add(new Field("contents", new FileReader(f))); //1
+doc.add(new Field("file name", f.getName(), Field.Store.YES, Field.Index.NOT_ANALYZED));//2
+doc.add(new Field("full path", f.getCanonicalPath(), Field.Store.YES, Field.Index.NOT_ANALYZED));//3
+return doc;
+
+Index file content.
+Index file name.
+Index file full path.
+
+2 1
+3 2
+4 3
+END

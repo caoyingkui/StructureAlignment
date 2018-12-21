@@ -1,0 +1,14 @@
+Workbook workbook = new XSSFWorkbook();
+CellStyle cs = workbook.createCellStyle();
+Font font = workbook.createFont();
+font.setColor(IndexedColors.RED.getIndex());
+cs.setFont(font);
+
+Get Font from XSSFWorkbook .
+And set font color as red. 
+Finally assign the font instance to CellStyle instance
+
+3 1
+4 2
+5 3
+END

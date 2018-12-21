@@ -1,0 +1,47 @@
+if (args.length != 1) {
+	System.err.println("Usage: BerkeleyDbIndexer <index dir>");
+	System.exit(-1);}
+File indexFile = new File(args[0]);
+if (indexFile.exists()) { // A
+	File[] files = indexFile.listFiles(); // A
+	for (int i = 0; i < files.length; i++) // A
+		if (files[i].getName().startsWith("__")) // A
+			files[i].delete(); // A
+	indexFile.delete(); }// A
+indexFile.mkdir();
+EnvironmentConfig envConfig = new EnvironmentConfig(); // B
+DatabaseConfig dbConfig = new DatabaseConfig(); // B
+envConfig.setTransactional(true); // B
+envConfig.setAllowCreate(true); // B
+dbConfig.setTransactional(true); // B
+dbConfig.setAllowCreate(true); // B
+Environment env = new Environment(indexFile, envConfig); // C
+Transaction txn = env.beginTransaction(null, null); // C
+Database index = env.openDatabase(txn, "__index__", dbConfig); // C
+Database blocks = env.openDatabase(txn, "__blocks__", dbConfig); // C
+txn.commit(); // C
+txn = env.beginTransaction(null, null); // C
+JEDirectory directory = new JEDirectory(txn, index, blocks); // D
+IndexWriter writer = new IndexWriter(directory,new StandardAnalyzer(Version.LUCENE_CURRENT),true,IndexWriter.MaxFieldLength.UNLIMITED);
+Document doc = new Document();
+doc.add(new Field("contents", "The quick brown fox...",Field.Store.YES, Field.Index.ANALYZED));
+writer.addDocument(doc);
+writer.optimize();
+writer.close();
+directory.close();
+txn.commit();
+index.close();
+blocks.close();
+env.close();
+System.out.println("Indexing Complete");
+
+Remove existing index, if present.
+Configure BDB's environment and database.
+Open database and transaction.
+Create JEDirectory.
+
+5|6|7|8|9|10 1
+12|13|14|15|16|17 2
+18|19|20|21|22|23 3
+24 4
+END

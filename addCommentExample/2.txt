@@ -1,0 +1,4 @@
+snq=new SpanNearQuery(new SpanQuery[]{lazy,fox},3,false);
+
+The nested SpanTermQuery objects are in reverse order #23 so the inOrder flag is set to #24 . A slop of only #22 is needed for a match . 
+

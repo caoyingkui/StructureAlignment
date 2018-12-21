@@ -1,0 +1,14 @@
+if (daysAgo[doc] < maxDaysAgo) { // #1
+	float boost = (float) (multiplier * (maxDaysAgo-daysAgo[doc]) / maxDaysAgo); // #2
+	return (float) (subQueryScore * (1.0+boost));} 
+else 
+	return subQueryScore; // #3
+
+Check if book is new enough to get a boost.
+Do a simple linear boost; other functions are possible.
+Book is too old.
+
+1 1
+2 2
+5 3
+END

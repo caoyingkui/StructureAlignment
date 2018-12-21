@@ -1,0 +1,35 @@
+Document doc = new Document();
+doc.add(new Field("name", name, Field.Store.YES,Field.Index.ANALYZED));
+doc.add(new Field(latField, NumericUtils.doubleToPrefixCoded(lat), Field.Store.YES, Field.Index.NOT_ANALYZED)); // 1
+doc.add(new Field(lngField, NumericUtils.doubleToPrefixCoded(lng), Field.Store.YES, Field.Index.NOT_ANALYZED)); // 1
+doc.add(new Field("metafile", "doc", Field.Store.YES, Field.Index.ANALYZED));// 2
+IProjector projector = new SinusoidalProjector(); // 3
+int startTier = 5; // 4
+int endTier = 15; // 5
+for (; startTier <= endTier; startTier++) {
+	CartesianTierPlotter ctp;
+	ctp = new CartesianTierPlotter(startTier, projector, tierPrefix); // 6
+	double boxId = ctp.getTierBoxId(lat, lng); // 7
+	System.out.println("Adding field " + ctp.getTierFieldName() + ":"+ boxId);
+	doc.add(new Field(ctp.getTierFieldName(), NumericUtils.doubleToPrefixCoded(boxId), Field.Store.YES,Field.Index.NOT_ANALYZED_NO_NORMS));}// 8
+writer.addDocument(doc);
+System.out.println("===== Added Doc to index ====");
+
+Convert the lat / long to lucene fields to lucene sortable doubles.
+Add a default meta field to make searching all documents easy.
+Sinusoidal projection.
+About 1000 mile bestFit.
+about 1 mile bestFit.
+Create a Tier plotter for each level.
+Compute bounding box ID.
+Add the tier field.
+
+3|4 1
+5 2
+6 3
+7 4
+8 5
+11 6
+12 7
+14 8
+END

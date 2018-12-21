@@ -1,0 +1,12 @@
+if (args.length != 1) {
+	System.err.println("Usage: FastVectorHighlighterSample <filename>");
+	System.exit(-1);}
+makeIndex(); // #C
+searchIndex(args[0]); // #D
+
+Create index.
+Run search and print results.
+
+4 1
+5 2
+END

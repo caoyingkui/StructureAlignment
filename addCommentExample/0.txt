@@ -1,0 +1,4 @@
+snq=new SpanNearQuery(quick_brown_dog,4,true);
+
+Using the same terms with a slop of #11 positions still does n't result in a match . 
+

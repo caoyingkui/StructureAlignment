@@ -1,0 +1,14 @@
+Document doc = new Document();
+doc.Add(new Field("contents", new System.IO.StreamReader(file.FullName, System.Text.Encoding.Default))); // 1
+doc.Add(new Field("filename", file.Name, Field.Store.YES, Field.Index.NOT_ANALYZED)); // 2
+doc.Add(new Field("fullpath", file.FullName, Field.Store.YES, Field.Index.NOT_ANALYZED)); // 3
+return doc;
+
+Index file content.
+Index file name.
+Index full file path.
+
+2 1
+3 2
+4 3
+END

@@ -1,0 +1,20 @@
+GOAL:
+Creating a TextField
+
+DESCRIPTION:
+Don't be confused between a StringField and TextField. 
+Although both the fields contain textual data, there are major differences between these two fields. 
+A StringField is not tokenized and it's a good tool for exact match and sorting. 
+A TextField is tokenized and it's useful for storing any unstructured text for indexing. 
+When you pass the text into an Analyzer for indexing, a TextField is what's used to store the text content.
+
+CODE:
+Document document = new Document();
+String text = "Lucene is an Information Retrieval library written in Java.";
+doc.add(new TextField("text", text, Field.Store.YES));
+indexWriter.addDocument(document);
+indexWriter.commit();
+
+COMMENT:
+This is a very simple example showing how a TextField is added, assuming that you have an Analyzer already created for the IndexWriter on the  text field. 
+The analysis process will run against this field to index the content within. 

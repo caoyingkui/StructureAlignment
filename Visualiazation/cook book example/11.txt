@@ -1,0 +1,35 @@
+GOAL:
+Creating a numeric field
+
+DESCRIPTION:
+This is a very simple example showing how a TextField is added, assuming that you have an
+Analyzer already created for the IndexWriter on the  text field. The analysis process will run
+against this field to index the content within.
+
+CODE:
+IntField intField = new IntField("int_value", 100, Field.Store.YES);
+LongField longField = new LongField("long_value", 100L, Field.Store.YES);
+FloatField floatField = new FloatField("float_value", 100.0F, Field.Store.YES);
+DoubleField doubleField = new DoubleField("double_value", 100.0D,Field.Store.YES);
+FieldType sortedIntField = new FieldType();
+sortedIntField.setNumericType(FieldType.NumericType.INT);
+sortedIntField.setNumericPrecisionStep(Integer.MAX_VALUE);
+sortedIntField.setStored(false);
+sortedIntField.setIndexed(true);
+IntField intFieldSorted = new IntField("int_value_sort", 100,sortedIntField);
+Document document = new Document();
+document.add(intField);
+document.add(longField);
+document.add(floatField);
+document.add(doubleField);
+document.add(intFieldSorted);
+
+COMMENT:
+The instantiation of different numeric fields are pretty much the same as you find in the code.
+The first parameter is the name of the field, the second parameter is the value, and last the parameter is  FieldType . 
+In our example, we specified that we want the field value stored by passing in  Field.Store.YES .
+In the second portion, where we defined our own  FieldType , we can see a demonstration of creating a single-valued  IntField to sort purposes. 
+We set the numeric type to  FieldType.
+NumericType.INT and  precisionStep to  Integer.MAX_VALUE , so that we can ensure the index is not bracketed. 
+Then, we set stored to false because we are already storing the same  int value in  intField , and have indexed this to true so that this field goes into an index. 
+Also, lastly, we created another Field called  intFieldSorted to use this custom FieldType. 

@@ -1,0 +1,21 @@
+GOAL:
+Obtaining an IndexSearcher
+
+DESCRIPTION:
+The IndexSearcher class is the gateway to search an index as far as Lucene is concerned.
+An IndexSearcher takes an  IndexReader object and performs a search via the reader.
+IndexReader talks to the index physically and returns the results.  IndexSearcher
+executes a search by accepting a query object. Next, we will learn how to perform a search
+and create a Query object with a  QueryParser . For now, let's take a look at how we can
+obtain an IndexSearcher.
+
+CODE:
+Directory directory = getDirectory();
+IndexReader indexReader = DirectoryReader.open(directory);
+IndexSearcher indexSearcher = new IndexSearcher(indexReader);
+
+COMMENT:
+The first line assumes we can gain access to a Directory object by calling  getDirectory() .
+Then, we obtain an  IndexReader by calling  DirectoryReader.open(directory) . 
+The open method in  DirectoryReader is a static method that opens an index to read, which is analogous to  IndexWriter opening a directory to write. 
+With an  IndexReader initialized, we can instantiate an  IndexSearcher with the reader.

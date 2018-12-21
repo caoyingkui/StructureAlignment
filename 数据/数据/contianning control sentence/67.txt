@@ -1,0 +1,23 @@
+Document doc = new Document();
+String senderEmail = getSenderEmail();
+String senderName = getSenderName();
+String subject = getSubject();
+String body = getBody();
+doc.add(new Field("senderEmail", senderEmail,Field.Store.YES,Field.Index.NOT_ANALYZED));
+doc.add(new Field("senderName", senderName,Field.Store.YES,Field.Index.ANALYZED));
+doc.add(new Field("subject", subject,Field.Store.YES,Field.Index.ANALYZED));
+doc.add(new Field("body", body,Field.Store.NO,Field.Index.ANALYZED));
+String lowerDomain = getSenderDomain().toLowerCase();
+if (isImportant(lowerDomain)) { // 1
+	doc.setBoost(1.5F); //1
+}else 
+	if (isUnimportant(lowerDomain)) { // 2
+		doc.setBoost(0.1F); } //2
+writer.addDocument(doc);
+
+When we index messages sent by an important domain name (say, the company’s employees),we set their boost factor to 1.5, which is greater than the default factor of 1.0.
+When we encounter messages from a sender associated with a fictional bad domain, as checked by  isUnimportant , we label them as nearly insignificant by lowering their boost factor to 0.1.
+
+11|12 1
+14|15 2
+END

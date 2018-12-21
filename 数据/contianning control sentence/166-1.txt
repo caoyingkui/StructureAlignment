@@ -1,0 +1,20 @@
+String[] synonyms = engine.getSynonyms(termAttr.term()); //#1
+if (synonyms == null) 
+	return;
+State current = captureState();
+for (int i = 0; i < synonyms.length; i++) { //#2
+	save.restoreState(current);
+	AnalyzerUtils.setTerm(save, synonyms[i]); //#2
+	AnalyzerUtils.setType(save, TOKEN_TYPE_SYNONYM); //#2
+	AnalyzerUtils.setPositionIncrement(save, 0); //#3
+	synonymStack.push(save.captureState()); }//#2
+
+Synonyms are retrieved from the  SynonymEngine .
+We push each synonym onto the stack.
+The position increment is set to zero, 
+	allowing synonyms to be logically in the same place as the original term.
+
+1 1
+7|8|9|10 2
+9 3
+END

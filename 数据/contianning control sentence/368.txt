@@ -1,0 +1,28 @@
+Directory dir = FSDirectory.Open(new System.IO.FileInfo(indexDir)); // C
+IndexSearcher searcher = new IndexSearcher(dir); // D
+QueryParser parser = new QueryParser("contents",new StandardAnalyzer(Version.LUCENE_CURRENT)); // E
+Query query = parser.Parse(q); // E
+Lucene.Net.Search.TopDocs hits = searcher.Search(query, 10); // F
+System.Console.WriteLine("Found " +hits.totalHits +" document(s) that matched query '" + q + "':");
+for (int i = 0; i < hits.scoreDocs.Length; i++) {
+ScoreDoc scoreDoc = hits.ScoreDocs[i]; // G
+Document doc = searcher.Doc(scoreDoc.doc); // G
+System.Console.WriteLine(doc.Get("filename")); }// G
+searcher.Close(); // H
+
+Index directory created by Indexer.
+Query string.
+Open index.
+Open searcher.
+Parse query.
+Search index.
+Retrieve & display result.
+Close searcher.
+
+1 3
+2 4
+3|4 5
+5 6
+8|9|10 7
+11 8
+END

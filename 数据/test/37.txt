@@ -1,0 +1,1 @@
+Document new add Field Field.Store.YES, Field.Index.NOT_ANALYZED getName

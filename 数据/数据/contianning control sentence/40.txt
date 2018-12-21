@@ -1,0 +1,34 @@
+Directory dir = FSDirectory.open(new File(indexDir)); //3
+IndexSearcher is = new IndexSearcher(dir); //3
+QueryParser parser = new QueryParser(Version.LUCENE_CURRENT, "contents", new StandardAnalyzer( Version.LUCENE_CURRENT)); //4
+Query query = parser.parse(q); //4
+long start = System.currentTimeMillis();
+TopDocs hits = is.search(query, 10); //5
+long end = System.currentTimeMillis();
+System.err.println("Found " + hits.totalHits  + " document(s) (in " + (end - start) + " milliseconds) that matched query '" + q + "':"); // 6
+for(int i=0;i<hits.scoreDocs.length;i++) {
+	ScoreDoc scoreDoc = hits.scoreDocs[i]; //7
+	Document doc = is.doc(scoreDoc.doc); //7
+	System.out.println(doc.get("filename")); }//8
+is.close();
+
+Index directory created by Indexer
+Parse command-line arguments (index directory, query string).
+We use Lucene’s  Directory and  IndexSearcher classes to open our index for searching.
+We use  QueryParser to parse a human-readable search text into Lucene’s  Query class.
+Searching returns hits in the form of a  TopDocs object.
+Print details on the search (how many hits were found and time taken)
+Retrieve matching document
+Display filename
+Close the  IndexSearcher when we are done with it.
+
+1|2 3
+3|4 4
+6 5
+8 6
+10|11 7
+12 8
+END
+
+
+

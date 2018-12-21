@@ -1,0 +1,26 @@
+IndexReader r = IndexReader.open(TestUtil.getBookIndexDirectory()); //A added by me 
+IndexSearcher s = new IndexSearcher(r); //A added by me 
+int maxDoc = s.maxDoc(); //A added by me 
+int[] daysAgo = new int[maxDoc]; //A added by me 
+int[] pubmonths = FieldCache.DEFAULT.getInts(r, "pubmonthAsDay"); // #A
+int now = (int) (DateTools.stringToDate("200410").getTime()/(1000*3600*24)); // #A
+for(int i=0;i<maxDoc;i++) { // #A
+	if (!r.isDeleted(i)) { // #A
+		daysAgo[i] = now - pubmonths[i];}} // #A
+QueryParser parser = new QueryParser(Version.LUCENE_CURRENT,"contents",new StandardAnalyzer(Version.LUCENE_CURRENT)); // B added by me
+Query q = parser.parse("technology in action"); // #B
+Query q2 = new RecencyBoostingQuery(q, daysAgo, 2.0, 2*365); // #C
+TopDocs hits = s.search(q2, 5);
+for(int i=0;i<hits.scoreDocs.length;i++) {
+	Document doc = r.document(hits.scoreDocs[i].doc);
+	System.out.println((1+i) + ": " + doc.get("title") + ": pubmonth=" + doc.get("pubmonth") + " score=" + hits.scoreDocs[i].score); }
+s.close();
+
+Create daysAgo array from FieldCache.
+Normal query.
+Query that boosts by recency.
+
+1|2|3|4|5|6|7|8|9 1
+10|11 2
+12 3
+END

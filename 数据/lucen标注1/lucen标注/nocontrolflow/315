@@ -1,0 +1,22 @@
+static final String[] DOCS = { "the quick brown fox jumps over the lazy dog", "the quick gold fox jumped over the lazy black dog", "the quick fox jumps over the black dog", "the red fox jumped over the lazy dark gray dog" };// #A
+static final String QUERY = "quick OR fox OR \"lazy dog\"~1"; // #B
+static final String F = "f";
+static Directory dir = new RAMDirectory();
+static Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_CURRENT);
+
+Sample documents
+Sample query string
+Create index
+Run search and print results
+Store.YES and TermVector.WITH_POSITIONS_OFFSETS
+Get FastVectorHighlighter
+Create FieldQuery
+Highlight top fragment
+Write highlighted fragments
+Create SimpleFragListBuilder
+Create ScoreOrderFragmentsBuilder with multi colored tags
+Create FastVectorHighlighter
+
+1 1
+2 2
+END

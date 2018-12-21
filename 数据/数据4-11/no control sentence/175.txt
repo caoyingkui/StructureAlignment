@@ -1,0 +1,10 @@
+Query query = new QueryParser(Version.LUCENE_CURRENT, "description", new SimpleAnalyzer()).parse("partnum:Q36 AND SPACE"); 
+assertEquals("note Q36 -> q","+partnum:q +space", query.toString("description")); 
+assertEquals("doc not found :(", 0, TestUtil.hitCount(searcher, query));
+
+QueryParser analyzes each term and phrase of the query expression
+Query has a nice  toString() method to return the query as a QueryParser -like expression
+
+1 1
+2 2
+END

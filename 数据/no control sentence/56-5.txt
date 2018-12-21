@@ -1,0 +1,9 @@
+IndexReader reader = IndexReader.open(directory);
+assertEquals(ids.length, reader.maxDoc()); //1
+assertEquals(ids.length, reader.numDocs()); //1
+reader.close();
+
+Verify reader document count.
+
+2|3 1
+END

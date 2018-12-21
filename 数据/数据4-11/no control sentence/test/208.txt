@@ -1,0 +1,35 @@
+SpanQuery[] quick_brown_dog = new SpanQuery[]{quick, brown, dog};
+SpanNearQuery snq = new SpanNearQuery(quick_brown_dog, 0, true); // #1
+assertNoMatches(snq);
+dumpSpans(snq);
+snq = new SpanNearQuery(quick_brown_dog, 4, true); // #2
+assertNoMatches(snq);
+dumpSpans(snq);
+snq = new SpanNearQuery(quick_brown_dog, 5, true); // #3
+assertOnlyBrownFox(snq);
+dumpSpans(snq);
+snq = new SpanNearQuery(new SpanQuery[]{lazy, fox}, 3, false);// #4
+assertOnlyBrownFox(snq);
+dumpSpans(snq);
+PhraseQuery pq = new PhraseQuery(); // #5
+pq.add(new Term("f", "lazy")); // #5
+pq.add(new Term("f", "fox")); // #5
+pq.setSlop(4); // #5
+assertNoMatches(pq);
+pq.setSlop(5); // #6
+assertOnlyBrownFox(pq);
+
+Querying for these three terms in successive positions doesn’t match either document.
+Using the same terms with a slop of 4 positions still doesn’t result in a match.
+With a slop of 5, the  SpanNearQuery has a match.
+The nested  SpanTermQuery objects are in reverse order, so the  inOrder flag is set to  false . A slop of only 3 is needed for a match.
+Here we use a comparable  PhraseQuery , although a slop of 4 still doesn’t match.
+A slop of 5 is needed for a  PhraseQuery to match.
+
+2 1
+5 2
+8 3
+11 4
+14|15|16|17 5
+19 6
+END

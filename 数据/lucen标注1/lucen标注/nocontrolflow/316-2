@@ -1,0 +1,21 @@
+FragListBuilder fragListBuilder = new SimpleFragListBuilder(); // #J
+FragmentsBuilder fragmentBuilder = new ScoreOrderFragmentsBuilder( BaseFragmentsBuilder.COLORED_PRE_TAGS,BaseFragmentsBuilder.COLORED_POST_TAGS); // #K
+return new FastVectorHighlighter(true, true, fragListBuilder, fragmentBuilder); // #L
+
+Sample documents
+Sample query string
+Create index
+Run search and print results
+Store.YES and TermVector.WITH_POSITIONS_OFFSETS
+Get FastVectorHighlighter
+Create FieldQuery
+Highlight top fragment
+Write highlighted fragments
+Create SimpleFragListBuilder
+Create ScoreOrderFragmentsBuilder with multi colored tags
+Create FastVectorHighlighter
+
+1 10
+2 11
+3 12
+END

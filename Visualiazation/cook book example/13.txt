@@ -1,0 +1,73 @@
+GOAL:
+Transactional commits and index versioning
+
+DESCRIPTION:
+In the world of data management platforms, anything that supports transactional commits
+would implement ACID (Atomicity, Consistency, Isolation, Durability). ACID is a set of
+properties that guarantees that transactions are processed reliably. So, how does Lucene
+measure against ACID?
+******
+Lucene supports a two-phase commit where you can call  prepareCommit() in
+IndexWriter to do all the necessary work (and flush the changes to the disk) beforehand.
+Then, you can call  commit() to commit the changes or  rollback() to rollback the
+transaction. Note that calling  rollback() will also close the  IndexWriter . Calling
+commit() actually triggers a call to  prepareCommit() internally and calling  close() will
+trigger a call to  commit() before  IndexWriter is closed.
+******
+A Lucene index may have multiple IndexCommits. Each IndexCommit can be considered
+as a point-in-time snapshot of the index. By default, Lucene uses a policy class called
+IndexDeletionPolicy that would delete prior IndexCommits after a successful commit. To
+keep previous IndexCommits, we will need to customize a  IndexDeletionPolicy or use the
+built-in  NoDeletionPolicy . Here is a list of  IndexDeletionPolicy provided out of the box:
+
+CODE:
+Analyzer analyzer = new StandardAnalyzer();
+Directory directory = new RAMDirectory();
+IndexWriterConfig config = new IndexWriterConfig(Version.LATEST, analyzer);
+SnapshotDeletionPolicy policy = new SnapshotDeletionPolicy(NoDeletionPolicy.INSTANCE);
+config.setIndexDeletionPolicy(policy);
+IndexWriter indexWriter = new IndexWriter(directory, config);
+IndexCommit lastSnapshot;
+Document document = new Document();
+indexWriter.addDocument(document);
+indexWriter.commit();
+lastSnapshot = policy.snapshot();
+document = new Document();
+indexWriter.addDocument(document);
+indexWriter.commit();
+lastSnapshot = policy.snapshot();
+document = new Document();
+indexWriter.addDocument(document);
+indexWriter.rollback();
+indexWriter.close();
+List<IndexCommit> commits = DirectoryReader.listCommits(directory);
+System.out.println("Commits count: " + commits.size());
+for (IndexCommit commit : commits) {
+	IndexReader reader = DirectoryReader.open(commit);
+	System.out.println("Commit " + commit.getSegmentCount());
+	System.out.println("Number of docs: " + reader.numDocs());
+}
+System.out.println("\nSnapshots count: " + policy.getSnapshotCount());
+List<IndexCommit> snapshots = policy.getSnapshots();
+for (IndexCommit snapshot : snapshots) {
+	IndexReader reader = DirectoryReader.open(snapshot);
+	System.out.println("Snapshot " + snapshot.getSegmentCount());
+	System.out.println("Number of docs: " + reader.numDocs());
+}
+policy.release(lastSnapshot);
+System.out.println("\nSnapshots count: " + policy.getSnapshotCount());
+
+COMMENT:
+In this demonstration, we first set up a policy for deletion called  SnapshotDeletionPolicy that wraps around  NoDeletionPolicy . 
+This means that all the commits are kept and the prior commits will not be removed automatically. 
+Then, we start adding a document to the index, and committing and taking snapshots in between. 
+Note that on the third document, we call rollback to rollback the changes 
+we use DirectoryReader to list all the past commits and  SnapshotDeletionPolicy to list all the past snapshots.
+The first print statement Commits count will output two because we added two documents and roll backed the third one. 
+In the first iteration, you will find two commits. 
+First commit should show 1 document and the second commit should show 2 documents. 
+In the snapshot's iteration, it should show 2 snapshots with the similar output. 
+At last, after we release a snapshot of one of the commits, the snapshot count should change to 1.
+
+
+

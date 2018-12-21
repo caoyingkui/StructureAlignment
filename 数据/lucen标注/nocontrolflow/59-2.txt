@@ -1,0 +1,20 @@
+IndexWriter writer = getWriter();
+assertEquals(2, writer.numDocs());
+writer.deleteDocuments(new Term("id", "1"));
+writer.optimize(); //3
+writer.commit();
+assertFalse(writer.hasDeletions());
+assertEquals(1, writer.maxDoc()); //C
+assertEquals(1, writer.numDocs()); //C
+writer.close();
+
+2 docs in the index
+Delete first document
+1 indexed document, 0 deleted documents
+Index contains deletions
+1 indexed document, 1 deleted document
+Optimize compacts deletions
+
+4 16
+7|8 13
+END

@@ -1,0 +1,28 @@
+Digester dig;
+dig = new Digester();
+dig.setValidating(false);
+dig.addObjectCreate("address-book", DigesterXMLDocument.class); // #1
+dig.addObjectCreate("address-book/contact", Contact.class); // #2
+dig.addSetProperties("address-book/contact", "type", "type"); // #3
+dig.addCallMethod("address-book/contact/name","setName", 0); // #4
+dig.addCallMethod("address-book/contact/address","setAddress", 0);
+dig.addCallMethod("address-book/contact/city","setCity", 0);
+dig.addCallMethod("address-book/contact/province","setProvince", 0);
+dig.addCallMethod("address-book/contact/postalcode","setPostalcode", 0);
+dig.addCallMethod("address-book/contact/country","setCountry", 0);
+dig.addCallMethod("address-book/contact/telephone","setTelephone", 0);
+dig.addSetNext("address-book/contact", "populateDocument"); // #5
+
+Rule 1: Create instance of DigesterXMLDocument
+Rule 2: Create instance of Contact
+Rule 3: Set Contact’s type attribute
+Rule 4: Set Contact’s name property
+Rule 5: Call populateDocument
+
+4 1
+5 2
+6 3
+7 4
+14 5
+END
+

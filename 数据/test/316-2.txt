@@ -1,0 +1,12 @@
+FragListBuilder fragListBuilder = new SimpleFragListBuilder(); // 1
+FragmentsBuilder fragmentBuilder = new ScoreOrderFragmentsBuilder( BaseFragmentsBuilder.COLORED_PRE_TAGS,BaseFragmentsBuilder.COLORED_POST_TAGS); // 2
+return new FastVectorHighlighter(true, true, fragListBuilder, fragmentBuilder); // 3
+
+Create SimpleFragListBuilder.
+Create ScoreOrderFragmentsBuilder with multi colored tags.
+Create FastVectorHighlighter.
+
+1 1
+2 2
+3 3
+END

@@ -1,0 +1,20 @@
+TermQuery methodologyBooks = new TermQuery( new Term("category", "/technology/computers/programming/methodology")); // #1
+TermQuery easternPhilosophyBooks = new TermQuery( new Term("category", "/philosophy/eastern")); // #2
+BooleanQuery enlightenmentBooks = new BooleanQuery(); // #3
+enlightenmentBooks.add(methodologyBooks, BooleanClause.Occur.SHOULD); // #3
+enlightenmentBooks.add(easternPhilosophyBooks,BooleanClause.Occur.SHOULD); // #3
+IndexSearcher searcher = new IndexSearcher(TestUtil.getBookIndexDirectory());
+TopDocs matches = searcher.search(enlightenmentBooks, 10);
+System.out.println("or = " + enlightenmentBooks);
+assertTrue(TestUtil.hitsIncludeTitle(searcher, matches,"Extreme Programming Explained"));
+assertTrue(TestUtil.hitsIncludeTitle(searcher, matches,"Tao Te Ching \u9053\u5FB7\u7D93"));
+searcher.close();
+
+Match 1st category.
+Match 2nd category.
+Combine this two queries.
+
+1 1
+2 2
+3|4|5 3
+END

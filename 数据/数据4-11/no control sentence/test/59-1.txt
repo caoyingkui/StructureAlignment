@@ -1,0 +1,1 @@
+IndexWriter   getWriter assertEquals numDocs deleteDocuments commit maxDoc numDocs

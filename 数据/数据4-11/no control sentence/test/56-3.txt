@@ -1,0 +1,1 @@
+IndexSearcher new Term Query TermQuery TestUtil hitCount close

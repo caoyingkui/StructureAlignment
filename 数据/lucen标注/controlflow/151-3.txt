@@ -1,0 +1,9 @@
+TermAttribute term = (TermAttribute) stream.addAttribute(TermAttribute.class);
+while(stream.incrementToken()) {
+System.out.print("[" + term.term() + "] "); }//B
+
+Invoke analysis process
+Print token text surrounded by brackets
+
+3 6
+END

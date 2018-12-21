@@ -1,0 +1,7 @@
+displayTokens(analyzer.tokenStream("contents", new StringReader(text))); //A
+
+Invoke analysis process
+Print token text surrounded by brackets
+
+1 3
+END

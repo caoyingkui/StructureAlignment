@@ -1,0 +1,20 @@
+Document doc = new Document();
+doc.Add(new Field("contents", new System.IO.StreamReader(file.FullName, System.Text.Encoding.Default))); // F
+doc.Add(new Field("filename", file.Name, Field.Store.YES, Field.Index.NOT_ANALYZED)); // G
+doc.Add(new Field("fullpath", file.FullName, Field.Store.YES, Field.Index.NOT_ANALYZED)); // H
+return doc;
+
+Create Lucene index in this directory
+Index *.txt from this directory
+Create IndexWriter
+Close IndexWriter
+Return number of documents indexed
+Index file content
+Index file name
+Index full file path
+Add document to index
+
+2 6
+3 7
+4 8
+END

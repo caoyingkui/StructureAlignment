@@ -1,0 +1,22 @@
+IndexSearcher searcher;
+Directory dir = TestUtil.getBookIndexDirectory(); //A
+searcher = new IndexSearcher(dir,true); //B
+Term t = new Term("subject", "ant");
+Query query = new TermQuery(t);
+TopDocs docs = searcher.search(query, 10);
+assertEquals("JDwA", 1, docs.totalHits); //C
+t = new Term("subject", "junit");
+docs = searcher.search(new TermQuery(t), 10);
+assertEquals(2, docs.totalHits); //D
+searcher.close();
+
+TestUtil provides directory
+Create IndexSearcher
+One hit expected for search for "ant"
+Two hits expected for "junit"
+
+2 1
+3 2
+7 3
+10 4
+END

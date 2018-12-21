@@ -1,0 +1,8 @@
+Document doc = GetDocument(file);  //1
+writer.AddDocument(doc);  //1
+
+Add document to index.
+
+1|2 1
+END
+

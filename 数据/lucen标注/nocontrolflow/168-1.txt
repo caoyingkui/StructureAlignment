@@ -1,0 +1,14 @@
+RAMDirectory directory = new RAMDirectory();
+IndexWriter writer = new IndexWriter(directory,synonymAnalyzer, IndexWriter.MaxFieldLength.UNLIMITED);//#1
+Document doc = new Document();
+doc.add(new Field("content","The quick brown fox jumps over the lazy dogs",Field.Store.YES,Field.Index.ANALYZED)); //#2
+writer.addDocument(doc);
+writer.close();
+searcher = new IndexSearcher(directory);
+
+Search for "hops"
+Search for "fox hops"
+
+2 9
+4 10
+END

@@ -1,0 +1,35 @@
+IndexSearcher searcher = new IndexSearcher(directory);
+DistanceQueryBuilder dq = new DistanceQueryBuilder(latitude, longitude, radius, latField, lngField, tierPrefix,true); // 1
+Query tq;
+if (what == null)
+	tq = new TermQuery(new Term("metafile", "doc")); // 2
+else 
+	tq = new TermQuery(new Term("name", what));
+DistanceFieldComparatorSource dsort; // 3
+dsort = new DistanceFieldComparatorSource(dq.getDistanceFilter()); // 3
+Sort sort = new Sort(new SortField("foo", dsort)); // 3
+TopDocs hits = searcher.search(tq, dq.getFilter(), 10, sort);
+int numResults = hits.totalHits;
+Map<Integer,Double> distances = dq.getDistanceFilter().getDistances(); // 4
+System.out.println("Number of results: " + numResults);
+System.out.println("Found:");
+for(int i =0 ; i < numResults; i++) {
+	int docID = hits.scoreDocs[i].doc;
+	Document d = searcher.doc(docID);
+	String name = d.get("name");
+	double rsLat = NumericUtils.prefixCodedToDouble(d.get(latField));
+	double rsLng = NumericUtils.prefixCodedToDouble(d.get(lngField));
+	Double geo_distance = distances.get(docID);
+	System.out.printf(name +": %.2f Miles\n", geo_distance);
+	System.out.println("\t\t("+ rsLat +","+ rsLng +")");}
+
+Create a distance query.
+Matches all documents.
+Create a distance sort.
+Get distances from the distance filter.
+
+2 1
+4 2
+7|8|9 3
+12 4
+END

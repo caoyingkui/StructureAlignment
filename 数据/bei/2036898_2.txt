@@ -1,0 +1,7 @@
+IndexReader reader = IndexReader.Open("<lucene dir>");
+Searcher searcher = new IndexSearcher(reader);
+Analyzer analyzer = new StandardAnalyzer();
+MultiFieldQueryParser queryParser = new MultiFieldQueryParser(new string[] {"filename", "filetext"},analyzer);
+Hits hits = searcher.Search(queryParser.parse("<text>"));
+
+The second way is to use MultiFieldQueryParser, this behaves like QueryParser, allowing access to all the power that it has, except that it will search over multiple fields.

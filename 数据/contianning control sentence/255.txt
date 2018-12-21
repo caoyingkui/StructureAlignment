@@ -1,0 +1,17 @@
+TermRangeQuery query = (TermRangeQuery) super.getRangeQuery(field, part1, part2, inclusive); // B
+if ("price".equals(field)) { // C
+	return NumericRangeQuery.newDoubleRange( "price", Double.parseDouble( query.getLowerTerm()), Double.parseDouble( query.getUpperTerm()), query.includesLower(), query.includesUpper());} // D
+else {
+	return query; }// E
+
+Override the getRangeQuery method.
+Invoke super() to create default TermRangeQuery.
+For price field, build NumericRangeQuery.
+Construct corresponding NumericRangeQuery.
+For all other fields, return default TermRangeQuery.
+
+1 2
+2 3
+3 4
+5 5
+END

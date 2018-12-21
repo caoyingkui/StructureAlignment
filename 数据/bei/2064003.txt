@@ -1,0 +1,17 @@
+BooleanQuery booleanQueryInner = new BooleanQuery();
+Query query1 = new TermQuery(new Term("id", "<id 1>"));
+Query query2 = new TermQuery(new Term("id", "<id 2>"));
+Query query3 = new TermQuery(new Term("id", "<id 3>"));
+Query query4 = new TermQuery(new Term("id", "<id 4>"));
+booleanQueryInner.add(query1, BooleanClause.Occur.SHOULD);
+booleanQueryInner.add(query2, BooleanClause.Occur.SHOULD);
+booleanQueryInner.add(query3, BooleanClause.Occur.SHOULD);
+booleanQueryInner.add(query4, BooleanClause.Occur.SHOULD);
+BooleanQuery booleanQueryOuter = new BooleanQuery();
+booleanQueryOuter.add(booleanQueryInner, BooleanClause.Occur.MUST);
+booleanQueryOuter.add(boolenaQueryOtherConditions, BooleanClause.Occur.MUST);
+
+When combining Lucene queries where you want any index record that contains any one of multiple possible values with additional criteria that must also be met, create multiple boolean query objects.
+For the first group of "OR" conditions:
+Now combine with other conditions in query
+Now index records will only be returned if they meet one of the conditions in the inner "OR" group and also meet the conditions in the "other conditions" query.

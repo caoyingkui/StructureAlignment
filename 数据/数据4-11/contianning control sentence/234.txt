@@ -1,0 +1,24 @@
+Map vectorMap = (Map) categoryMap.get(category);
+int dotProduct = 0;
+int sumOfSquares = 0;
+for (int i = 0; i < words.length; i++) {
+	String word = words[i];
+	int categoryWordFreq = 0;
+	if (vectorMap.containsKey(word)) {
+		categoryWordFreq =((Integer) vectorMap.get(word)).intValue();}
+	dotProduct += categoryWordFreq; //#1
+	sumOfSquares += categoryWordFreq * categoryWordFreq;}
+double denominator;
+if (sumOfSquares == words.length) {
+	denominator = sumOfSquares; }// #2 
+else {
+	denominator = Math.sqrt(sumOfSquares) *Math.sqrt(words.length);}
+double ratio = dotProduct / denominator;
+return Math.acos(ratio);
+
+Assume each word has frequency 1.
+Shortcut to prevent precision issue.
+
+9 1
+13 2
+END

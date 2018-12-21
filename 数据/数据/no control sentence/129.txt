@@ -1,0 +1,16 @@
+Query query = new QueryParser(Version.LUCENE_CURRENT, "subject", analyzer).parse("title2:[K TO N]"); //A
+assertTrue(query instanceof TermRangeQuery);
+TopDocs matches = searcher.search(query, 10);
+assertTrue(TestUtil.hitsIncludeTitle(searcher, matches, "Mindstorms"));
+query = new QueryParser(Version.LUCENE_CURRENT, "subject", analyzer).parse("title2:{K TO Mindstorms}"); //B
+matches = searcher.search(query, 10);
+assertFalse(TestUtil.hitsIncludeTitle(searcher, matches, "Mindstorms")); 
+
+Inclusive range, with square brackets
+Exclusive range, with curly brackets
+Demonstrates exclusion of Mindstorms book
+
+1 1
+5 2
+7 3
+END

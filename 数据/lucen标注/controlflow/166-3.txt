@@ -1,0 +1,23 @@
+String[] synonyms = engine.getSynonyms(termAttr.term()); //#6
+if (synonyms == null) return;
+State current = captureState();
+for (int i = 0; i < synonyms.length; i++) { //#7
+save.restoreState(current);
+AnalyzerUtils.setTerm(save, synonyms[i]); //#7
+AnalyzerUtils.setType(save, TOKEN_TYPE_SYNONYM); //#7
+AnalyzerUtils.setPositionIncrement(save, 0); //#8
+synonymStack.push(save.captureState()); }//#7
+
+Synonym buffer
+Pop buffered synonyms
+Read next token
+Push synonyms of current token onto stack
+Return current token
+Retrieve synonyms
+Push synonyms onto stack
+Set position increment to zero
+
+1 16
+4|6|7|9 17
+8 18
+END

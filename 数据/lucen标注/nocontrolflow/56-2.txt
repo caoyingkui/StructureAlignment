@@ -1,0 +1,13 @@
+return new IndexWriter(directory, new WhitespaceAnalyzer(), IndexWriter.MaxFieldLength.UNLIMITED); 
+
+Run before every test
+Create IndexWriter
+Add documents
+Create new searcher
+Build simple single-term query
+Get number of hits
+Verify writer document count
+Verify searcher document count
+
+1 4
+END

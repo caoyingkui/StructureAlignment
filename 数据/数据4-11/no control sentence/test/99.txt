@@ -1,0 +1,20 @@
+IndexSearcher searcher = new IndexSearcher(TestUtil.getBookIndexDirectory());
+QueryParser parser = new QueryParser(Version.LUCENE_CURRENT, "contents", new SimpleAnalyzer()); //1
+Query query = parser.parse("+JUNIT +ANT -MOCK"); //2
+TopDocs docs = searcher.search(query, 10);
+assertEquals(1, docs.totalHits);
+Document d = searcher.doc(docs.scoreDocs[0].doc);
+assertEquals("Java Development with Ant", d.get("title"));
+query = new QueryParser(Version.LUCENE_CURRENT, "contents", new SimpleAnalyzer()).parse("mock OR junit"); //3
+docs = searcher.search(query, 10);
+assertEquals("JDwA and JIA", 2, docs.totalHits);
+searcher.close();
+
+Create QueryParser, with default field and analyzer.
+Parse user’s search text into a Query.
+Create QueryParser and parse text in single expression.
+
+2 1
+3 2
+8 3
+END
