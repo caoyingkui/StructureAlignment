@@ -153,6 +153,7 @@ public class WN {
     }
 
     public static double calculateSimilarity(String word1, String word2){
+
         double sim = -1;
         if(word1.trim().length() == 0 || word2.trim().length() == 0)
             return 0;
@@ -201,6 +202,7 @@ public class WN {
         Map<ISynsetID, Integer> result = new HashMap<>();
         ArrayDeque<Pair<ISynset, Integer>> deque = new ArrayDeque<>();
         deque.add(new Pair<>(synset, 0));
+        HashSet<ISynsetID> visited = new HashSet<>();
         while(deque.size() > 0){
             Pair<ISynset, Integer> pair =  deque.getFirst();
             deque.removeFirst();
@@ -209,12 +211,18 @@ public class WN {
             int depth = pair.getValue();
             for(ISynsetID id: pair.getKey().getRelatedSynsets(Pointer.HYPERNYM)){
                 ISynset set = dict.getSynset(id);
-                deque.push(new Pair<>(set, depth + 1));
+                if (!visited.contains(set.getID())) {
+                    visited.add(set.getID());
+                    deque.push(new Pair<>(set, depth + 1));
+                }
             }
 
             for(ISynsetID id: pair.getKey().getRelatedSynsets(Pointer.HYPERNYM_INSTANCE)){
                 ISynset set = dict.getSynset(id);
-                deque.push(new Pair<>(set, depth + 1));
+                if (!visited.contains(set.getID())) {
+                    visited.add(set.getID());
+                    deque.push(new Pair<>(set, depth + 1));
+                }
             }
         }
 
